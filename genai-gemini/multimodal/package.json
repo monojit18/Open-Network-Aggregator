@@ -1,0 +1,30 @@
+{
+    "name": "content_gemini_app",
+    "description": "Wrapper around Gemini Content generation API",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",        
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv markdown-it axios socket.io-client @google-cloud/vertexai @google-cloud/aiplatform",
+        "start": "node contentgen.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "@google-cloud/aiplatform": "^3.24.0",
+        "@google-cloud/vertexai": "^0.5.0",
+        "axios": "^1.7.2",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "jshint": "^2.13.6",
+        "markdown-it": "^14.1.0",
+        "socket.io-client": "^4.7.5"
+    },
+    "dependencies": {
+        "@ffmpeg-installer/ffmpeg": "^1.1.0",
+        "cors": "^2.8.5"
+    }
+}

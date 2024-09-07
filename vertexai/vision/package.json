@@ -1,0 +1,24 @@
+{
+    "name": "vision_app",
+    "description": "Wrapper around GCP vision API",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors @google-cloud/vision",
+        "start": "node vision.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "@google-cloud/vision": "^3.1.4",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "jshint": "^2.13.6"
+    }
+}

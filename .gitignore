@@ -1,0 +1,17 @@
+!.gitignore
+**/.DS_Store
+**/.env
+**/misc/**
+**/node_modules
+**/package-lock.json
+**/logs
+**/data
+**/*.plan
+**/*.tfvars
+**/values
+!**/values.tmpl/**
+**/ingress
+!**/ingress.tpl
+**/manifests/vertexai
+!**/manifests/vertexai.tpl
+

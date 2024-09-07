@@ -1,0 +1,26 @@
+{
+    "name": "seeker_app",
+    "description": "An ONEST Seeker Adaptor App",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv axios cors libsodium-wrappers socket.io-client",
+        "start": "node seeker.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "axios": "^1.7.5",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "jshint": "^2.13.6",
+        "libsodium-wrappers": "^0.7.15",
+        "socket.io-client": "^4.7.5"
+    }
+}

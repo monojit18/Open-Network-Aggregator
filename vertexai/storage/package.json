@@ -1,0 +1,23 @@
+{
+    "name": "storage_app",
+    "description": "Wrapper around GCP Storage API",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv @google-cloud/storage",
+        "start": "node storage.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "@google-cloud/storage": "^6.12.0",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "jshint": "^2.13.6"
+    }
+}
