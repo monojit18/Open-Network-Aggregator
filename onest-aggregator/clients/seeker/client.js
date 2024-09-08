@@ -43,9 +43,9 @@ const KOnStatusAction = "on_status";
 const KCallbackActions =
 {
     OnWeatherAction: "on_weather",
-    OnVideoAction: "on_video"
+    OnVideoAction: "on_video",
+    OnErrorAction: "on_error"
 }
-
 
 DotEnv.config();
 
@@ -116,6 +116,11 @@ function prepareSocketClient()
     });
 
     _socketIOClient.on(KCallbackActions.OnVideoAction, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KCallbackActions.OnErrorAction, (message) =>
     {
         console.log(message);
     });
