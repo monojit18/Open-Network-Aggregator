@@ -1,0 +1,39 @@
+deployment:
+  name: storageapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: storageapp-deploy 
+    version: v1
+  selectorLabels:
+    app: storageapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: storage-app
+    image: "<repo-name>/cloud-native-apps-repo/storagelib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [6060]
+    envVars:
+    - name: STORAGE_DIR_PATH
+      value: /data
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: storageapp-svc
+  selector:
+    app: storageapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6060  

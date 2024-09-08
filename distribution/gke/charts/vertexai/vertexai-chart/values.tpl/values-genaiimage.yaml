@@ -1,0 +1,43 @@
+deployment:
+  name: genaiimageapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: genaiimageapp-deploy 
+    version: v1
+  selectorLabels:
+    app: genaiimageapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: genaiimage-app
+    image: "<repo-name>/cloud-native-apps-repo/genai-imagelib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [6066]
+    envVars:
+    - name: GENAI_LOCATION
+      value: us-central1
+    - name: GENAI_PUBLISHER
+      value: google
+    - name: GENAI_API_ENDPOINT
+      value: us-central1-aiplatform.googleapis.com    
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: genaiimageapp-svc
+  selector:
+    app: genaiimageapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6066  

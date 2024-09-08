@@ -1,0 +1,43 @@
+deployment:
+  name: translateapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: translateapp-deploy 
+    version: v1
+  selectorLabels:
+    app: translateapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: translate-app
+    image: "<repo-name>/cloud-native-apps-repo/translatelib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "200m"
+    memoryLimit: "1Gi"
+    cpuLimit: "400m"
+    containerPorts: [6061]
+    envVars:
+    - name: TRANSCODER_LOCATION
+      value: us-central1
+    - name: TRANSLATION_LOCATION
+      value: us-central1
+    - name: GLOSSARY_LOCATION
+      value: us-central1
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: translateapp-svc
+  selector:
+    app: translateapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6061  

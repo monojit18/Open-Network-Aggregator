@@ -1,0 +1,37 @@
+deployment:
+  name: streamerserverapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: streamerserverapp-deploy 
+    version: v1
+  selectorLabels:
+    app: streamerserverapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: streamerserver-app
+    image: "<repo-name>/cloud-native-apps-repo/streamer-serverlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [8081]
+    envVars:    
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: streamerserverapp-svc
+  selector:
+    app: streamerserverapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 8081  

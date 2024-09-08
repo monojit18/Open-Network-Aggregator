@@ -1,0 +1,918 @@
+BASEFOLDERPATH=""
+PROJECT_ID=<project-name>
+OWNER=<owner-email>
+GSA=<sa-name>@<project-name>.iam.gserviceaccount.com
+GSA_DISPLAY_NAME=apps-project-sa
+CLUSTER="gke-public-cluster"
+REGION=asia-southeast1
+ZONE=asia-southeast1-a
+AI_LOCATION=us-central1
+
+
+gcloud auth login
+gcloud auth list
+gcloud config set account $OWNER
+gcloud services enable cloudresourcemanager.googleapis.com
+
+gcloud config set project $PROJECT_ID
+#gcloud auth application-default login
+
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
+
+gcloud iam service-accounts list
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/owner
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/iam.serviceAccountUser
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/iam.serviceAccountTokenCreator
+
+gcloud iam service-accounts keys create $BASEFOLDERPATH/misc/$PROJECT_ID-sa.json --iam-account=$GSA
+gcloud auth activate-service-account $GSA --key-file=$BASEFOLDERPATH/misc/$GSA_DISPLAY_NAME.json
+#gcloud config set account $GSA
+gcloud auth list
+
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
+
+#gcloud storage buckets create gs://$PROJECT_ID-terra-stg
+
+Storage
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/vertexai/storage
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="storagelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="storagelib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/storage-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/storage-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Vision
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/vertexai/vision
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="visionlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="visionlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/vision-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/vision-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Speech
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/vertexai/speech
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="speechlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="speechlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/speech-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/speech-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Translation
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/vertexai/translation
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="translatelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="translatelib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/translation-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/translation-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+VectorSearch
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/vertexai/vectorsearch
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="vector-searchlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="vector-searchlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/vector-search-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/vector-search-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Websock-Streamer
+=================
+Server
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/websock-streamer/server
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="streamer-serverlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="streamer-serverlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/streamer-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/streamer-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=================
+Client
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/websock-streamer/client
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="streamer-clientlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="streamer-clientlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/streamer-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/streamer-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Imagegen
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/image
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="genai-imagelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="genai-imagelib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-image-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-image-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Textgen
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/text
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="genai-textlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="genai-textlib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-text-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-text-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+MultiModal
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/multimodal
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="genai-multimodallib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="genai-multimodallib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-multimodal-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/genai-multimodal-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Agent-Builder/Conversation
+==========================================================================================
+Cloud build
+=============
+cd $BASEFOLDERPATH/genai-gemini/agent-builder/conversation
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="discovery-enginelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="discovery-enginelib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/discovery-engine-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/discovery-engine-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Agent-Builder/Datastore
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/agent-builder/datastores
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="datastorelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="datastorelib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/datastore-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/datastore-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Chatgenie
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/chatgenie
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="chatgenie"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="chatgenie"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/chatgenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/chatgenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Codegenie
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/codegenie
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="codegenie"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="codegenie"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/codegenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/codegenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Retailgenie
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/genai-gemini/retailgenie
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="retailgenie"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="retailgenie"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/retailgenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/retailgenie-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+DocumentAI
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/documentai
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="docailib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="docailib"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/docai-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/docai-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+==========================================================================================
+Seeker-Client
+=============================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/clients/seeker
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="seeker-client"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="seeker-client"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/seeker-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/seeker-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=====================================================================================================
+Seeker-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/seeker
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="seeker-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="seeker-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=============================================================================================
+Job-Seeker-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/seeker
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="job-seeker-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="job-seeker-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/job-seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/job-seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=============================================================================================
+Finance-Seeker-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/seeker
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="finance-seeker-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="finance-seeker-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/finance-seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/finance-seeker-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=============================================================================================
+Provider-Client
+=============================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/clients/provider
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="provider-client"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="provider-client"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/provider-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/provider-client-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=====================================================================================================
+Provider-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/provider
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="provider-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="provider-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+======================================================================================================
+Job-Provider-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/provider
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="job-provider-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="job-provider-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/job-provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/job-provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+======================================================================================================
+Finance-Provider-Adapter
+======================================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/adapters/provider
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="finance-provider-adapter"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="finance-provider-adapter"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/finance-provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/finance-provider-adapter-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+======================================================================================================
+Network-Middlewares
+=======================
+ONEST-Middleware
+=============================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/middlewares/networks/onest
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="onest-middleware"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="onest-middleware"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/onest-middleware-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/onest-middleware-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=====================================================================================================
+Master-Middleware
+=============================================================================================
+cd $BASEFOLDERPATH/onest-aggregator/middlewares/master
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="master-middleware"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="master-middleware"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/master-middleware-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/master-middleware-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+=====================================================================================================
+ONIX-Callback-BPP
+======================================================================================================
+cd $BASEFOLDERPATH/onix/callbacks/bpp
+PROJECT_NAME="apps-project"
+REPO_NAME="cloud-native-apps-repo"
+PACKAGE_NAME="onix-bpp-callback"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app-deploy/app-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR="cloud-run"
+RESOURCE_NAME="onix-bpp-callback"
+
+gcloud builds submit --config="./builds/cloud-run/run-deploy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/onix-bpp-callback-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/onix-bpp-callback-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+========================================================================================
+gcloud container clusters get-credentials $CLUSTER --region=$REGION --project=$PROJECT_ID
+k label namespace istio-system istio-injection=enabled
+
+Smoke services
+===============================================================================================
+k create ns smoke
+k label namespace smoke istio-injection=enabled
+
+k create serviceaccount smoke-sa -n smoke
+#k delete serviceaccount smoke-sa -n smoke
+
+gcloud iam service-accounts add-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[smoke/smoke-sa]"
+#cloud iam service-accounts remove-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[smoke/smoke-sa]"
+
+k annotate serviceaccount smoke-sa -n smoke iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount smoke-sa -n smoke iam.gke.io/gcp-service-account-
+
+Deploy Microservices
+======================
+helm upgrade --install --create-namespace smoke-tests-chart-nginx $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/ -n smoke \
+-f $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/values/values-nginx.yaml
+#helm uninstall smoke-tests-chart-nginx -n smoke
+
+helm upgrade --install --create-namespace smoke-tests-chart-apache $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/ -n smoke \
+-f $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/values/values-apache.yaml
+#helm uninstall smoke-tests-chart-apache -n smoke
+
+k get po -n smoke
+
+Deploy Smoke gateway
+==================================
+k apply -f $BASEFOLDERPATH/distribution/gke/manifests/smoke/smoke-gateway.yaml -n smoke
+#k delete -f $BASEFOLDERPATH/distribution/gke/manifests/smoke/smoke-gateway.yaml -n smoke
+
+Deploy Smoke Internal gateway
+==================================
+k apply -f $BASEFOLDERPATH/distribution/gke/manifests/smoke/smoke-internal-gateway.yaml -n smoke
+#k delete -f $BASEFOLDERPATH/distribution/gke/manifests/smoke/smoke-internal-gateway.yaml -n smoke
+==================================================================================================================
+
+vertex-ai services
+===============================================================================================
+k create ns vertexai
+k label namespace vertexai istio-injection=enabled
+
+k create serviceaccount vertexai-sa -n vertexai
+#k delete serviceaccount vertexai-sa -n vertexai
+
+gcloud iam service-accounts add-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+#cloud iam service-accounts remove-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+
+k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account-
+
+
+#helm create vertexai-chart -n vertexai
+
+#helm upgrade --install --create-namespace vertexai-chart-streamer-server $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+#-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-streamer-server.yaml
+#helm uninstall vertexai-chart-streamer-server -n vertexai
+
+#helm upgrade --install --create-namespace vertexai-chart-streamer-client $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+#-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-streamer-client.yaml
+#helm uninstall vertexai-chart-streamer-client -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-storage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-storage.yaml
+#helm uninstall vertexai-chart-storage -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-translate $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-translate.yaml
+#helm uninstall vertexai-chart-translate -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-vision $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-vision.yaml
+#helm uninstall vertexai-chart-vision -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-speech $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-speech.yaml
+#helm uninstall vertexai-chart-speech -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-genaitext $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-genaitext.yaml
+#helm uninstall vertexai-chart-genaitext -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-genaimultimodal $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-genaimultimodal.yaml
+#helm uninstall vertexai-chart-genaimultimodal -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-genaiimage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-genaiimage.yaml
+#helm uninstall vertexai-chart-genaiimage -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-vectorsearch $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-vectorsearch.yaml
+#helm uninstall vertexai-chart-vectorsearch -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-discovery-engine $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-discovery-engine.yaml
+#helm uninstall vertexai-chart-discovery-engine -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-datastore $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-datastore.yaml
+#helm uninstall vertexai-chart-datastore -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-chatgenie $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-chatgenie.yaml
+#helm uninstall vertexai-chart-chatgenie -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-codegenie $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-codegenie.yaml
+#helm uninstall vertexai-chart-codegenie -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-retailgenie $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-retailgenie.yaml
+#helm uninstall vertexai-chart-retailgenie -n vertexai
+
+helm upgrade --install --create-namespace vertexai-chart-documentai $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/ -n vertexai \
+-f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-chart/values/values-docai.yaml
+#helm uninstall vertexai-chart-documentai -n vertexai
+
+k get po -n vertexai
+
+Deploy vertexai gateway
+==================================
+k apply -f $BASEFOLDERPATH/distribution/gke/manifests/vertexai/vertexai-gateway.yaml -n vertexai
+#k delete -f $BASEFOLDERPATH/distribution/gke/manifests/vertexai/vertexai-gateway.yaml -n vertexai
+
+Deploy vertexai Internal gateway
+==================================
+k apply -f $BASEFOLDERPATH/distribution/gke/manifests/vertexai/vertexai-internal-gateway.yaml -n vertexai
+#k delete -f $BASEFOLDERPATH/distribution/gke/manifests/vertexai/vertexai-internal-gateway.yaml -n vertexai
+===================================================================================================

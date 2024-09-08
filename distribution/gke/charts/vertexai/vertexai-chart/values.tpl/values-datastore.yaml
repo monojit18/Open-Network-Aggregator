@@ -1,0 +1,37 @@
+deployment:
+  name: datastoreapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: datastoreapp-deploy 
+    version: v1
+  selectorLabels:
+    app: datastoreapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: datastore-app
+    image: "<repo-name>/cloud-native-apps-repo/datastorelib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [6072]
+    envVars:    
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: datastoreapp-svc
+  selector:
+    app: datastoreapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6072

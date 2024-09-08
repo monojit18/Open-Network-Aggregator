@@ -1,0 +1,39 @@
+deployment:
+  name: visionapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: visionapp-deploy 
+    version: v1
+  selectorLabels:
+    app: visionapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: vision-app
+    image: "<repo-name>/cloud-native-apps-repo/visionlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [6062]
+    envVars:
+    - name: VISION_DIR_PATH
+      value: /data   
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: visionapp-svc
+  selector:
+    app: visionapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6062  

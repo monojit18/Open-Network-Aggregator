@@ -1,0 +1,41 @@
+deployment:
+  name: speechapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: speechapp-deploy 
+    version: v1
+  selectorLabels:
+    app: speechapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: speech-app
+    image: "<repo-name>/cloud-native-apps-repo/speechlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [6063]
+    envVars:
+    - name: SPEECH_LOCATION
+      value: us-central1 
+    - name: SPEECH_DIR_PATH
+      value: /data   
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: speechapp-svc
+  selector:
+    app: speechapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6063  

@@ -1,0 +1,45 @@
+deployment:
+  name: genaitextapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: genaitextapp-deploy 
+    version: v1
+  selectorLabels:
+    app: genaitextapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: genaitext-app
+    image: "<repo-name>/cloud-native-apps-repo/genai-textlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [6065]
+    envVars:
+    - name: WEBSOCK_STREAMER_HTTP_HOST      
+      value: https://streamer-serverlib-4encm3loxa-as.a.run.app
+    - name: GENAI_LOCATION
+      value: us-central1
+    - name: GENAI_PUBLISHER
+      value: google
+    - name: GENAI_API_ENDPOINT
+      value: us-central1-aiplatform.googleapis.com    
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: genaitextapp-svc
+  selector:
+    app: genaitextapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6065

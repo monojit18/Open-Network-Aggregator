@@ -1,0 +1,106 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: vertexai-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: vertexai-virtual-service
+spec:
+  hosts:
+  - "*.com"  
+  gateways:
+  - vertexai-gateway
+  http:
+  - match:
+    - uri:
+        regex: /languages/?(.*)
+    route:
+    - destination:
+        host: translateapp-svc
+        port:
+          number: 80
+  - match:  
+    - uri:
+        regex: /translate/?(.*)
+    route:
+    - destination:
+        host: translateapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /text/?(.*)
+    route:
+    - destination:
+        host: retailgenieapp-svc
+        port:
+          number: 80
+  - match:  
+    - uri:
+        regex: /product/?(.*)
+    route:
+    - destination:
+        host: retailgenieapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /image/?(.*)
+    route:
+    - destination:
+        host: retailgenieapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /chat/?(.*)
+    route:
+    - destination:
+        host: chatgenieapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /agent/?(.*)
+    route:
+    - destination:
+        host: chatgenieapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /engine/?(.*)
+    route:
+    - destination:
+        host: datastoreapp-svc
+        port:
+          number: 80  
+  - match:
+    - uri:
+        regex: /code/?(.*)
+    route:
+    - destination:
+        host: codegenieapp-svc
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /vector/?(.*)
+    route:
+    - destination:
+        host: vectorsearchapp-svc
+        port:
+          number: 80
+  

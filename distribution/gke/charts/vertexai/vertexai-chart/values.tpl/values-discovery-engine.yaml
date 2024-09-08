@@ -1,0 +1,37 @@
+deployment:
+  name: discovery-engineapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: discovery-engineapp-deploy 
+    version: v1
+  selectorLabels:
+    app: discovery-engineapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: discovery-engine-app
+    image: "<repo-name>/cloud-native-apps-repo/discovery-enginelib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [6071]
+    envVars:    
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: discovery-engineapp-svc
+  selector:
+    app: discovery-engineapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6071  

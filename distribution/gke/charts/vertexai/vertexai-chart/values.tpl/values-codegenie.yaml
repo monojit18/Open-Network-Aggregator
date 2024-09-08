@@ -1,0 +1,53 @@
+deployment:
+  name: codegenieapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: codegenieapp-deploy 
+    version: v1
+  selectorLabels:
+    app: codegenieapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: codegenie-app
+    image: "<repo-name>/cloud-native-apps-repo/codegenie:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "1Gi"
+    cpuRequest: "500m"
+    memoryLimit: "2Gi"
+    cpuLimit: "1"
+    containerPorts: [6070]
+    envVars:
+    - name: STORAGELIB_HOST
+      value: http://storageapp-svc.vertexai.svc
+    - name: SPEECHLIB_HOST
+      value: http://speechapp-svc.vertexai.svc
+    - name: TRANSLATELIB_HOST
+      value: http://translateapp-svc.vertexai.svc    
+    - name: VISIONLIB_HOST
+      value: http://visionapp-svc.vertexai.svc
+    - name: GENAI_IMAGELIB_HOST
+      value: http://genaiimageapp-svc.vertexai.svc
+    - name: GENAI_VECTORSEARCHLIB_HOST
+      value: http://vectorsearchapp-svc.vertexai.svc
+    - name: GENAI_TEXTLIB_HOST
+      value: http://genaitextapp-svc.vertexai.svc
+    - name: GENAI_MULTILIB_HOST
+      value: http://genaimultimodalapp-svc.vertexai.svc
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: codegenieapp-svc
+  selector:
+    app: codegenieapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6070

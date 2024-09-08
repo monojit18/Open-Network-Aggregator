@@ -1,0 +1,41 @@
+deployment:
+  name: docaiapp-deploy
+  serviceAccount: vertexai-sa
+  labels:
+    app: docaiapp-deploy 
+    version: v1
+  selectorLabels:
+    app: docaiapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: gkeappspool
+  containers:
+  - name: docai-app
+    image: "<repo-name>/docailib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [6073]
+    envVars:
+    - name: DOCAI_DIR_PATH
+      value: /data
+    - name: DOCAI_LOCATION
+      value: us
+    - name: PROJECT_ID
+      value: <project_id>
+service:
+  name: docaiapp-svc
+  selector:
+    app: docaiapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6073
