@@ -37,7 +37,8 @@ const KVideoRoom = "video-room";
 const KCallbackEvents =
 {
     OnVideoAction: "on_video",
-    OnCallbackAction: "callback"
+    OnCallbackAction: "callback",
+    OnErrorAction: "on_error"
 }
 
 const KSocketEvents =
@@ -202,6 +203,33 @@ function fireCallbackEvent(videoResponse, videoInfo)
     _socketIOClient.emit(KCallbackEvents.OnCallbackAction, videoData);
 }
 
+function fireErrorEvent(errorInfo, videoInfo)
+{
+    const videoData = {};
+    videoData.room = videoInfo.transaction_id;
+    videoData.event = KCallbackEvents.OnErrorAction;
+    
+    const payload = {};
+    const context = {};
+    const message = {};
+
+    context.domain = videoInfo.domain;
+    context.transaction_id = videoInfo.transaction_id;
+    context.message_id = videoInfo.message_id;
+    payload.context = context;
+
+    message.network = videoInfo.network;
+
+    const errorResponse = {};
+    errorResponse.code = errorInfo.response?.data?.error?.code;
+    errorResponse.message = errorInfo.response?.data?.error?.message;
+    message.provider = errorResponse;
+    payload.message = message;
+
+    videoData.payload = payload;
+    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, videoData);
+}
+
 async function initSocketClient()
 {
     _axiosAgent = new Https.Agent
@@ -335,7 +363,7 @@ _express.post("/videos", async (request, response) =>
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);
+        await fireErrorEvent(errorInfo, videoInfo);
     }
 });
 /* API DEFINITIONS - END */
