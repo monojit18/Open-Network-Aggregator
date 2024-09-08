@@ -37,7 +37,8 @@ const KWeatherRoom = "weather-room";
 const KCallbackEvents =
 {
     OnWeatherAction: "on_weather",
-    OnCallbackAction: "callback"
+    OnCallbackAction: "callback",
+    OnErrorAction: "on_error"
 }
 
 const KSocketEvents =
@@ -208,6 +209,33 @@ function fireCallbackEvent(weatherResponse, weatherInfo)
 
     message.network = weatherInfo.network;
     message.provider = weatherResponse;
+    payload.message = message;
+
+    weatherData.payload = payload;
+    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, weatherData);
+}
+
+function fireErrorEvent(errorInfo, weatherInfo)
+{
+    const weatherData = {};
+    weatherData.room = weatherInfo.transaction_id;
+    weatherData.event = KCallbackEvents.OnErrorAction;
+    
+    const payload = {};
+    const context = {};
+    const message = {};
+
+    context.domain = weatherInfo.domain;
+    context.transaction_id = weatherInfo.transaction_id;
+    context.message_id = weatherInfo.message_id;
+    payload.context = context;
+
+    message.network = weatherInfo.network;
+
+    const errorResponse = {};
+    errorResponse.code = errorInfo.response?.data?.error?.code;
+    errorResponse.message = errorInfo.response?.data?.error?.message;
+    message.provider = errorResponse;
     payload.message = message;
 
     weatherData.payload = payload;
