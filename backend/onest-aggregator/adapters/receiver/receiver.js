@@ -101,6 +101,8 @@ function initSocketServer()
     
         const options = {};
         options.connectionStateRecovery = {};
+        options.maxHttpBufferSize = 1e8;
+
         const cors = {};
         cors.origin = "*";
         options.cors = cors;

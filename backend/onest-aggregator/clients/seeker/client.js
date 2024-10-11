@@ -42,8 +42,11 @@ const KOnStatusAction = "on_status";
 
 const KCallbackActions =
 {
+    OnONDCAction: "on_ondc",
     OnWeatherAction: "on_weather",
     OnVideoAction: "on_video",
+    OnLLMAction: "on_llm",
+    OnEnamMandiAction: "on_enam_mandi",
     OnErrorAction: "on_error"
 }
 
@@ -110,12 +113,27 @@ function prepareSocketClient()
         console.log(message);
     });
 
+    _socketIOClient.on(KCallbackActions.OnONDCAction, (message) =>
+    {
+        console.log(message);
+    });
+
     _socketIOClient.on(KCallbackActions.OnWeatherAction, (message) =>
     {
         console.log(message);
     });
 
     _socketIOClient.on(KCallbackActions.OnVideoAction, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KCallbackActions.OnLLMAction, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KCallbackActions.OnEnamMandiAction, (message) =>
     {
         console.log(message);
     });

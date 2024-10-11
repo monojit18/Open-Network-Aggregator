@@ -328,6 +328,31 @@ function prepareFinanceMessage(networkInfo)
     return messagesList;
 }
 
+function prepareONESTUrl(domainString)
+{    
+    let onestURLString = null;
+
+    switch(domainString)
+    {
+        case KLearning:
+        {
+            onestURLString =  _allUrls[KMicroServices.LearningSeekerAdapterLib];
+        }
+        break;
+        case KJob:
+        {
+            onestURLString =  _allUrls[KMicroServices.JobsSeekerAdapterLib];
+        }
+        break;
+        case KFinance:
+        {        
+            onestURLString =  _allUrls[KMicroServices.FinanceSeekerAdapterLib];
+        }
+        break;
+    }
+    return onestURLString;
+}
+
 function prepareMessageInfo(nlpInfo)
 {
     const nlpNetworkInfo = nlpInfo.network;
@@ -427,12 +452,12 @@ _express.post("/select", async (request, response) =>
 {
     const networkInfo = prepareNetworkInfo(request);
     const domainString = determineDomainString(networkInfo.context.domain);
-    const onestURLString = networkInfo.context.bap_id;    
+    const onestURLString = prepareONESTUrl(domainString);
     const results = {};
 
     try
     {
-        const responseList = await callONESTNetwork(networkInfo, domainString, KNetworkActions.SelectAction);
+        const responseList = await callONESTNetwork(networkInfo, domainString, onestURLString, KNetworkActions.SelectAction);
         results.results = responseList;
         response.send(results);
     }

@@ -243,8 +243,6 @@ Following is a logical flow of the protocol adapter for both Provider and Seeker
 - Post approval, same image is deployed to **GKE (Pre-Prod)** environment
 - A test and feedback cycle is performed. Post successful testing an **Approval Workflow** **is** initiated for DevOps/Production admin before moving to **Production** environment
 
-A test and feedback cycle is performed. Post successful testing same image is deployed to **GKE (Production)** environment
-
 
 
 ## References

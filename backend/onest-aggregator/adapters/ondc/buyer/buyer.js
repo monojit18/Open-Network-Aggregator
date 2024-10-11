@@ -28,15 +28,20 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 let _socketIOClient = null;
+let _allUrls = {};
 
-const KPriceAPIKey = "579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b";
+const KMicroServices =
+{   
+    MyStoreSearch: "mystore-search"
+}
+
 const KStatusACK = "ACK";
 const KRoomKey = "room";
-const KEnamMandiRoom = "enam-mandi-room";
+const KONDCSeekerRoom = "ondc-seeker-room";
 
 const KCallbackEvents =
 {
-    OnEnamMandiAction: "on_enam_mandi",
+    OnONDCAction: "on_ondc",
     OnCallbackAction: "callback",
     OnErrorAction: "on_error"
 }
@@ -58,8 +63,7 @@ _express.use(Express.json
     
 _express.use(Express.urlencoded
 ({
-    extended: true,
-    limit: '10mb'
+    extended: true
 }));
 
 _express.use(Cors
@@ -74,14 +78,36 @@ function prepareErrorMessage(exception)
     return exception;
 }
 
-function prepareAckResponse(priceInfo)
+function processGenericResponse(response)
+{
+    const genericResponse = response.data;
+    return genericResponse;
+}
+
+function prepareAllUrls()
+{    
+    _allUrls[KMicroServices.MyStoreSearch] = `${process.env.MYSTORE_SEARCH_URL}`;
+}
+
+function prepareONDCInfo(request)
+{
+    const ondcInfo = {};
+    ondcInfo.domain = request.body.domain;
+    ondcInfo.transaction_id = request.body.transaction_id;
+    ondcInfo.message_id = request.body.message_id;
+    ondcInfo.network = request.body.network;
+    ondcInfo.query = ondcInfo.network?.intent[0]?.query;
+    return ondcInfo;
+}
+
+function prepareAckResponse(ondcInfo)
 {
     const ackResponse = {};
 
     const context = {};
-    context.domain = priceInfo.domain;
-    context.transaction_id = priceInfo.transaction_id;
-    context.message_id = priceInfo.message_id;
+    context.domain = ondcInfo.domain;
+    context.transaction_id = ondcInfo.transaction_id;
+    context.message_id = ondcInfo.message_id;
     ackResponse.context = context;
 
     const message = {};
@@ -92,45 +118,45 @@ function prepareAckResponse(priceInfo)
     return ackResponse;
 }
 
-function fireCallbackEvent(weatherResponse, priceInfo)
+function fireCallbackEvent(ondcResponse, ondcInfo)
 {
-    const priceData = {};
-    priceData.room = priceInfo.transaction_id;
-    priceData.event = KCallbackEvents.OnEnamMandiAction;
+    const ondcData = {};
+    ondcData.room = ondcInfo.transaction_id;
+    ondcData.event = KCallbackEvents.OnONDCAction;
     
     const payload = {};
     const context = {};
     const message = {};
 
-    context.domain = priceInfo.domain;
-    context.transaction_id = priceInfo.transaction_id;
-    context.message_id = priceInfo.message_id;
+    context.domain = ondcInfo.domain;
+    context.transaction_id = ondcInfo.transaction_id;
+    context.message_id = ondcInfo.message_id;
     payload.context = context;
 
-    message.network = priceInfo.network;
-    message.provider = weatherResponse;
+    message.network = ondcInfo.network;
+    message.provider = ondcResponse;
     payload.message = message;
 
-    priceData.payload = payload;
-    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, priceData);
+    ondcData.payload = payload;
+    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, ondcData);
 }
 
-function fireErrorEvent(errorInfo, priceInfo)
+function fireErrorEvent(errorInfo, ondcInfo)
 {
-    const priceData = {};
-    priceData.room = priceInfo.transaction_id;
-    priceData.event = KCallbackEvents.OnErrorAction;
+    const ondcData = {};
+    ondcData.room = ondcInfo.transaction_id;
+    ondcData.event = KCallbackEvents.OnErrorAction;
     
     const payload = {};
     const context = {};
     const message = {};
 
-    context.domain = priceInfo.domain;
-    context.transaction_id = priceInfo.transaction_id;
-    context.message_id = priceInfo.message_id;
+    context.domain = ondcInfo.domain;
+    context.transaction_id = ondcInfo.transaction_id;
+    context.message_id = ondcInfo.message_id;
     payload.context = context;
 
-    message.network = priceInfo.network;
+    message.network = ondcInfo.network;
 
     const errorResponse = {};
     errorResponse.code = errorInfo.response?.data?.error?.code;
@@ -138,57 +164,8 @@ function fireErrorEvent(errorInfo, priceInfo)
     message.provider = errorResponse;
     payload.message = message;
 
-    priceData.payload = payload;
-    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, priceData);
-}
-
-function preparePriceInfo(request)
-{
-    const priceInfo = {};
-    priceInfo.domain = request.body.domain;
-    priceInfo.transaction_id = request.body.transaction_id;
-    priceInfo.message_id = request.body.message_id;
-    priceInfo.network = request.body.network;
-    
-    const enamMandiInfo = priceInfo.network.price;    
-    if (enamMandiInfo.state != null)
-    {
-        priceInfo.state = enamMandiInfo.state;
-    }
-
-    if (enamMandiInfo.district != null)
-    {
-        priceInfo.district = enamMandiInfo.district;
-    }
-
-    if (enamMandiInfo.market != null)
-    {
-        priceInfo.market = enamMandiInfo.market;
-    }
-
-    if (enamMandiInfo.commodity != null)
-    {
-        priceInfo.commodity = enamMandiInfo.commodity;
-    }
-
-    if (enamMandiInfo.variety != null)
-    {
-        priceInfo.variety = enamMandiInfo.variety;
-    }
-
-    if (enamMandiInfo.grade != null)
-    {
-        priceInfo.grade = enamMandiInfo.grade;
-    }
-    return priceInfo;
-}
-
-function preaprePriceResponse(priceResult)
-{
-    const priceResponse = {};
-    const response = priceResult.data;
-    priceResponse.records = response.records;
-    return priceResponse;
+    ondcData.payload = payload;
+    _socketIOClient.emit(KCallbackEvents.OnCallbackAction, ondcData);
 }
 
 function prepareSocketClient()
@@ -220,14 +197,14 @@ async function initSocketClient()
     ({
         rejectUnauthorized: false
     });
+    prepareAllUrls();
     
     const socketQuery = {};
-    socketQuery[KRoomKey] = KEnamMandiRoom;
+    socketQuery[KRoomKey] = KONDCSeekerRoom;
     _socketIOClient = io(`${process.env.SEEKER_RECEIVER_HTTP_HOST}`,
     {
         query: socketQuery
     });
-
     await initSocketServerConnection();
 }
 
@@ -251,42 +228,12 @@ async function initSocketServerConnection()
     }
 }
 
-async function performPriceSearch(priceInfo)
+async function performONDCSearch(ondcInfo)
 {
     try
     {
-        let enamMandiURL = `${process.env.ENAM_MANDI_SEARCH_URL}`;
-        enamMandiURL += `?format=json&api-key=${KPriceAPIKey}`;
-
-        if (priceInfo.state != null)
-        {
-            enamMandiURL += `&filters[state.keyword]=${priceInfo.state}`;
-        }
-
-        if (priceInfo.district != null)
-        {
-            enamMandiURL += `&filters[district]=${priceInfo.district}`;
-        }
-
-        if (priceInfo.market != null)
-        {
-            enamMandiURL += `&filters[market]=${priceInfo.market}`;
-        }
-
-        if (priceInfo.commodity != null)
-        {
-            enamMandiURL += `&filters[commodity]=${priceInfo.commodity}`;
-        }
-        
-        if (priceInfo.variety != null)
-        {
-            enamMandiURL += `&filters[variety]=${priceInfo.variety}`;
-        }
-
-        if (priceInfo.grade != null)
-        {
-            enamMandiURL += `&filters[grade]=${priceInfo.grade}`;
-        }
+        let ondcURL = `${process.env.MYSTORE_SEARCH_URL}`;        
+        ondcURL += `&search=${ondcInfo.query}&vector_search=${ondcInfo.query}&limit=20`;
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
@@ -295,9 +242,9 @@ async function performPriceSearch(priceInfo)
             "content-type": "application/json"            
         };
 
-        const priceResult = await Axios.get(`${enamMandiURL}`, requestOptions);
-        const priceResponse = preaprePriceResponse(priceResult);        
-        fireCallbackEvent(priceResponse, priceInfo);
+        const ondcResult = await Axios.get(`${ondcURL}`, requestOptions);
+        const ondcResponse = processGenericResponse(ondcResult);        
+        fireCallbackEvent(ondcResponse, ondcInfo);
     }
     catch(exception)
     {
@@ -306,24 +253,24 @@ async function performPriceSearch(priceInfo)
 }
 
 /* API DEFINITIONS - START */
-_express.post("/enam", async (request, response) =>
+_express.post("/search", async (request, response) =>
 {
-    const priceInfo = preparePriceInfo(request);
+    const ondcInfo = prepareONDCInfo(request);
     const results = {};
 
     try
-    {
-        const ackResponse = prepareAckResponse(priceInfo);
+    {        
+        const ackResponse = prepareAckResponse(ondcInfo);
         results.results = ackResponse;
         response.send(results);
-
-        await performPriceSearch(priceInfo);        
+                
+        await performONDCSearch(ondcInfo);
     }
     catch(exception)
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        await fireErrorEvent(errorInfo, priceInfo);
+        await fireErrorEvent(errorInfo, ondcInfo);
     }
 });
 /* API DEFINITIONS - END */

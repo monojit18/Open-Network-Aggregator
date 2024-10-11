@@ -36,9 +36,12 @@ const KMicroServices =
     VectorSearchlib: "vector-searchlib",
     GenAITextlib: "genai-textlib",
     GenAIMultimodallib: "genai-multimodallib",
+    ONDCAgent: "ondc-agent",
     ONESTAgent: "onest-agent",
     VideoAgent: "video-agent",
-    WeatherAgent: "weather-agent"
+    WeatherAgent: "weather-agent",
+    EnaMandiAgent: "enam-mandi-agent",
+    LLMAgent: "llm-agent"
 }
 
 const KNetworkActions =
@@ -56,14 +59,16 @@ const KNetworkNames =
     ONEST: "ONEST",
     VIDEO: "VIDEO",
     WEATHER: "WEATHER",
+    ENAMMANDI: "ENAM",
+    LLM: "LLM",    
     UI: "UI"
 }
 
-// const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response; strictly ground response to the input text.\nConditions:\nDomain for Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for anything related to Retail will be \"ONDC\"\nDomain for anything related to UI action will be \"UI\"";
-// const KEndpointId = "4173620794712129536";
+// const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for anything related to Transactional operations in Retail will be \"ONDC\"\nDomain for anything related to Weather Forecast will be \"WEATHER\"\nDomain for anything related to Video and Webinar will be \"VIDEO\"\nDomain for anything related to UI action will be \"UI\"\nDomain for any Generic questions e.g. asking for suggestions, options or guidance will be \"LLM\"";
+// const KEndpointId = "8161966183562608640";
 
-const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for anything related to Retail will be \"ONDC\"\nDomain for anything related to Weather Forecast will be \"WEATHER\"\nDomain for anything related to Video and Webinar will be \"VIDEO\"\nDomain for anything related to UI action will be \"UI\"";
-const KEndpointId = "4302627593510715392";
+const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"\nDomain for anything related to UI action will be \"UI\"";
+const KEndpointId = "2378288730856226816";
 
 DotEnv.config();
 
@@ -107,24 +112,6 @@ function processListResponse(response)
     return consolidatedList;
 }
 
-function processVideoResponse(response)
-{
-    const videoResponse = response.data.results;
-    return videoResponse;
-}
-
-function processWeatherResponse(response)
-{
-    const weatherResponse = response.data.results;
-    return weatherResponse;
-}
-
-function processTranslationResponse(response)
-{
-    const translateResponseList = response.data.results;
-    return translateResponseList;
-}
-
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.StorageLib] = `${process.env.STORAGELIB_HOST}`;
@@ -133,9 +120,11 @@ function prepareAllUrls()
     _allUrls[KMicroServices.VectorSearchlib] = `${process.env.GENAI_VECTORSEARCHLIB_HOST}`;
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
     _allUrls[KMicroServices.GenAIMultimodallib] = `${process.env.GENAI_MULTILIB_HOST}`;
+    _allUrls[KMicroServices.ONDCAgent] = `${process.env.ONDC_AGENT_URL}`;
     _allUrls[KMicroServices.ONESTAgent] = `${process.env.ONEST_AGENT_URL}`;
     _allUrls[KMicroServices.VideoAgent] = `${process.env.VIDEO_AGENT_URL}`;
     _allUrls[KMicroServices.WeatherAgent] = `${process.env.WEATHER_AGENT_URL}`;
+    _allUrls[KMicroServices.LLMAgent] = `${process.env.LLM_AGENT_URL}`;
 }
 
 function prepareNLPInfo(request)
@@ -146,6 +135,11 @@ function prepareNLPInfo(request)
     nlpInfo.text = request.body.text;
     nlpInfo.prompt = KNLPPrompt;
     nlpInfo.endpointId = KEndpointId;
+
+    if (request.body.histories != null)
+    {
+        nlpInfo.histories = request.body.histories
+    }
     return nlpInfo;
 }
 
@@ -197,7 +191,7 @@ async function detectText(sourceText)
     {
         const response = await Axios.post(`${_allUrls[KMicroServices.TranslateLib]}/languages/detect`,
                                             requestBody, requestOptions);
-        const translateResponseList = processTranslationResponse(response);
+        const translateResponseList = processGenericResponse(response);
         return translateResponseList[0];        
     }
     catch(exception)
@@ -239,7 +233,7 @@ async function translateText(nlpInfo)
     {
         const response = await Axios.post(`${_allUrls[KMicroServices.TranslateLib]}/translate/text?src=${textInfo.sourceLanguage}&trg=${textInfo.targetLanguage}`,
                                             requestBody, requestOptions);
-        const translateResponseList = processTranslationResponse(response);
+        const translateResponseList = processGenericResponse(response);
         return translateResponseList[0];        
     }
     catch(exception)
@@ -250,7 +244,29 @@ async function translateText(nlpInfo)
 
 async function searchONDCAgent(nlpResponse, nlpInfo)
 {
-    return {};
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = {};
+    requestBody.transactionId = nlpInfo.transactionId;
+    requestBody.messageId = nlpInfo.messageId;
+    requestBody.network = nlpResponse.formatted_response.networks[0];
+
+    const intent = {};
+    intent.query = nlpInfo.text;
+    requestBody.network.intent[0] = intent;
+
+    try
+    {
+        const response = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/${KNetworkActions.SearchAction}`,
+                                                requestBody, requestOptions);
+        const networkResponse = processGenericResponse(response);
+        return networkResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
 }
 
 async function actionONDCAgent(networkInfo, actionString)
@@ -295,7 +311,7 @@ async function searchVideoAgent(nlpResponse, nlpInfo)
     {
         const response = await Axios.post(`${_allUrls[KMicroServices.VideoAgent]}/search`,
                                                 requestBody, requestOptions);
-        const networkResponse = processVideoResponse(response);
+        const networkResponse = processGenericResponse(response);
         return networkResponse;
     }
     catch(exception)
@@ -318,7 +334,54 @@ async function searchWeatherAgent(nlpResponse, nlpInfo)
     {
         const response = await Axios.post(`${_allUrls[KMicroServices.WeatherAgent]}/search`,
                                                 requestBody, requestOptions);
-        const networkResponse = processWeatherResponse(response);
+        const networkResponse = processGenericResponse(response);
+        return networkResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function searchEnamMandiAgent(nlpResponse, nlpInfo)
+{
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = {};
+    requestBody.transactionId = nlpInfo.transactionId;
+    requestBody.messageId = nlpInfo.messageId;
+    requestBody.network = nlpResponse.formatted_response.networks[0];    
+
+    try
+    {
+        const response = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
+                                                requestBody, requestOptions);
+        const networkResponse = processGenericResponse(response);
+        return networkResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function searchLLMAgent(nlpResponse, nlpInfo)
+{
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = {};
+    requestBody.transactionId = nlpInfo.transactionId;
+    requestBody.messageId = nlpInfo.messageId;
+    requestBody.network = nlpResponse.formatted_response.networks[0];
+    requestBody.network.llm.histories = nlpInfo.histories;
+
+    try
+    {
+        const response = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
+                                                requestBody, requestOptions);
+        const networkResponse = processGenericResponse(response);
         return networkResponse;
     }
     catch(exception)
@@ -363,7 +426,6 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
     {
         case KNetworkNames.ONDC:
             networkResponse = await searchONDCAgent(nlpResponse, nlpInfo);
-            httpStatusCode = 501;
             break;
         case KNetworkNames.ONEST:
             networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
@@ -373,6 +435,12 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
             break;
         case KNetworkNames.WEATHER:
             networkResponse = await searchWeatherAgent(nlpResponse, nlpInfo);
+            break;
+        case KNetworkNames.LLM:
+            networkResponse = await searchLLMAgent(nlpResponse, nlpInfo);
+            break;
+        case KNetworkNames.ENAMMANDI:
+            networkResponse = await searchEnamMandiAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.UI:
             networkResponse = callUIAction(nlpResponse);

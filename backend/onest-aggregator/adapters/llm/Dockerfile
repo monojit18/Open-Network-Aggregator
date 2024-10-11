@@ -1,13 +1,13 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /enam-mandi-adapter
+WORKDIR /llm-adapter
 
-COPY package*.json /enam-mandi-adapter/
+COPY package*.json /llm-adapter/
 
 RUN npm install --unsafe-perm
 
-COPY . /enam-mandi-adapter/
+COPY . /llm-adapter/
 
 EXPOSE 10003
 

@@ -169,29 +169,6 @@ function preapreWeatherResponse(weatherResult, weatherInfo)
     return weatherResponse;
 }
 
-function prepareSocketClient()
-{
-    _socketIOClient.on(KSocketEvents.ConnectionEvent, () =>
-    {
-        console.log(_socketIOClient.id);
-    });
-
-    _socketIOClient.on(KSocketEvents.ConnectedEvent, (message) =>
-    {
-        console.log(message);
-    });
-
-    _socketIOClient.on(KSocketEvents.EndConnectionEvent, (message) =>
-    {
-        console.log(message);
-    });
-
-    _socketIOClient.on(KSocketEvents.DisconnectEvent, () =>
-    {
-        console.log(_socketIOClient.connected);
-    });
-}
-
 function fireCallbackEvent(weatherResponse, weatherInfo)
 {
     const weatherData = {};
@@ -240,6 +217,29 @@ function fireErrorEvent(errorInfo, weatherInfo)
 
     weatherData.payload = payload;
     _socketIOClient.emit(KCallbackEvents.OnCallbackAction, weatherData);
+}
+
+function prepareSocketClient()
+{
+    _socketIOClient.on(KSocketEvents.ConnectionEvent, () =>
+    {
+        console.log(_socketIOClient.id);
+    });
+
+    _socketIOClient.on(KSocketEvents.ConnectedEvent, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KSocketEvents.EndConnectionEvent, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KSocketEvents.DisconnectEvent, () =>
+    {
+        console.log(_socketIOClient.connected);
+    });
 }
 
 async function initSocketClient()
@@ -321,7 +321,7 @@ _express.post("/weather", async (request, response) =>
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);
+        await fireErrorEvent(errorInfo, weatherInfo);
     }
 });
 /* API DEFINITIONS - END */
