@@ -1,0 +1,114 @@
+<div
+  class="h-[calc(100vh-185px)] pt-12 pb-8"
+  [ngClass]="{ 'h-[calc(100vh-300px)]': isLoading }"
+>
+  <!-- <pre>{{ objectKeys(generativeData).length | json }}</pre> -->
+  @for (genMessageKey of objectKeys(generativeData); track $index) { @for
+  (generated of generativeData[genMessageKey]; track $index) { @if
+  ((!generated.data.generatedMessage || (generated.data.generatedMessage.message
+  | json) == '{}' && generated.data?.generatedMessage?.context?.bpp_id !==
+  'seeker-dev.gcpwkshpdev.com' &&
+  generated.data?.generatedMessage?.context?.bpp_id !==
+  'kahani-bpp.tekdinext.com' && !(objectKeys(generativeData).length > 0)) &&
+  !generated.isUser ) {
+  <div
+    class="mx-auto flex flex-col flex-1 gap-4 text-base md:gap-5 lg:gap-6 md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] mb-5 fade-in"
+  >
+    <div class="flex flex-row w-full justify-start">
+      {{ "GENERIC.NO_RESULT" | translate }}
+    </div>
+  </div>
+  } @else {
+  <div
+    class="mx-auto flex flex-col flex-1 gap-4 text-base md:gap-5 lg:gap-6 md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] mb-5 fade-in"
+  >
+    @if (generated.isUser) {
+    <div class="flex flex-row w-full justify-end user-message">
+      <div class="max-w-[80%] p-3 flex flex-row justify-end items-start gap-2">
+        <div
+          class="flex flex-row justify-end items-start rounded-lg mb-2 md:w-[87%]"
+        >
+          <p class="p-2 !m-0">
+            {{ generated?.data?.userInput | translate | translateText | async }}
+          </p>
+        </div>
+        <div
+          class="rounded-full w-9 h-9 flex items-center justify-center bg-blue-200 font-semibold notranslate"
+        >
+          <img src="kr.png" alt="" class="w-full h-full rounded-full" />
+        </div>
+      </div>
+    </div>
+    } @else if (generated.data?.generatedMessage?.context?.bpp_id !==
+    'kahani-bpp.tekdinext.com' &&
+    generated.data?.generatedMessage?.context?.bpp_id !==
+    'seeker-dev.gcpwkshpdev.com') {
+    <div class="flex flex-row w-full justify-start" #contentSection>
+      <div class="w-[80%] p-3">
+        <!-- <button (click)="readContentAloud(contentSection)">
+          🔊 Read Content
+        </button> -->
+        @if (( generated.data.generatedMessage.message | json) !== '{}') { @if
+        (generated.data?.generatedMessage?.context?.domain?.includes('onest') &&
+        generated.data?.generatedMessage?.message?.catalog?.providers[0]?.id !==
+        'INFOSYS' && generated.data?.generatedMessage?.context?.bpp_id !==
+        'kahani-bpp.tekdinext.com') { @if
+        (generated.data?.generatedMessage?.context?.action === "on_select") {
+        <app-onest-select
+          [message]="generated.data.generatedMessage"
+        ></app-onest-select>
+        } @else {
+        <app-onest [generated]="generated"></app-onest>
+
+        } } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('weather'))
+        {
+        <app-weather [message]="generated.data.generatedMessage"></app-weather>
+        } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('video')) {
+        <app-videos [message]="generated.data.generatedMessage"></app-videos>
+        } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('Agri')) {
+        <app-agri [message]="generated.data.generatedMessage"></app-agri>
+        } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('driver'))
+        {
+        <app-driver [generated]="generated"></app-driver>
+        } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('ondc')) {
+        @if (generated.data?.generatedMessage?.message?.provider?.data?.length)
+        {
+        <app-ondc [message]="generated.data.generatedMessage"></app-ondc>
+
+        } @else {
+        <div
+          class="mx-auto flex flex-col flex-1 gap-4 text-base md:gap-5 lg:gap-6 md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] mb-5 fade-in md:ml-[-50px]"
+        >
+          <div class="flex flex-row w-full justify-start">
+            {{ "GENERIC.NO_RESULT" | translate }}
+          </div>
+        </div>
+        } } @else if
+        (generated.data?.generatedMessage?.context?.domain?.includes('llm')) {
+        <app-llm [message]="generated.data.generatedMessage"></app-llm>
+        }}
+      </div>
+    </div>
+    }
+  </div>
+  @if (!generated.isUser &&
+  generated.data?.generatedMessage?.message?.catalog?.providers[0]?.id !==
+  'INFOSYS' && generated.data?.generatedMessage?.context?.bpp_id !==
+  'kahani-bpp.tekdinext.com' &&(generated.data.generatedMessage.message | json)
+  !== '{}') {
+  <div
+    class="mx-auto flex flex-col flex-1 text-base md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] fade-in"
+  >
+    <div
+      class="flex flex-row w-full justify-start ml-0 md:ml-[50px] relative top-[-30px]"
+    >
+      <app-feedback></app-feedback>
+    </div>
+  </div>
+  } } } }
+</div>

@@ -1,0 +1,13 @@
+.youTubeVideoSection {
+  border-radius: 20px;
+  position: relative;
+  // width: 28rem;
+  // min-width: 400px;
+
+  .icon-wrapper {
+    position: absolute;
+    top: 15%;
+    left: calc(50% - 40px);
+    transform: scale(0.5);
+  }
+}

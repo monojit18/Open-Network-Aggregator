@@ -1,0 +1,79 @@
+<div class="generatedData md:ml-[50px] w-full relative">
+  <div class="flex flex-col py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "GENERIC.ONDC_NETWORK" | translate }}
+    </div>
+
+    <div class="mt-4">
+      <div class="generatedmessage mt-2">
+        <h5 class="!text-sm font-medium my-3">ONDC</h5>
+
+        <p class="!text-sm !my-3">
+          {{ "ONDC marketplace" | translateText | async }}
+        </p>
+
+        <div class="flex flex-col w-full gap-3 mt-2">
+          <div class="w-full bg-[#eceef4] rounded-2xl p-3">
+            <p class="text-sm mb-2">
+              <span
+                class="font-normal px-2 py-1 bg-[#ffdcc4] text-[#301400] rounded-2xl cursor-pointer"
+                [matTooltip]="'GENERIC.PROVIDER' | translate"
+              >
+                ONDC Sellers</span
+              >
+            </p>
+
+            @if (message.message?.provider?.data?.length) {
+
+            <div class="flex flex-col w-full pt-2">
+              @for (i of message.message?.provider?.data | slice : 0 : 3; track
+              i) {
+              <app-ondc-cards
+                [i]="i"
+                [baseUrl]="message.message?.provider?.fileBaseUrl || ''"
+              ></app-ondc-cards>
+              }
+            </div>
+            @if (showAll) { @for (i of message.message?.provider?.data | slice :
+            3; track i) {
+            <app-ondc-cards
+              [i]="i"
+              [baseUrl]="message.message?.provider?.fileBaseUrl || ''"
+            ></app-ondc-cards>
+            } } @if (arrLength > 3) {
+            <div class="w-full flex justify-end">
+              <button
+                (click)="showAll = !showAll"
+                class="text-blue-500"
+                mat-button
+              >
+                {{
+                  showAll
+                    ? ("GENERIC.SHOW_LESS" | translate)
+                    : ("GENERIC.SHOW_MORE" | translate) +
+                      "(" +
+                      (arrLength - 3) +
+                      ")"
+                }}
+              </button>
+            </div>
+
+            } }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

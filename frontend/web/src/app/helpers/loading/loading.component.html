@@ -1,0 +1,48 @@
+<!-- https://codepen.io/Sourav-Raj-the-scripter/pen/GRVpZzv -->
+
+<div class="w-full flex flex-row relative z-0">
+  <div
+    class="flex flex-col items-start flex-1 text-base md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] my-2 px-3"
+  >
+    <ngx-skeleton-loader
+      class="hidden h-4 lg:block"
+      [theme]="{
+        width: '200px',
+        'border-radius': '8px',
+        height: '10px',
+        'margin-bottom': '2px',
+        'background-color': '#955ef4',
+      }"
+    ></ngx-skeleton-loader>
+    <ngx-skeleton-loader
+      class="h-4"
+      [theme]="{
+        width: '200px',
+        'border-radius': '8px',
+        height: '10px',
+        'margin-bottom': '2px',
+        'background-color': '#955ef4',
+      }"
+    ></ngx-skeleton-loader>
+    <ngx-skeleton-loader
+      class="h-4"
+      [theme]="{
+        width: '250px',
+        'border-radius': '8px',
+        height: '10px',
+        'margin-bottom': '2px',
+        'background-color': '#955ef4',
+      }"
+    ></ngx-skeleton-loader>
+    <div id="sentence-wrapper">
+      <p class="sentence font-medium text-xs">
+        <span class="words words-1 text-xs">
+          <span class="text-xs">{{ "GENERIC.COLLECTING" | translate }}...</span>
+          <span class="text-xs">{{ "GENERIC.COLLECTING" | translate }}...</span>
+          <span class="text-xs">{{ "GENERIC.COLLECTING" | translate }}...</span>
+          <span class="text-xs">{{ "GENERIC.COLLECTING" | translate }}...</span>
+        </span>
+      </p>
+    </div>
+  </div>
+</div>
