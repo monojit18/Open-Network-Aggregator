@@ -1,0 +1,139 @@
+<div
+  class="mx-auto flex flex-col items-start flex-1 gap-4 text-base md:gap-5 lg:gap-6 md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem] mb-5 bg-transparent"
+>
+  <div class="flex flex-row w-full items-center gap-2">
+    <span
+      class="material-symbols-outlined notranslate cursor-pointer md:hidden"
+      (click)="clear()"
+      matTooltip="New Chat"
+    >
+      edit_note
+    </span>
+    <div
+      class="w-[90%] md:w-[96%] h-[75px] px-4 py-3 rounded-3xl border bg-white border-solid border-[#fa7fd9] justify-between items-center inline-flex relative z-10"
+    >
+      <div
+        class="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex"
+      >
+        <div class="self-stretch justify-between items-center inline-flex">
+          <textarea
+            id="prompt-textarea"
+            tabindex="0"
+            dir="auto"
+            rows="1"
+            placeholder="{{ 'GENERIC.MESSAGE' | translate }}"
+            class="m-0 resize-none border-0 bg-transparent px-4 text-token-text-primary focus:ring-0 focus-visible:ring-0 max-h-[25dvh] outline-none w-full"
+            style="height: 30px; outline: none"
+            spellcheck="false"
+            #textareaElement
+            (keydown)="handleEnterKey($event)"
+            [(ngModel)]="inputValue"
+          ></textarea>
+          <div
+            class="px-3.5 py-[5px] send-btn rounded-full justify-center items-center gap-1 cursor-pointer hidden fade-in"
+            [ngClass]="{ '!flex': inputValue }"
+            (click)="handleButtonClick()"
+            matTooltip="Submit"
+          >
+            <div class="text-white text-sm font-medium">Send</div>
+            <div class="w-6 h-6 relative">
+              <div class="w-6 h-6 absolute top-0 left-0">
+                <span class="material-symbols-outlined notranslate text-white">
+                  send
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="justify-start items-start gap-2.5 inline-flex">
+          <div class="w-6 h-6 relative" matTooltip="Use microphone">
+            <button
+              (click)="startListening()"
+              [ngClass]="{ listening: isListening }"
+              class="mb-1 absolute left-2 top-0 me-1 flex h-8 w-8 items-center justify-center rounded-full text-black hover:opacity-70 hover:bg-blue-100 border-none cursor-pointer bg-transparent"
+            >
+              <span
+                class="material-symbols-outlined notranslate"
+                [ngClass]="{ 'text-blue-600': isListening }"
+                style="
+                  font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0,
+                    'opsz' 48;
+                "
+              >
+                mic
+              </span>
+            </button>
+          </div>
+          <!-- <div class="w-6 h-6 relative">
+             <div class="w-6 h-6 left-0 top-0 absolute bg-[#d9d9d9]"></div> 
+          </div> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--  -->
+  <!-- 
+    <span
+      class="material-symbols-outlined notranslate cursor-pointer md:hidden"
+      (click)="clear()"
+      matTooltip="New Chat"
+    >
+      edit_note
+    </span>
+    <div
+      class="flex w-full flex-col gap-1.5 rounded-[26px] p-1.5 transition-colors bg-[#eceef4] dark:bg-token-main-surface-secondary"
+    >
+      <div class="flex items-end gap-1.5 md:gap-2">
+        <div class="flex min-w-0 flex-1 flex-col">
+          <textarea
+            id="prompt-textarea"
+            tabindex="0"
+            dir="auto"
+            rows="1"
+            placeholder="{{ 'GENERIC.MESSAGE' | translate }}"
+            class="m-0 resize-none border-0 bg-transparent px-4 text-token-text-primary focus:ring-0 focus-visible:ring-0 max-h-[25dvh] outline-none"
+            style="height: 25px; outline: none"
+            spellcheck="false"
+            #textareaElement
+            (keydown)="handleEnterKey($event)"
+            [(ngModel)]="inputValue"
+          ></textarea>
+        </div>
+        <button
+          (click)="startListening()"
+          [ngClass]="{ listening: isListening }"
+          class="mb-1 me-1 flex h-8 w-8 items-center justify-center rounded-full text-black hover:opacity-70 border-none cursor-pointer"
+        >
+          <span
+            class="material-symbols-outlined notranslate"
+            [ngClass]="{ 'text-blue-600': isListening }"
+            style="
+              font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+            "
+          >
+            mic
+          </span>
+        </button>
+        <button
+          [disabled]="!inputValue"
+          aria-label="Send prompt"
+          data-testid="send-button"
+          (click)="handleButtonClick()"
+          class="mb-1 me-1 flex h-8 w-8 items-center justify-center rounded-full text-black hover:opacity-70 border-none cursor-pointer"
+        >
+          <span
+            class="material-symbols-outlined notranslate"
+            [ngStyle]="{
+              'font-variation-settings': inputValue
+                ? '\'FILL\' 1, \'wght\' 300, \'GRAD\' 0, \'opsz\' 48'
+                : '\'FILL\' 0, \'wght\' 300, \'GRAD\' 0, \'opsz\' 48'
+            }"
+          >
+            send
+          </span>
+        </button>
+      </div>
+    </div>
+  </div> -->
+</div>

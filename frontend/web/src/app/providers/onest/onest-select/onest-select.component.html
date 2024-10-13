@@ -1,0 +1,123 @@
+<div class="generatedData md:ml-[50px] w-full relative">
+  <div class="flex flex-col py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "GENERIC.ONEST_NETWORK" | translate }}
+    </div>
+
+    <div class="mt-4">
+      <div class="generatedMessage mt-2">
+        <p class="text-sm">
+          <span
+            class="font-normal px-2 py-1 bg-[#ffdcc4] text-[#301400] rounded-2xl cursor-pointer"
+            [matTooltip]="'GENERIC.PROVIDER' | translate"
+            >{{ message.message.order.provider.descriptor.name }}</span
+          >
+        </p>
+
+        <div class="flex flex-col w-full gap-3">
+          @for (item of message.message.order.items; track item) {
+          <div class="w-full bg-[#eceef4] rounded-2xl p-3">
+            <p class="text-sm font-medium">
+              {{ item.descriptor.name | translateText | async }}
+            </p>
+            <div
+              class="p-3 h-fit flex flex-col justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+            >
+              <!-- <div class="wrapper flex flex-col w-full md:w-2/6">
+                @if (item?.descriptor?.images?.length) {
+                <div class="w-full h-[185px] md:!h-[130px] image-wrapper">
+                  <img
+                    [src]="item.descriptor.images[0].url"
+                    alt="{{ item.descriptor.name }}"
+                    class="w-full h-44 max-h-44 md:!h-32 rounded-md"
+                  />
+                </div>
+                }
+                <p
+                  class="font-medium text-xs !mt-2"
+                  [appHtmlTooltip]="item.descriptor.name"
+                >
+                  {{ item.descriptor.name | translateText | async }}
+                </p>
+              </div> -->
+              <div
+                class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch"
+              >
+                <div class="text-xs flex flex-row gap-1 justify-start min-h-9">
+                  <p
+                    class="text-xs"
+                    [innerHTML]="
+                      item.descriptor.long_desc | translateText | async
+                    "
+                    [appHtmlTooltip]="item.descriptor.long_desc"
+                  ></p>
+                </div>
+                <div
+                  class="content flex flex-col p-3 max-h-[350px] overflow-auto"
+                >
+                  @if (item.tags?.length) { @for (tag of item.tags; track tag) {
+                  @if (tag?.descriptor?.name) {
+                  <p class="text-sm font-medium">
+                    {{ tag.descriptor.name | translateText | async }}
+                  </p>
+                  } @if ( tag?.list?.length ) { @for (list of tag.list; track
+                  list) { @if ( list?.descriptor?.name ) {
+                  <p class="pl-2 text-xs">
+                    <span class="font-medium"
+                      >{{
+                        list?.descriptor?.name | translateText | async
+                      }}:&nbsp;</span
+                    >
+                    <span>
+                      @if (tag?.descriptor?.name.includes('Salary Information'))
+                      {
+                      <span>₹</span>
+                      }{{ list?.value }}</span
+                    >
+                  </p>
+                  } } } } }
+                </div>
+
+                <div class="flex flex-row justify-between items-center">
+                  @if (item?.price) {
+
+                  <div class="flex flex-row items-center text-xs">
+                    <span class="font-medium"
+                      >{{ "GENERIC.PRICE" | translate }}:&nbsp;</span
+                    >₹{{ item.price.value }}
+                  </div>
+                  } @if (item?.rating) {
+
+                  <div class="flex flex-row items-center text-xs">
+                    <app-ratings [rating]="item.rating"></app-ratings>
+                  </div>
+                  }
+                </div>
+              </div>
+              <div class="flex flex-row items-center justify-end gap-2 mt-2">
+                <!-- </div> -->
+                <button mat-flat-button class="my-3 custom-btn">
+                  {{ "Apply" | translateText | async }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

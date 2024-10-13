@@ -1,0 +1,12 @@
+.modal-body {
+  padding: unset !important;
+  position: relative;
+  overflow: hidden;
+}
+
+
+:host ::ng-deep {
+  .modal-content {
+    background-color: unset !important;
+  }
+}

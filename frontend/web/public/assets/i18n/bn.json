@@ -1,0 +1,52 @@
+{
+  "EMPTY": {
+    "HELLO_KRISHNA": "নমস্কার কৃষ্ণ",
+    "HOW_CAN_I": "আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+    "SUGGEST_JAVA_FRESHER": "জাভা ফ্রেশারদের জন্য চাকরির প্রস্তাব দিন",
+    "VIDEOS_ON_RICE": "ধান চাষের পদ্ধতি নিয়ে ভিডিও দেখান",
+    "WEATHER_BENGALURU": "বেঙ্গালুরুতে আজকের আবহাওয়া কেমন?",
+    "SHOW_AGRI": "কৃষি সম্পর্কিত কোর্স দেখান"
+  },
+  "GENERIC": {
+    "NEW_CHAT": "নতুন চ্যাট",
+    "MESSAGE": "বার্তা",
+    "NINJA_NETWORK": "নিনজাকার্ট",
+    "YOUTUBE_NETWORK": "ইউটিউব",
+    "ONEST_NETWORK": "ওনেস্ট নেটওয়ার্ক",
+    "BY": "দ্বারা",
+    "SHOW_MORE": "আরও দেখান",
+    "SHOW_LESS": "কম দেখান",
+    "NO_RESULT": "কোনও ফলাফল পাওয়া যায়নি। দয়া করে অন্য কীওয়ার্ড ব্যবহার করার চেষ্টা করুন",
+    "PROVIDER": "প্রদাতা",
+    "LOCATION": "অবস্থান",
+    "PRICE": "মূল্য",
+    "DURATION": "সময়কাল",
+    "OPENINGS": "খালি পদ",
+    "SELECT": "নির্বাচন করুন",
+    "MORE_DETAILS": "আরও তথ্য",
+    "RESULT_FOR": "এর জন্য ফলাফল",
+    "SOMETHING_WRONG": "কিছু ভুল হয়েছে",
+    "ONDC_NETWORK": "ONDC নেটওয়ার্ক",
+    "FETCHING_DATA": "ডেটা নিয়ে আসা হচ্ছে",
+    "WEIGHT": "ওজন",
+    "CONTACT": "যোগাযোগ করুন",
+    "AGRI_STACK": "এগ্রিস্ট্যাক",
+    "COLLECTING": "আপনার জন্য সেরা তথ্য সংগ্রহ করা হচ্ছে",
+    "SELLERAPP": "SellerApp",
+    "MARKETPLACE": "বাজার",
+    "ADDRESS": "ঠিকানা",
+    "ZIP": "জিপ কোড",
+    "STATE": "রাজ্য",
+    "CITY": "শহর"
+  },
+  "WEATHER": {
+    "OPEN_WEATHER": "ওপেন ওয়েদার",
+    "HUMIDITY": "আর্দ্রতা",
+    "FEELS": "মনে হচ্ছে",
+    "WIND": "বাতাসের গতি",
+    "VISIBILITY": "দৃশ্যমানতা",
+    "STATUS": "মেঘলা",
+    "MIN": "নূন্যতম তাপমাত্রা",
+    "MAX": "সর্বোচ্চ তাপমাত্রা"
+  }
+}

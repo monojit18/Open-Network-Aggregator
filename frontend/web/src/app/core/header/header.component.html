@@ -1,0 +1,41 @@
+<div
+  class="bg-[#f8f9ff] h-full p-4"
+  style="box-shadow: 0px 10px 7px 10px #f8f9ff"
+>
+  <div class="flex flex-row items-center justify-between w-full">
+    <div class="w-32 h-7">
+      <img
+        src="https://cdn.sellerapp.com/sellerapp-ui/onboarding-new/sellerapp-logo-black.svg"
+        alt=""
+        class="w-full"
+      />
+    </div>
+    <div class="flex flex-row justify-start items-center gap-2">
+      <div
+        class="p-2 pt-1 pb-1 min-w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] cursor-pointer"
+      >
+        <select
+          #langSelect
+          (change)="
+            translate.use(langSelect.value); onLanguageChange(langSelect.value)
+          "
+          class="bg-transparent border-none outline-none"
+        >
+          <option
+            *ngFor="let lang of translate.getLangs()"
+            [value]="lang"
+            [selected]="lang === translate.currentLang"
+          >
+            {{ langMap[lang] }}
+          </option>
+        </select>
+      </div>
+
+      <div
+        class="rounded-full w-9 h-9 flex items-center justify-center bg-blue-200 font-semibold notranslate"
+      >
+        <img src="kr.png" alt="" class="w-full h-full rounded-full" />
+      </div>
+    </div>
+  </div>
+</div>

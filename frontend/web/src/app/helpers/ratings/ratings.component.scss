@@ -1,0 +1,21 @@
+.material-icons {
+  color: rgb(255, 202, 40);
+  // font-size: 16px;
+  width: auto;
+  height: auto;
+  min-width: auto;
+  min-height: auto;
+}
+.smallGray {
+  font-size: 0.875rem;
+  color: #b3b2b2;
+}
+.icon {
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 0px;
+  font-size: 22px;
+  transform: rotate(0) translateX(0);
+  transition: transform 0.3s ease-out;
+  z-index: 2;
+}

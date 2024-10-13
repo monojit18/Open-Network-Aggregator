@@ -1,0 +1,84 @@
+<div class="generatedData md:ml-[50px] w-full relative">
+  <div class="flex flex-col py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "GENERIC.ONEST_NETWORK" | translate }}
+      <!-- <span class="material-symbols-outlined notranslate">
+            stat_minus_1
+          </span> -->
+    </div>
+
+    <div class="mt-4">
+      <div class="generatedMessage mt-2">
+        <h5 class="!text-sm font-semibold my-3">
+          {{
+            generated.data.generatedMessage.message.catalog.descriptor.name
+              | translateText
+              | async
+          }}
+        </h5>
+
+        <div class="flex flex-col w-full gap-3">
+          @for (item of
+          generated.data.generatedMessage.message.catalog.providers; track
+          $index) {
+          <div class="w-full bg-[#eceef4] rounded-2xl p-3">
+            <p class="text-sm">
+              <span
+                class="font-normal px-2 py-1 bg-[#ffdcc4] text-[#301400] rounded-2xl cursor-pointer"
+                [matTooltip]="'GENERIC.PROVIDER' | translate"
+                >{{ item.descriptor.name | translateText | async }}</span
+              >
+            </p>
+
+            <p class="text-sm">
+              {{ item.descriptor.short_desc | translateText | async }}
+            </p>
+            @if (item?.categories?.length) {
+            <div
+              class="flex flex-row flex-wrap justify-start items-center gap-2"
+            >
+              @for (cat of item.categories; track $index) {
+              <span
+                class="py-1 px-2 rounded-3xl text-xs bg-[#d7e3f8] text-[#101c2b]"
+                >{{ cat.descriptor.name | translateText | async }}</span
+              >
+              }
+            </div>
+            } @if(item?.locations) {
+            <div
+              class="flex flex-row flex-wrap items-center justify-start gap-1"
+            >
+              <span class="text-xs font-medium">
+                {{ "GENERIC.LOCATION" | translate }}:
+              </span>
+              @for (lo of item?.locations; track lo) {
+              <span class="text-xs"
+                >{{ lo?.city?.name }} ({{ lo?.state?.name }}),
+              </span>
+              }
+            </div>
+            }
+            <app-items-container
+              [data]="item.items"
+              [hasOnestFlow]="false"
+            ></app-items-container>
+          </div>
+
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
