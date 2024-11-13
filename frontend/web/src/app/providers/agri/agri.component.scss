@@ -1,0 +1,18 @@
+mat-cell,
+mat-header-cell {
+  background: #f8f9ff;
+
+  border: 1px solid var(--Other-Colors-Border, rgba(225, 232, 239, 1));
+}
+mat-table {
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  mat-cell {
+    width: 150px !important;
+  }
+}
+.mdc-data-table__row:last-child .mat-mdc-cell {
+  border-bottom: 1px solid var(--Other-Colors-Border, rgba(225, 232, 239, 1));
+}

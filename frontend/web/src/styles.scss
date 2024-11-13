@@ -1,0 +1,139 @@
+@use "@angular/material" as mat;
+// Plus imports for other components in your app.
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+// Define the theme object.
+$sellerapp-generative-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+:root {
+  @include mat.all-component-themes($sellerapp-generative-theme);
+  font-family: "Noto Sans" !important;
+}
+
+// Comment out the line below if you want to use the pre-defined typography utility classes.
+// For more information: https://material.angular.io/guide/typography#using-typography-styles-in-your-application.
+// @include mat.typography-hierarchy($sellerapp-generative-theme);
+
+// Comment out the line below if you want to use the deprecated `color` inputs.
+// @include mat.color-variants-backwards-compatibility($sellerapp-generative-theme);
+/* You can add global styles to this file, and also import other style files */
+// @tailwind base;
+@tailwind components;
+@tailwind utilities;
+@include mat.button-density(2);
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "Noto Sans" !important;
+  background: #f8f9ff;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+button,
+textarea,
+input {
+  font-family: "Noto Sans" !important;
+  font-weight: 300;
+}
+p {
+  font-size: 14px;
+  font-weight: 300;
+}
+p,
+span {
+  line-height: 1.5;
+}
+
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+.goog-logo-link {
+  display: none !important;
+}
+
+.goog-te-gadget {
+  font-size: 0px;
+}
+
+.goog-te-gadget .goog-te-combo {
+  font-size: initial;
+}
+
+.skiptranslate {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+}
+
+.mat-drawer-content {
+  background: #f8f9ff !important;
+}
+.mat-drawer,
+.mat-drawer-inner-container {
+  background: #eceef4;
+  overflow: hidden;
+  width: 65px !important;
+}
+.custom-btn {
+  background: #38618e !important;
+}
+.custom-btn:disabled,
+.custom-btn.mat-button-disabled {
+  background: #e0e0e0 !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  cursor: not-allowed;
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 1000ms ease-in-out forwards;
+}
+
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf {
+  display: none !important;
+}
+
+/* Hide nested elements with dynamic classes */
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf > div {
+  display: none !important;
+}
+
+/* Hide SVG elements within the widget */
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf svg {
+  display: none !important;
+}
+.mdc-button {
+  margin: 0;
+  max-height: 36px;
+}

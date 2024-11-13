@@ -1,0 +1,362 @@
+<div class="generatedData md:ml-[50px] w-full relative">
+  @if (isYouTube) {
+  <div class="mx-auto flex flex-col gap-4 relative py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 max-w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "GENERIC.YOUTUBE_NETWORK" | translate }}
+    </div>
+    <div class="w-full bg-[#eceef4] rounded-2xl p-3 flex flex-col pt-2">
+      @for (item of message.message.provider.videos | slice : 0 : 3; track item)
+      {
+      <div
+        class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+      >
+        <div
+          class="wrapper flex flex-col items-center justify-center w-full md:w-2/6 gap-2"
+        >
+          <div
+            class="youTubeVideoSection image-wrapper relative flex flex-row justify-center w-full w-full"
+            (click)="modal.openPlayer(item.videoId)"
+          >
+            <img
+              src="{{ item.thumbnails.medium.url }}"
+              class="w-full max-h-32 rounded-md hidden md:block"
+            />
+            <img
+              src="{{ item.thumbnails.high.url }}"
+              class="w-full max-h-32 rounded-md block md:hidden"
+            />
+
+            <div class="icon-wrapper z-10">
+              <span
+                class="material-symbols-outlined text-7xl cursor-pointer relative z-10 text-red-700 notranslate"
+              >
+                play_circle
+              </span>
+            </div>
+          </div>
+          <span class="text-xs">
+            {{ "GENERIC.BY" | translate | translateText | async }}&nbsp;
+            <a
+              class="text-xs notranslate no-underline text-gray-500"
+              target="_blank"
+              href="https://www.youtube.com/channel/{{ item.channelId }}"
+              >{{
+                item.channelTitle
+                  | truncatePipe : 15 : "..."
+                  | translateText
+                  | async
+              }}</a
+            ></span
+          >
+          <app-youtube-modal #modal></app-youtube-modal>
+        </div>
+        <div
+          class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6 gap-2"
+        >
+          <p
+            class="text-xs font-medium py-2"
+            [appHtmlTooltip]="item.title | translateText | async"
+          >
+            {{ item.title | truncatePipe : 75 : "..." | translateText | async }}
+          </p>
+          <p
+            class="text-xs py-2"
+            [appHtmlTooltip]="item.description | translateText | async"
+          >
+            {{
+              item.description
+                | truncatePipe : 115 : "..."
+                | translateText
+                | async
+            }}
+          </p>
+        </div>
+      </div>
+
+      } @if (showAll) { @for (item of message.message.provider.videos | slice :
+      3; track $index) {
+      <div
+        class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+      >
+        <div
+          class="wrapper flex flex-col items-center justify-center w-full md:w-2/6 gap-2"
+        >
+          <div
+            class="youTubeVideoSection image-wrapper relative flex flex-row justify-center w-full w-full"
+            (click)="modal.openPlayer(item.videoId)"
+          >
+            <img
+              src="{{ item.thumbnails.medium.url }}"
+              class="w-full max-h-32 rounded-md hidden md:block"
+            />
+            <img
+              src="{{ item.thumbnails.high.url }}"
+              class="w-full max-h-32 rounded-md block md:hidden"
+            />
+
+            <div class="icon-wrapper z-10">
+              <span
+                class="material-symbols-outlined text-7xl cursor-pointer relative z-10 text-red-700 notranslate"
+              >
+                play_circle
+              </span>
+            </div>
+          </div>
+          <span class="text-xs">
+            {{ "GENERIC.BY" | translate | translateText | async }}&nbsp;
+            <a
+              class="text-xs notranslate no-underline text-gray-500"
+              target="_blank"
+              href="https://www.youtube.com/channel/{{ item.channelId }}"
+              >{{
+                item.channelTitle
+                  | truncatePipe : 15 : "..."
+                  | translateText
+                  | async
+              }}</a
+            ></span
+          >
+          <app-youtube-modal #modal></app-youtube-modal>
+        </div>
+        <div
+          class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6 gap-2"
+        >
+          <p
+            class="text-xs font-medium py-2"
+            [appHtmlTooltip]="item.title | translateText | async"
+          >
+            {{ item.title | truncatePipe : 75 : "..." | translateText | async }}
+          </p>
+          <p
+            class="text-xs py-2"
+            [appHtmlTooltip]="item.description | translateText | async"
+          >
+            {{
+              item.description
+                | truncatePipe : 115 : "..."
+                | translateText
+                | async
+            }}
+          </p>
+        </div>
+      </div>
+      } }
+    </div>
+    @if (message.message.provider.videos.length > 3) {
+
+    <div class="w-full flex justify-end">
+      <button (click)="showAll = !showAll" class="text-blue-500" mat-button>
+        {{
+          showAll
+            ? ("GENERIC.SHOW_LESS" | translate)
+            : ("GENERIC.SHOW_MORE" | translate) +
+              "(" +
+              (message.message.provider.videos.length - 3) +
+              ")"
+        }}
+      </button>
+    </div>
+
+    }
+  </div>
+  } @else if (isNinjaCart) {
+  <div class="mx-auto flex flex-col gap-4 relative py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 max-w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "GENERIC.NINJA_NETWORK" | translate }}
+    </div>
+
+    <div class="w-full bg-[#eceef4] rounded-2xl p-3 flex flex-col pt-2">
+      @for (item of message.message.provider.videos | slice : 0 : 3; track item)
+      {
+      <div
+        class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+      >
+        <div
+          class="wrapper flex flex-col items-center justify-center w-full md:w-2/6"
+        >
+          <div
+            class="youTubeVideoSection image-wrapper relative flex flex-row justify-center w-full"
+            (click)="openNinja(item)"
+          >
+            <img
+              src="{{ item.preview_url }}"
+              class="w-full max-h-32 rounded-md hidden md:block"
+            />
+            <img
+              src="{{ item.preview_url }}"
+              class="w-full max-h-32 rounded-md block md:hidden"
+            />
+
+            <div class="icon-wrapper z-10">
+              <span
+                class="material-symbols-outlined text-7xl cursor-pointer relative z-10 text-red-700 notranslate"
+              >
+                play_circle
+              </span>
+            </div>
+            <app-youtube-modal #modal></app-youtube-modal>
+          </div>
+        </div>
+        <div
+          class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6"
+        >
+          <div class="rounded-lg p-3 flex flex-col justify-between">
+            <p
+              class="text-xs font-medium py-2"
+              [appHtmlTooltip]="item.short_desc | translateText | async"
+            >
+              {{
+                item.short_desc
+                  | truncatePipe : 75 : "..."
+                  | translateText
+                  | async
+              }}
+            </p>
+            <p
+              class="text-xs py-2"
+              [appHtmlTooltip]="item.long_desc | translateText | async"
+            >
+              {{
+                item.long_desc
+                  | truncatePipe : 100 : "..."
+                  | translateText
+                  | async
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      } @if (showAll) {
+      <ng-container class="fade-in">
+        @for (item of message.message.provider.videos | slice : 3; track $index)
+        {
+        <div
+          class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+        >
+          <div
+            class="wrapper flex flex-col items-center justify-center w-full md:w-2/6"
+          >
+            <div
+              class="youTubeVideoSection image-wrapper relative flex flex-row justify-center w-full"
+              (click)="openNinja(item)"
+            >
+              <img
+                src="{{ item.preview_url }}"
+                class="w-full max-h-32 rounded-md hidden md:block"
+              />
+              <img
+                src="{{ item.preview_url }}"
+                class="w-full max-h-32 rounded-md block md:hidden"
+              />
+
+              <div class="icon-wrapper z-10">
+                <span
+                  class="material-symbols-outlined text-7xl cursor-pointer relative z-10 text-red-700 notranslate"
+                >
+                  play_circle
+                </span>
+              </div>
+              <app-youtube-modal #modal></app-youtube-modal>
+            </div>
+          </div>
+          <div
+            class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6"
+          >
+            <div class="rounded-lg p-3 flex flex-col justify-between">
+              <p
+                class="text-xs font-medium py-2"
+                [appHtmlTooltip]="item.short_desc | translateText | async"
+              >
+                {{
+                  item.short_desc
+                    | truncatePipe : 75 : "..."
+                    | translateText
+                    | async
+                }}
+              </p>
+              <p
+                class="text-xs py-2"
+                [appHtmlTooltip]="item.long_desc | translateText | async"
+              >
+                {{
+                  item.long_desc
+                    | truncatePipe : 100 : "..."
+                    | translateText
+                    | async
+                }}
+              </p>
+            </div>
+          </div>
+        </div>
+        }
+      </ng-container>
+      } @if (message.message.provider.videos.length > 3) {
+
+      <div class="w-full flex justify-end">
+        <button (click)="showAll = !showAll" class="text-blue-500" mat-button>
+          {{
+            showAll
+              ? ("GENERIC.SHOW_LESS" | translate)
+              : ("GENERIC.SHOW_MORE" | translate) +
+                "(" +
+                (message.message.provider.videos.length - 3) +
+                ")"
+          }}
+        </button>
+      </div>
+
+      }
+    </div>
+  </div>
+  } @else if (isApna) {
+  <div class="mx-auto flex flex-col gap-4 relative py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 max-w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      Apna
+    </div>
+    <div class="w-full bg-[#eceef4] rounded-2xl p-3 flex flex-col pt-2">
+      @for (item of message.message.provider.catalog.videos | slice : 0 : 3;
+      track item) {
+      <app-apna-modal [item]="item"></app-apna-modal>
+
+      }
+    </div>
+  </div>
+  }
+</div>

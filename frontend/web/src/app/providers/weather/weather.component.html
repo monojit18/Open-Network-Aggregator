@@ -1,0 +1,100 @@
+<div class="generatedData md:ml-[50px] w-full relative gap-4">
+  <div class="flex flex-col py-5">
+    <div
+      class="absolute md:left-[-55px] md:top-[10px] top-[-35px] flex items-center justify-center w-8 h-8 rounded-full mb-3 bg-[#eceef4] p-2"
+    >
+      <img
+        src="https://cdn.sellerapp.com/img/logo-2.svg"
+        alt="sellerapp"
+        class="w-full"
+      />
+    </div>
+
+    <div
+      class="p-2 w-fit rounded-2xl flex justify-between items-center text-xs bg-[#eceef4] font-semibold"
+    >
+      {{ "WEATHER.OPEN_WEATHER" | translate }}
+    </div>
+
+    <div class="w-full bg-[#eceef4] rounded-2xl p-3 mt-4">
+      <p>
+        {{ "GENERIC.RESULT_FOR" | translate }}:
+        <span class="text-sm font-medium">{{
+          message.message.network.weather.address
+            | titlecase
+            | translateText
+            | async
+        }}</span>
+      </p>
+      @if (message.message.provider) {
+      <div
+        class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl bg-[#fff] hover:bg-[#d2e4ff]"
+      >
+        <div class="wrapper flex flex-col w-full md:w-2/6 items-center">
+          <div class="w-[110px] h-[110px]">
+            <img
+              [src]="message.message.provider.weather.icon"
+              alt=""
+              class="w-full"
+            />
+          </div>
+          <div class="flex flex-col w-full">
+            <div class="font-bold text-5xl p-1">
+              {{ message.message.provider.main.temp }}
+              <sup class="text-sm">°C</sup>
+            </div>
+
+            <p class="text-xs">
+              {{ "WEATHER.FEELS" | translate }}:
+              {{ message.message.provider.main.feels_like }}
+              <sup class="text-xs">°C</sup>
+            </p>
+          </div>
+        </div>
+        <div
+          class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6"
+        >
+          <p class="text-xs">
+            <span class="font-medium"
+              >{{ "WEATHER.STATUS" | translate }}:
+            </span>
+            {{ message.message.provider.weather.main }}
+          </p>
+          <p class="text-xs">
+            <span class="font-medium"
+              >{{ "WEATHER.VISIBILITY" | translate }}:
+            </span>
+            {{ message.message.provider.visibility }}
+          </p>
+          <p class="text-xs">
+            <span class="font-medium">{{ "WEATHER.MIN" | translate }}: </span>
+            {{ message.message.provider.main.temp_min }}
+            <sup class="text-xs">°C</sup>
+          </p>
+          <p class="text-xs">
+            <span class="font-medium">{{ "WEATHER.MAX" | translate }}: </span>
+            {{ message.message.provider.main.temp_max }}
+            <sup class="text-xs">°C</sup>
+          </p>
+          <p class="text-xs">
+            <span class="font-medium">{{ "WEATHER.WIND" | translate }}: </span>
+            {{ message.message.provider.windSpeed }}
+          </p>
+          <p class="text-xs">
+            <span class="font-medium">{{ "WEATHER.CLOUD" | translate }}: </span>
+            {{ message.message.provider.clouds }}
+          </p>
+          <p class="text-xs">
+            <span class="font-medium"
+              >{{ "WEATHER.HUMIDITY" | translate }}:
+            </span>
+            {{ message.message.provider.main.humidity }}
+          </p>
+        </div>
+      </div>
+      } @else {
+      <p>{{ "WEATHER.SOMETHING_WRONG" | translate }}</p>
+      }
+    </div>
+  </div>
+</div>

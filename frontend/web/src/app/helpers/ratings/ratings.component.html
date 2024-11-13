@@ -1,0 +1,45 @@
+<div class="flex flex-row">
+  <div
+    [matTooltip]="rating"
+    class="flex flex-row justify-start items-center width-max"
+    *ngIf="numRating > -1"
+  >
+    <!-- <mat-icon
+      *ngFor="let in of counter(fullShaded); let i = index"
+      [inline]="false"
+      [ngStyle]="{ 'font-size.px': '16' }"
+      >star</mat-icon
+    > -->
+    <span
+      class="material-symbols-outlined notranslate text-base text-orange-400"
+      *ngFor="let in of counter(fullShaded); let i = index"
+    >
+      star
+    </span>
+    <span
+      class="material-symbols-outlined notranslate text-base text-orange-400"
+      *ngFor="let in of counter(halfShaded); let i = index"
+    >
+      star_rate_half
+    </span>
+
+    <span
+      class="material-symbols-outlined notranslate text-base text-slate-200"
+      *ngFor="let in of counter(unShaded); let i = index"
+    >
+      star
+    </span>
+    <!-- <mat-icon
+      *ngFor="let in of counter(halfShaded); let i = index"
+      [inline]="false"
+      [ngStyle]="{ 'font-size.px': '16' }"
+      >star_half</mat-icon
+    >
+    <mat-icon
+      *ngFor="let in of counter(unShaded); let i = index"
+      [inline]="false"
+      [ngStyle]="{ 'font-size.px': '16' }"
+      >star_border</mat-icon
+    > -->
+  </div>
+</div>

@@ -1,0 +1,171 @@
+<div
+  class="p-3 h-fit flex flex-col md:flex-row justify-between gap-2 rounded-xl hover:bg-[#d2e4ff]"
+>
+  <div class="wrapper flex flex-col w-full md:w-2/6 gap-2">
+    @if (i?.images[0]) {
+    <div class="w-full h-[185px] md:h-[160px] image-wrapper">
+      <img
+        [src]="baseUrl + i?.images[0].image"
+        class="w-full h-44 max-h-44 md:h-40 md:max-h-40 md:min-h-32 rounded-md"
+      />
+    </div>
+    } @else {
+    <div class="w-full h-[185px] md:h-[160px] image-wrapper">
+      <img
+        [src]="baseUrl + i?.logo"
+        class="w-full h-44 max-h-44 md:h-40 md:max-h-40 md:min-h-32 rounded-md"
+      />
+    </div>
+    }
+
+    <p class="font-medium text-xs">
+      {{ i.common_name | truncatePipe : 20 : "..." | translateText | async }}
+    </p>
+  </div>
+  <div
+    class="main-content bg-[#F8F9FC] rounded-xl p-2 flex flex-col justify-between items-stretch md:w-4/6"
+  >
+    <div class="flex flex-col justify-between h-full gap-2">
+      <div class="flex flex-row items-center justify-between w-full">
+        @if (i.name) {
+        <div class="font-medium text-xs">
+          {{ i.name | truncatePipe : 30 : "..." | translateText | async }}
+        </div>
+
+        } @if(i.category) {
+        <div
+          class="py-1 px-2 rounded-3xl text-xs bg-[#d7e3f8] text-[#101c2b] w-fit hidden md:block"
+          [matTooltip]="i.category | translateText | async"
+        >
+          {{
+            i.category
+              | truncatePipe : 15 : "..." || "NA"
+              | translateText
+              | async
+          }}
+        </div>
+        }
+      </div>
+      @if (i.description) {
+      <div
+        class="py-1 px-2 rounded-3xl text-xs bg-[#d7e3f8] text-[#101c2b] w-fit block md:hidden"
+        [matTooltip]="i.category | translateText | async"
+      >
+        {{
+          i.category | truncatePipe : 30 : "..." || "NA" | translateText | async
+        }}
+      </div>
+      <div class="text-xs flex flex-row justify-start text-wrapper">
+        <p
+          class="text-xs"
+          [innerHTML]="
+            i?.description
+              | truncatePipe : 45 : '...' || 'NA'
+              | translateText
+              | async
+          "
+          [appHtmlTooltip]="
+            i.description
+              | truncatePipe : 120 : '...' || 'NA'
+              | translateText
+              | async
+          "
+        ></p>
+      </div>
+      } @if (i.seller_details) {
+
+      <!-- @if (i.seller_details.info) {
+
+      <div class="text-xs flex flex-row gap-1 justify-start">
+        <p
+          class="text-xs"
+          [innerHTML]="
+            i?.seller_details.info
+              | truncatePipe : 45 : '...' || 'NA'
+              | translateText
+              | async
+          "
+          [appHtmlTooltip]="
+            i.seller_details.info
+              | truncatePipe : 120 : '...' || 'NA'
+              | translateText
+              | async
+          "
+        ></p>
+      </div>
+      }  -->
+      @if (i.seller_details.title) {
+
+      <div class="text-xs flex flex-row justify-start text-wrapper">
+        <p>
+          <span>{{ "Seller" | translateText | async }}: </span>
+          <span class="font-normal">{{
+            i.seller_details.title
+              | truncatePipe : 35 : "..." || "NA"
+              | translateText
+              | async
+          }}</span>
+        </p>
+      </div>
+      } }
+
+      <div class="flex flex-col justify-between w-full items-start gap-2">
+        <!-- @if (i?.address) {
+        <p class="text-xs">
+          {{ "GENERIC.ADDRESS" | translate }}:
+          {{
+            i?.address
+              | truncatePipe : 35 : "..." || "NA"
+              | translateText
+              | async
+          }}
+        </p>
+        } -->
+        <div
+          class="flex-row gap-3 items-center justify-between w-full hidden md:flex"
+        >
+          @if (i?.seller_details?.city) {
+          <p class="text-xs">
+            {{ "GENERIC.CITY" | translate }}:
+            {{ i?.seller_details?.city || "NA" | translateText | async }}
+          </p>
+          } @if (i?.seller_details?.state) {
+          <p class="text-xs">
+            {{ "GENERIC.STATE" | translate }}:
+            {{ i?.seller_details?.state || "NA" | translateText | async }}
+          </p>
+          }
+        </div>
+        <div class="flex flex-row gap-3 items-center justify-between w-full">
+          @if (i?.price) {
+          <p class="text-xs">
+            {{ "Price" | translateText | async }}: ₹{{ i?.price }}
+          </p>
+          } @if (i?.weight) {
+          <p class="text-xs">
+            {{ "Weight" | translateText | async }}:
+            {{ i?.weight || "NA" | translateText | async }}{{ i?.weightunit }}
+          </p>
+          }
+        </div>
+
+        <!-- @if (i?.zip_code) {
+        <p class="text-xs">
+          {{ "GENERIC.ZIP" | translate }}:
+          {{ i?.zip_code || "NA" }}
+        </p>
+        } -->
+      </div>
+      <div class="flex flex-row items-center justify-end gap-2 mt-2">
+        <a
+          mat-flat-button
+          class="my-3 custom-btn"
+          [href]="'https://www.mystore.in/en/product/' + i.alias"
+          target="_blank"
+        >
+          {{ "GENERIC.SELECT" | translate }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
