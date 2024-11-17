@@ -163,6 +163,10 @@ function prepareGenAIParameters(request)
     parameters.maxOutputTokens = Number(request.headers.maxtokens);
     parameters.temperature = Number(request.headers.temperature);
     parameters.topP = Number(request.headers.topp);
+
+    if (request.headers.topk != null)
+        parameters.topK = Number(request.headers.topk);
+
     return parameters;
 }
 
@@ -176,7 +180,6 @@ function prepareTextParameters(request)
                                                                  : KCallTypes.CallTypeText;
     textInfo.expectJSON = (request.query.type == "json");
     return textInfo;
-
 }
 
 function prepareChatParameters(request)
@@ -191,7 +194,6 @@ function prepareChatParameters(request)
     chatInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeChat;
     return chatInfo;
-
 }
 
 function prepareCodeParameters(request)
@@ -203,7 +205,15 @@ function prepareCodeParameters(request)
     codeInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeCode;
     return codeInfo;
+}
 
+function prepareMedLMParameters(request)
+{
+    const medLMInfo = {};
+    medLMInfo.modelId = request.headers.modelid;
+    medLMInfo.instances = request.body.instances;
+    medLMInfo.parameters = prepareGenAIParameters(request);    
+    return medLMInfo;
 }
 
 function prepareEmbeddingParameters(request)
@@ -333,10 +343,10 @@ async function emitTextStream(streamingResult, metadataInfo)
     {
         for await (const buffer of streamingResult.stream)
         {
-            const streamData = {};            
+            const streamData = {};
             streamData.buffer = buffer;
             streamData.room = metadataInfo.sessionId;
-            _socketIOClient.emit(KStreamData, streamData);            
+            _socketIOClient.emit(KStreamData, streamData);
         }
     }
 }
@@ -641,6 +651,32 @@ async function generateCodeContent(codeInfo)
     }
 }
 
+async function generateMedLMContent(medLMInfo)
+{
+    try
+    {
+        const accessToken = await performAuthentication();        
+        const medLMURL = `https://${process.env.GENAI_LOCATION}-aiplatform.googleapis.com/v1/${prepareGenAIEndpoint(medLMInfo.modelId)}:predict`;
+
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+        };
+
+        const requestBody = medLMInfo.instances;
+        const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
+        const medLMContent = medLMResult.data;
+        return medLMContent;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function generateStreamCodeContent(codeInfo)
 {
     const codeRequest =
@@ -679,6 +715,19 @@ async function performCodeContentGeneration(codeInfo)
             predictionContent = await generateCodeContent(codeInfo);
         }
         return predictionContent;        
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performMedLMTextGeneration(medLMInfo)
+{
+    try
+    {
+        const medLMContent = await generateMedLMContent(medLMInfo);        
+        return medLMContent;        
     }
     catch(exception)
     {
@@ -806,6 +855,30 @@ _express.post("/genai/code/:sessionId?/:type?", async (request, response) =>
     {
         const predictionResponse = await performCodeContentGeneration(codeInfo);
         results.results = predictionResponse;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /genai/medlm/chat
+ * @method POST
+ * @description Generate Medical suggestions from  Prompts
+ */
+_express.post("/genai/medlm/chat", async (request, response) =>
+{
+    const medLMInfo = prepareMedLMParameters(request);
+    const results = {};
+
+    try
+    {
+        const medLMResponse = await performMedLMTextGeneration(medLMInfo);
+        results.results = medLMResponse;
         response.send(results);
     }
     catch(exception)
