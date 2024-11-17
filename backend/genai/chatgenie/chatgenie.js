@@ -88,6 +88,7 @@ function prepareChatInfo(request)
     chatInfo.next = request.params.next;
     chatInfo.text = request.body.text;
     chatInfo.texts = request.body.texts;
+    chatInfo.histories = request.body.histories;
     chatInfo.sourceLanguage = request.body.language;
     chatInfo.targetLanguage = "en-US";
     chatInfo.prompt = request.body.prompt;
