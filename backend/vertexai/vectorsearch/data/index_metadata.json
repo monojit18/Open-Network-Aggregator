@@ -1,0 +1,15 @@
+{
+    "contentsDeltaUri": "gs://embeddings-stg/batch_root",
+    "config": {
+      "dimensions": 768,
+      "approximateNeighborsCount": 800,
+      "distanceMeasureType": "DOT_PRODUCT_DISTANCE",
+      "shardSize": "SHARD_SIZE_MEDIUM",
+      "algorithm_config": {
+        "treeAhConfig": {
+          "leafNodeEmbeddingCount": 5000,
+          "leafNodesToSearchPercent": 3
+        }
+      }
+    }
+  }
