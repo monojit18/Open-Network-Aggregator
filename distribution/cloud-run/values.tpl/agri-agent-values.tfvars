@@ -5,20 +5,20 @@ projectInfo = {
 }
 
 cloudrunInfo = {
-    name = "translatelib"
+    name = "agri-agent"
     spec = {
-        image = "<repo-name>/translatelib:v1.0"
+        image = "<repo-name>/agri-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "100m"
-            memory = "128Mi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,20 +29,12 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "translatelib:v1.0"
+        value = "agri-agent:v1.0"
     },
     {
-        name = "TRANSCODER_LOCATION"
-        value = "us-central1"
-    },
-    {
-        name = "TRANSLATION_LOCATION"
-        value = "us-central1"
-    },
-    {
-        name = "GLOSSARY_LOCATION"
-        value = "us-central1"
-    },
+        name = "AGRI_ADAPTER_URL"
+        value = "https://agri-adapter-.run.app"
+    },        
     {
         name = "PROJECT_ID"
         value = ""

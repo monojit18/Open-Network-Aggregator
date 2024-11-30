@@ -1,25 +1,24 @@
-
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "streamer-clientlib"
+    name = "video-agent"
     spec = {
-        image = "<repo-name>/streamer-clientlib:v1.0"
+        image = "<repo-name>/video-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "100m"
-            memory = "128Mi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -30,15 +29,19 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "streamer-clientlib:v1.0"
+        value = "video-agent:v1.0"
     },
     {
-        name = "WEBSOCK_STREAMER_HTTP_HOST"
-        value = "https://streamer-serverlib-"
+        name = "VIDEO_ADAPTER_URL"
+        value = "https://video-adapter-.run.app"
+    },
+    {
+        name = "GENAI_TEXTLIB_HOST"
+        value = "https://genai-textlib-801148443625.asia-southeast1.run.app"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

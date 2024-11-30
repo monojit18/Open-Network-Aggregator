@@ -1,24 +1,24 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "streamer-serverlib"
+    name = "event-receiverlib"
     spec = {
-        image = "<repo-name>/streamer-serverlib:v1.0"
+        image = "<repo-name>/event-receiverlib:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "100m"
-            memory = "128Mi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,11 +29,15 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "streamer-serverlib:v1.0"
+        value = "event-receiverlib:v1.0"
+    },
+    {
+        name = "EVENT_SERVER_HTTP_HOST"        
+        value = "https://event-serverlib-<repo-name>.run.app"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

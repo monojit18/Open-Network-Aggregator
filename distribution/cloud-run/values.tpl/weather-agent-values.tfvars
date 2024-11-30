@@ -1,13 +1,13 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "onix-bpp-callback"
+    name = "weather-agent"
     spec = {
-        image = "<repo-name>/onix-bpp-callback:v1.0"
+        image = "<repo-name>/weather-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
@@ -29,11 +29,15 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "onix-bpp-callback:v1.0"
-    },        
+        value = "weather-agent:v1.0"
+    },
+    {
+        name = "WEATHER_ADAPTER_URL"
+        value = "https://weather-adapter-.run.app"
+    },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

@@ -1,13 +1,13 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "seeker-adapter"
+    name = "mandi-adapter"
     spec = {
-        image = "<repo-name>/seeker-adapter:v1.0"
+        image = "<repo-name>/mandi-adapter:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
@@ -29,23 +29,19 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "seeker-adapter:v1.0"
+        value = "mandi-adapter:v1.0"
     },
     {
-        name = "SANDBOX_HOST"
-        value = "https://sandbox.onest.network"
-    },
+        name = "EVENT_RECEIVER_HTTP_HOST"
+        value = "https://event-receiverlib-.run.app"
+    },   
     {
-        name = "BAP_SUBSCRIBER_ID"
-        value = "seeker-dev.<dns>"
-    },
-    {
-        name = "BAP_CLIENT_CALLBACK_URL"
-        value = "https://seeker-client-"
+        name = "ENAM_MANDI_SEARCH_URL"
+        value = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

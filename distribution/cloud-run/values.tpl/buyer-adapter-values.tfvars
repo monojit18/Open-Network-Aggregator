@@ -1,24 +1,24 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "docailib"
+    name = "buyer-adapter"
     spec = {
-        image = "<repo-name>/docailib:v1.0"
+        image = "<repo-name>/buyer-adapter:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "100m"
-            memory = "128Mi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,19 +29,15 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "docailib:v1.0"
+        value = "buyer-adapter:v1.0"
     },
     {
-        name = "DOCAI_DIR_PATH"
-        value = "/data"
-    },
-    {
-        name = "DOCAI_LOCATION"
-        value = "us"
-    },
+        name = "EVENT_RECEIVER_HTTP_HOST"      
+        value = "https://event-receiverlib-.run.app"
+    },       
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

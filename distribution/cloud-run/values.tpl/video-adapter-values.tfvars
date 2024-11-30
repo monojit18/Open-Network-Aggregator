@@ -1,13 +1,13 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "provider-adapter"
+    name = "video-adapter"
     spec = {
-        image = "<repo-name>/provider-adapter:v1.0"
+        image = "<repo-name>/video-adapter:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
@@ -29,23 +29,19 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "provider-adapter:v1.0"
+        value = "video-adapter:v1.0"
     },
     {
-        name = "SANDBOX_HOST"
-        value = "https://sandbox.onest.network"
+        name = "EVENT_RECEIVER_HTTP_HOST"
+        value = "https://event-receiverlib-<repo-name>.run.app"
     },
     {
-        name = "BPP_SUBSCRIBER_ID"
-        value = "provider-dev.<dns>"
-    },
-    {
-        name = "BPP_CLIENT_CALLBACK_URL"
-        value = "https://provider-client-"
+        name = "YOUTUBE_DATA_V3_SEARCH_URL"
+        value = "https://youtube.googleapis.com/youtube/v3"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

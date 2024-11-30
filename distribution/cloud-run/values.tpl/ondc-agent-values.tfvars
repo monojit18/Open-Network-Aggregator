@@ -1,13 +1,13 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "provider-client"
+    name = "ondc-agent"
     spec = {
-        image = "<repo-name>/provider-client:v1.0"
+        image = "<repo-name>/ondc-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
@@ -29,11 +29,19 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "provider-client:v1.0"
-    },        
+        value = "ondc-agent:v1.0"
+    },
+    {
+        name = "GENAI_TEXTLIB_HOST"
+        value = "https://genai-textlib-.run.app"
+    },
+    {
+        name = "BUYER_ADAPTER_URL"
+        value = "https://buyer-adapter-.run.app"
+    },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

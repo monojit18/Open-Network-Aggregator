@@ -5,20 +5,20 @@ projectInfo = {
 }
 
 cloudrunInfo = {
-    name = "translatelib"
+    name = "weather-adapter"
     spec = {
-        image = "<repo-name>/translatelib:v1.0"
+        image = "<repo-name>/weather-adapter:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "100m"
-            memory = "128Mi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,19 +29,19 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "translatelib:v1.0"
+        value = "weather-adapter:v1.0"
     },
     {
-        name = "TRANSCODER_LOCATION"
-        value = "us-central1"
+        name = "WEATHER_SEARCH_URL"
+        value = "https://api.openweathermap.org/data/2.5/weather"
     },
     {
-        name = "TRANSLATION_LOCATION"
-        value = "us-central1"
+        name = "WEATHER_ICON_URL"
+        value = "https://openweathermap.org/img/wn"
     },
     {
-        name = "GLOSSARY_LOCATION"
-        value = "us-central1"
+        name = "EVENT_RECEIVER_HTTP_HOST"
+        value = "https://event-receiverlib-.run.app"
     },
     {
         name = "PROJECT_ID"

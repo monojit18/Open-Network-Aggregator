@@ -1,24 +1,24 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "datastorelib"
+    name = "llm-agent"
     spec = {
-        image = "<repo-name>/datastorelib:v1.0"
+        image = "<repo-name>/llm-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "1000m"
-            memory = "2Gi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
-            cpu = "2000m"
-            memory = "4Gi"
+            cpu = "1000m"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,11 +29,15 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "datastorelib:v1.0"
+        value = "llm-agent:v1.0"
+    },     
+    {
+        name = "LLM_ADAPTER_URL"
+        value = "https://llm-adapter-.run.app"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

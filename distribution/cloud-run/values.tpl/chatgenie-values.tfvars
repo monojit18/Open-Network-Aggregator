@@ -1,7 +1,7 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
@@ -33,43 +33,27 @@ cloudrunInfo = {
     },
     {
         name = "STORAGELIB_HOST"
-        value = "https://storagelib-"
+        value = "https://storagelib-.run.app"
     },    
     {
         name = "SPEECHLIB_HOST"
-        value = "https://speechlib-"
+        value = "https://speechlib-.run.app"
     },
     {
         name = "TRANSLATELIB_HOST"
-        value = "https://translatelib-"
+        value = "https://translatelib-.run.app"
     },    
     {
         name = "VISIONLIB_HOST"
-        value = "https://visionlib-"
-    },
-    {
-        name = "GENAI_IMAGELIB_HOST"
-        value = "https://genai-imagelib-"
-    },
-    {
-        name = "GENAI_VECTORSEARCHLIB_HOST"
-        value = "https://vector-searchlib-"
-    },
+        value = "https://visionlib-.run.app"
+    },    
     {
         name = "GENAI_TEXTLIB_HOST"
-        value = "https://genai-textlib-"
-    },
-    {
-        name = "GENAI_MULTILIB_HOST"
-        value = "https://genai-multimodallib-"
-    },
-    {
-        name = "DISCOVERY_ENGINELIB_HOST"
-        value = "https://discovery-enginelib-"
-    },
+        value = "https://genai-textlib-.run.app"
+    },    
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

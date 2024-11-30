@@ -1,24 +1,24 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "discovery-enginelib"
+    name = "event-serverlib"
     spec = {
-        image = "<repo-name>/discovery-enginelib:v1.0"
+        image = "<repo-name>/event-serverlib:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
         traffic = 100
         requests = {
-            cpu = "1000m"
-            memory = "2Gi"
+            cpu = "500m"
+            memory = "512Mi"
         }
         limits = {
-            cpu = "2000m"
-            memory = "4Gi"
+            cpu = "1000m"
+            memory = "1Gi"
         }
     }
     ports = {
@@ -29,11 +29,11 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "discovery-enginelib:v1.0"
-    },
+        value = "event-serverlib:v1.0"
+    },       
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

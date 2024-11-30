@@ -1,13 +1,13 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
-    name = "finance-seeker-adapter"
+    name = "mandi-agent"
     spec = {
-        image = "<repo>/finance-seeker-adapter:v1.0"
+        image = "<repo-name>/mandi-agent:v1.0"
         ingress = "all"
         minCount = "1"
         maxCount = "10"
@@ -29,23 +29,15 @@ cloudrunInfo = {
     envVars = [
     {
         name = "service"
-        value = "finance-seeker-adapter:v1.0"
+        value = "mandi-agent:v1.0"
     },
     {
-        name = "SANDBOX_HOST"
-        value = "https://sandbox.onest.network"
-    },
-    {
-        name = "BAP_SUBSCRIBER_ID"
-        value = "finance-seeker-dev.<dns>"
-    },
-    {
-        name = "BAP_CLIENT_CALLBACK_URL"
-        value = "https://seeker-client-"
+        name = "MANDI_ADAPTER_URL"
+        value = "https://mandi-adapter-.run.app"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }
