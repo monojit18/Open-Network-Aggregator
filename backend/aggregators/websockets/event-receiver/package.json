@@ -1,0 +1,24 @@
+{
+    "name": "event_receiver_app",
+    "description": "A Streaming Websocket Client App",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv axios socket.io-client",
+        "start": "node event-receiver.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "axios": "^1.7.7",
+        "dotenv": "^16.4.5",
+        "express": "^4.21.1",
+        "jshint": "^2.13.6",
+        "socket.io-client": "^4.8.1"
+    }
+}

@@ -20,7 +20,7 @@ export class SocketService {
         room: roomId,
       };
 
-      this.socketIOClient = io(`${environment.SEEKER_RECEIVER_HTTP_HOST}`, {
+      this.socketIOClient = io(`${environment.EVENT_SERVER_HTTP_HOST}`, {
         query: socketQuery,
         reconnection: true, // Enable reconnection
         reconnectionAttempts: 5, // Max reconnection attempts

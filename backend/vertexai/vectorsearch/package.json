@@ -7,7 +7,6 @@
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "preinstall": "mkdir -p logs",
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv axios google-auth-library @google-cloud/aiplatform",
         "start": "node vectorsearch.js"
     },

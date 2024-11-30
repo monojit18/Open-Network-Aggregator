@@ -37,8 +37,8 @@ let _markDown = null;
 let _axiosAgent = null;
 let _socketIOClient = null;
 
-const KGeminiVisionModel = "gemini-1.0-pro-vision";
-// const KGeminiVisionModel = "gemini-1.5-pro";
+// const KGeminiVisionModel = "gemini-1.0-pro-vision";
+const KGeminiVisionModel = "gemini-1.5-pro";
 
 const KSocketEvents =
 {

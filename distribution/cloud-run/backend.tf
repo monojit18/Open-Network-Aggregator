@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "apps-project-3108449-terra-stg"
+    bucket = "onix-agentic-151120240130-terra-stg"
     prefix = ""
   }
 }
