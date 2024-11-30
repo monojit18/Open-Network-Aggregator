@@ -9,6 +9,6 @@ RUN npm install --unsafe-perm
 
 COPY . /ondc-agent/
 
-EXPOSE 10004
+EXPOSE 10002
 
 CMD npm start

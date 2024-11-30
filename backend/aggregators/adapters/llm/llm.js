@@ -87,14 +87,12 @@ function prepareGenAIHeaders()
 
 function prepareLLMChatInfo(request)
 {
-    const llmInfo = {};
-    llmInfo.domain = request.body.domain;
-    llmInfo.transaction_id = request.body.transaction_id;
-    llmInfo.message_id = request.body.message_id;
-    llmInfo.network = request.body.network;
+    const llmInfo = {};    
+    llmInfo.context = request.body.context;
+    llmInfo.message = request.body.message;
     llmInfo.prompt = `${KLLMChatPrompt}`;
-    llmInfo.histories = llmInfo.network.llm.histories;
-    llmInfo.text = llmInfo.network.llm.query;
+    llmInfo.histories = llmInfo.message.network.chat?.histories;
+    llmInfo.query = llmInfo.message.network.filters[0].query;
     return llmInfo;
 }
 
@@ -103,7 +101,7 @@ function prepareLLMNegativeInfo(request)
     const llmInfo = prepareLLMChatInfo(request);
     llmInfo.histories = null;
     llmInfo.prompt = `${KLLMNegativePrompt}`;
-    llmInfo.text = llmInfo.network.llm.query;    
+    llmInfo.query = llmInfo.message.network.filters[0].query;    
     return llmInfo;
 }
 
@@ -129,12 +127,7 @@ function prepareLLMNegativeContentInfo(promptInfo)
 function prepareAckResponse(weatherInfo)
 {
     const ackResponse = {};
-
-    const context = {};
-    context.domain = weatherInfo.domain;
-    context.transaction_id = weatherInfo.transaction_id;
-    context.message_id = weatherInfo.message_id;
-    ackResponse.context = context;
+    ackResponse.context = weatherInfo.context;
 
     const message = {};
     const ack = {};
@@ -147,9 +140,10 @@ function prepareAckResponse(weatherInfo)
 function preapreLLMChatResponse(llmResult, llmInfo)
 {
     const response = llmResult.data;
+
     const llmResponse = {};
-    llmResponse.transactionId = llmInfo.transaction_id;
-    llmResponse.messageId = llmInfo.message_id;
+    llmResponse.context = llmInfo.context;
+    llmResponse.message = llmInfo.message;
 
     const chat = {};
     chat.text = response.results[0].original_response;
@@ -171,41 +165,33 @@ function preapreLLMChatResponse(llmResult, llmInfo)
     modelInfo.parts.push(modelPart);
     histories.push(modelInfo);
     chat.histories = histories;
-    llmResponse.chat = chat;
+    llmResponse.message.chat = chat;
     return llmResponse;
 }
 
 function preapreLLMNegativeResponse(llmResult, llmInfo)
 {
     const response = llmResult.data;
+
     const llmResponse = {};
-    llmResponse.transactionId = llmInfo.transaction_id;
-    llmResponse.messageId = llmInfo.message_id;
+    llmResponse.context = llmInfo.context;
+    llmResponse.message = llmInfo.message;
 
     const chat = {};
     chat.text = response.results[0].original_response;
-    llmResponse.chat = chat;
+    llmResponse.message.chat = chat;
     return llmResponse;
 }
 
 function preapreLLMCallbackData(llmResponse, llmInfo)
 {
     const llmData = {};
-    llmData.room = llmInfo.transaction_id;
+    llmData.room = llmInfo.context.transaction_id;
     llmData.event = KCallbackEvents.OnLLMAction;
     
     const payload = {};
-    const context = {};
-    const message = {};
-
-    context.domain = llmInfo.domain;
-    context.transaction_id = llmInfo.transaction_id;
-    context.message_id = llmInfo.message_id;
-    payload.context = context;
-
-    message.network = llmInfo.network;
-    message.provider = llmResponse;
-    payload.message = message;
+    payload.context = llmResponse.context;
+    payload.message = llmResponse.message;
     llmData.payload = payload;
     return llmData;
 }
@@ -293,7 +279,7 @@ async function performLLMChat(llmInfo)
         }
         
         const promptInfo = {};
-        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.text}`;
+        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.query}`;
         const contentsList = prepareLLMChatContentInfo(promptInfo);
         requestBody.contents = contentsList;
 
@@ -301,7 +287,7 @@ async function performLLMChat(llmInfo)
         requestOptions.headers = genAIHeaders;
 
         const llmResult = await Axios.post(`${llmChatURL}`, requestBody, requestOptions);
-        const llmResponse = preapreLLMChatResponse(llmResult, llmInfo);        
+        const llmResponse = preapreLLMChatResponse(llmResult, llmInfo);
         await fireCallbackEvent(llmResponse, llmInfo);
     }
     catch(exception)
@@ -384,7 +370,7 @@ _express.post("/llm/negative", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10003;
+var port = process.env.port || process.env.PORT || 10001;
 _server.listen(port);
 initializeAdapter();
 

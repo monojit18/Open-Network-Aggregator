@@ -1,13 +1,13 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /video-adapter
+WORKDIR /mandi-adapter
 
-COPY package*.json /video-adapter/
+COPY package*.json /mandi-adapter/
 
 RUN npm install --unsafe-perm
 
-COPY . /video-adapter/
+COPY . /mandi-adapter/
 
 EXPOSE 10001
 

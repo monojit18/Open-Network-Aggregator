@@ -1,7 +1,7 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 
-const SEEKER_RECEIVER_HTTP_HOST =
+const EVENT_SERVER_HTTP_HOST =
   'https://seeker-receiver-801148443625.asia-southeast1.run.app';
 
 class SocketService {
@@ -11,7 +11,7 @@ class SocketService {
 
   initSocketClient(roomId) {
     const socketQuery = {room: roomId};
-    this.socket = io(SEEKER_RECEIVER_HTTP_HOST, {
+    this.socket = io(EVENT_SERVER_HTTP_HOST, {
       query: socketQuery,
     });
 
@@ -54,7 +54,7 @@ class SocketService {
 
   async initSocketServerConnection() {
     try {
-      const response = await axios.post(`${SEEKER_RECEIVER_HTTP_HOST}/init`);
+      const response = await axios.post(`${EVENT_SERVER_HTTP_HOST}/init`);
       console.log('Server connection initialized:', response.data);
       return response.data;
     } catch (error) {

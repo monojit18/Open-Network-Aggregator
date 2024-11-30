@@ -470,7 +470,7 @@ _express.post("/select", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10004;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 initializeAgent();
 

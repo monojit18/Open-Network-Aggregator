@@ -1,13 +1,13 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /video-adapter
+WORKDIR /buyer-adapter
 
-COPY package*.json /video-adapter/
+COPY package*.json /buyer-adapter/
 
 RUN npm install --unsafe-perm
 
-COPY . /video-adapter/
+COPY . /buyer-adapter/
 
 EXPOSE 10001
 

@@ -1,13 +1,13 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /llm-agent
+WORKDIR /agri-agent
 
-COPY package*.json /llm-agent/
+COPY package*.json /agri-agent/
 
 RUN npm install --unsafe-perm
 
-COPY . /llm-agent/
+COPY . /agri-agent/
 
 EXPOSE 10002
 

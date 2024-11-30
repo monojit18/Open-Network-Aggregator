@@ -33,7 +33,7 @@ let _allUrls = {};
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
-    ONDCAdapter: "ondc-adapter"
+    BuyerAdapter: "ondc-adapter"
 }
 
 const KONDCDomain = "integrator:ondc";
@@ -71,7 +71,7 @@ function processGenericResponse(response)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
-    _allUrls[KMicroServices.ONDCAdapter] = `${process.env.ONDC_BUYER_ADAPTER_URL}`;
+    _allUrls[KMicroServices.BuyerAdapter] = `${process.env.BUYER_ADAPTER_URL}`;
 }
 
 function prepareNLPInfo(request)
@@ -105,13 +105,12 @@ function prepareShortHeaders()
     return genAIHeaders;
 }
 
-function prepareONDCMessage(nlpInfo)
+function prepareONDCMessage(request)
 {
-    const ondcMessage = {};
-    ondcMessage.domain = KONDCDomain;
-    ondcMessage.transaction_id = nlpInfo.transactionId;
-    ondcMessage.message_id = nlpInfo.messageId;
-    ondcMessage.network = nlpInfo.network;    
+    const ondcMessage = {};    
+    ondcMessage.context = request.body.context;
+    ondcMessage.message = request.body.message;
+    ondcMessage.preferred_network = request.body.preferred_network;
     return ondcMessage;
 }
 
@@ -145,6 +144,30 @@ async function extractRetailAttributes(ondcMessage)
     }
 }
 
+async function callBuyerAdapter(ondcMessage)
+{
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = ondcMessage;
+    
+    try
+    {
+        // const retailAttributesList = await extractRetailAttributes(ondcMessage);
+        // const searchString = retailAttributesList.join(",");
+        // ondcMessage.network.relevant_text = searchString;
+
+        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.BuyerAdapter]}/search`,
+                                                    requestBody, requestOptions);
+        const adapterResult = processGenericResponse(adapterResponse);
+        return adapterResult;        
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function initializeAgent()
 {
     _axiosAgent = new Https.Agent
@@ -157,24 +180,22 @@ async function initializeAgent()
 /* API DEFINITIONS - START */
 _express.post("/search", async (request, response) =>
 {
-    const nlpInfo = prepareNLPInfo(request);
-    const ondcMessage = prepareONDCMessage(nlpInfo);
-
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-
-    const requestBody = ondcMessage;
+    const ondcMessage = prepareONDCMessage(request);
     const results = {};
     
     try
     {
-        const retailAttributesList = await extractRetailAttributes(ondcMessage);
-        const searchString = retailAttributesList.join(",");
-        ondcMessage.network.intent[0].query = searchString;
-        
-        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.ONDCAdapter]}/search`,
-                                                requestBody, requestOptions);      
-        results.results = processGenericResponse(adapterResponse);
+        const preferredNetworksList = ondcMessage.preferred_network;
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
+            {
+                const copiedONDCMessage = JSON.parse(JSON.stringify(ondcMessage));
+                copiedONDCMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callBuyerAdapter(copiedONDCMessage);
+            }));
+        }
+        results.results = adapterResponse;
         response.send(results);
     }
     catch(exception)
@@ -186,7 +207,7 @@ _express.post("/search", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10004;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 initializeAgent();
 

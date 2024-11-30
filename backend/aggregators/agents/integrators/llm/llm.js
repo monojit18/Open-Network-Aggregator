@@ -33,8 +33,6 @@ const KMicroServices =
     LLMAdapter: "llm-adapter"
 }
 
-const kLLMDomain = "integrator:llm";
-
 DotEnv.config();
 
 _express.use(Express.json
@@ -70,22 +68,11 @@ function prepareAllUrls()
     _allUrls[KMicroServices.LLMAdapter] = `${process.env.LLM_ADAPTER_URL}`;
 }
 
-function prepareNLPInfo(request)
+function prepareLLMMessage(request)
 {
-    const nlpInfo = {};
-    nlpInfo.transactionId = request.body.transactionId;
-    nlpInfo.messageId = request.body.messageId;
-    nlpInfo.network = request.body.network;
-    return nlpInfo;
-}
-
-function prepareLLMMessage(nlpInfo)
-{
-    const llmMessage = {};
-    llmMessage.domain = kLLMDomain;
-    llmMessage.transaction_id = nlpInfo.transactionId;
-    llmMessage.message_id = nlpInfo.messageId;
-    llmMessage.network = nlpInfo.network;    
+    const llmMessage = {};    
+    llmMessage.context = request.body.context;
+    llmMessage.message = request.body.message;      
     return llmMessage;
 }
 
@@ -98,9 +85,7 @@ async function callLLMNetwork(llmMessage)
     
     try
     {
-        let llmURL = (llmMessage.network.llm.type == "NEGATIVE")
-                    ? `${_allUrls[KMicroServices.LLMAdapter]}/llm/negative`
-                    : `${_allUrls[KMicroServices.LLMAdapter]}/llm/chat`;
+        let llmURL = `${_allUrls[KMicroServices.LLMAdapter]}/llm/chat`;
         let adapterResponse = await Axios.post(`${llmURL}`, requestBody, requestOptions);
         adapterResponse = processGenericResponse(adapterResponse);
         return adapterResponse;
@@ -122,10 +107,8 @@ async function initializeAgent()
 
 /* API DEFINITIONS - START */
 _express.post("/search", async (request, response) =>
-{
-    const nlpInfo = prepareNLPInfo(request);
-    const llmMessage = prepareLLMMessage(nlpInfo);
-
+{    
+    const llmMessage = prepareLLMMessage(request);
     const results = {};
     
     try
@@ -143,7 +126,7 @@ _express.post("/search", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10007;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 initializeAgent();
 

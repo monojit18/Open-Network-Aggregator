@@ -1,0 +1,25 @@
+{
+    "name": "image_gen_app",
+    "description": "Wrapper around GCP Image generation API",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios google-auth-library @google-cloud/aiplatform",
+        "start": "node imagen.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "@google-cloud/aiplatform": "^3.26.0",
+        "axios": "^1.7.4",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "google-auth-library": "^9.13.0",
+        "jshint": "^2.13.6"
+    }
+}

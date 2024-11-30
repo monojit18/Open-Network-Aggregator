@@ -27,7 +27,8 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 
-const KWeatherAPIKey = "5901703212373e462f51de78f4efc4f7";
+// const KWeatherAPIKey = "5901703212373e462f51de78f4efc4f7";
+const KWeatherAPIKey = "x-api-weather-key";
 const KStatusACK = "ACK";
 
 const KCallbackEvents =
@@ -67,27 +68,36 @@ function prepareErrorMessage(exception)
     return exception;
 }
 
-function prepareWeatherInfo(request)
+function preparePartnerWeatherInfo(request)
 {
     const weatherInfo = {};
-    weatherInfo.domain = request.body.domain;
-    weatherInfo.transaction_id = request.body.transaction_id;
-    weatherInfo.message_id = request.body.message_id;
-    weatherInfo.network = request.body.network;
-    weatherInfo.address = weatherInfo.network.weather.address;
+    weatherInfo.context = request.body.context;
+    weatherInfo.message = request.body.message;
+    weatherInfo.apiKey = (request.headers != null) ? request.headers[KWeatherAPIKey] : null;
+    weatherInfo.preferred_network = request.body.preferred_network;
+    weatherInfo.address = weatherInfo.message.network.filters.address;    
+    return weatherInfo;
+}
+
+function prepareOpenWeatherInfo(request)
+{
+    const weatherInfo = preparePartnerWeatherInfo(request);
     weatherInfo.units = KWeatherConfig.UNITS;
     return weatherInfo;
+}
+
+function preparePartnerWeatherRequest(weatherInfo)
+{
+    const weatherRequest = {};
+    weatherRequest.context = weatherInfo.context;
+    weatherRequest.message = weatherInfo.message;      
+    return weatherRequest;
 }
 
 function prepareAckResponse(weatherInfo)
 {
     const ackResponse = {};
-
-    const context = {};
-    context.domain = weatherInfo.domain;
-    context.transaction_id = weatherInfo.transaction_id;
-    context.message_id = weatherInfo.message_id;
-    ackResponse.context = context;
+    ackResponse.context = weatherInfo.context;
 
     const message = {};
     const ack = {};
@@ -97,13 +107,17 @@ function prepareAckResponse(weatherInfo)
     return ackResponse;
 }
 
-function preapreWeatherResponse(weatherResult, weatherInfo)
+function preaprePartnerWeatherResponse(weatherResult)
+{
+    const weatherResponse = weatherResult.data;
+    return weatherResponse;
+}
+
+function preapreOpenWeatherResponse(weatherResult)
 {
     const response = weatherResult.data;
 
-    const weatherResponse = {};
-    weatherResponse.transactionId = weatherInfo.transactionId;
-    weatherResponse.messageId = weatherInfo.messageId;    
+    const weatherResponse ={};
     weatherResponse.coord = response.coord;
     weatherResponse.weather = response.weather[0];
     weatherResponse.weather.icon = `${process.env.WEATHER_ICON_URL}/${response.weather[0].icon}@2x.png`;
@@ -164,28 +178,50 @@ function initializeAdapter()
     });
 }
 
+async function firePartnerCallbackEvent(weatherResponse)
+{
+    try
+    {
+        const weatherData = {};
+        weatherData.room = weatherResponse.context.transaction_id;
+        weatherData.event = KCallbackEvents.OnWeatherAction;
+        
+        const payload = {};
+        payload.context = weatherResponse.context;
+        payload.message = weatherResponse.message;
+        weatherData.payload = payload;
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, weatherData);
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function fireCallbackEvent(weatherResponse, weatherInfo)
 {
     try
     {
         const weatherData = {};
-        weatherData.room = weatherInfo.transaction_id;
+        weatherData.room = weatherInfo.context.transaction_id;
         weatherData.event = KCallbackEvents.OnWeatherAction;
         
         const payload = {};
-        const context = {};
-        const message = {};
+        payload.context = weatherInfo.context;
+        payload.message = weatherInfo.message;
 
-        context.domain = weatherInfo.domain;
-        context.transaction_id = weatherInfo.transaction_id;
-        context.message_id = weatherInfo.message_id;
-        payload.context = context;
+        const catalog = {};
+        const descriptor = weatherInfo.preferred_network.descriptor;
+        catalog.descriptor = descriptor;
 
-        message.network = weatherInfo.network;
-        message.provider = weatherResponse;
-        payload.message = message;
+        const provider = {};
+        provider.descriptor = catalog.descriptor;
+        const items = weatherResponse;
+        provider.items = items;
+        catalog.provider = provider;
+        payload.message.catalog = catalog;
 
-        weatherData.payload = payload;    
+        weatherData.payload = payload;
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, weatherData);
     }
     catch(exception)
@@ -199,28 +235,20 @@ async function fireErrorEvent(errorInfo, weatherInfo)
     try
     {
         const weatherData = {};
-        weatherData.room = weatherInfo.transaction_id;
+        weatherData.room = weatherInfo.context.transaction_id;
         weatherData.event = KCallbackEvents.OnErrorAction;
         
         const payload = {};
-        const context = {};
-        const message = {};
-
-        context.domain = weatherInfo.domain;
-        context.transaction_id = weatherInfo.transaction_id;
-        context.message_id = weatherInfo.message_id;
-        payload.context = context;
-
-        message.network = weatherInfo.network;
+        payload.context = weatherInfo.context;
+        payload.message = weatherInfo.message;
 
         const errorResponse = {};
         errorResponse.code = errorInfo.response?.data?.error?.code;
         errorResponse.message = errorInfo.response?.data?.error?.message;
-        message.provider = errorResponse;
-        payload.message = message;
+        payload.error = errorResponse;
 
-        weatherData.payload = payload;    
-        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, weatherData);
+        weatherData.payload = payload;
+        await emitAdapterEvent(KCallbackEvents.OnErrorAction, weatherData);
     }
     catch(exception)
     {
@@ -250,12 +278,36 @@ async function emitAdapterEvent(eventName, eventData)
     }
 }
 
-async function performWeatherSearch(weatherInfo)
+async function performPartnerWeatherSearch(weatherInfo)
+{
+    try
+    {
+        let weatherURL = `${weatherInfo.preferred_network.url}`;
+        
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"            
+        };
+
+        const requestBody = preparePartnerWeatherRequest(weatherInfo);
+        const weatherResult = await Axios.post(`${weatherURL}`, requestBody, requestOptions);
+        const weatherResponse = preaprePartnerWeatherResponse(weatherResult);        
+        await firePartnerCallbackEvent(weatherResponse);
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performOpenWeatherSearch(weatherInfo)
 {
     try
     {
         let weatherURL = `${process.env.WEATHER_SEARCH_URL}`;
-        weatherURL += `?units=${weatherInfo.units}&q=${weatherInfo.address}&appId=${KWeatherAPIKey}`;
+        weatherURL += `?units=${weatherInfo.units}&q=${weatherInfo.address}&appId=${weatherInfo.apiKey}`;
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
@@ -265,7 +317,7 @@ async function performWeatherSearch(weatherInfo)
         };
 
         const weatherResult = await Axios.get(`${weatherURL}`, requestOptions);
-        const weatherResponse = preapreWeatherResponse(weatherResult, weatherInfo);        
+        const weatherResponse = preapreOpenWeatherResponse(weatherResult);        
         await fireCallbackEvent(weatherResponse, weatherInfo);
     }
     catch(exception)
@@ -275,9 +327,29 @@ async function performWeatherSearch(weatherInfo)
 }
 
 /* API DEFINITIONS - START */
-_express.post("/weather", async (request, response) =>
+_express.post("/weather/partner", async (request, response) =>
 {
-    const weatherInfo = prepareWeatherInfo(request);
+    const weatherInfo = preparePartnerWeatherInfo(request);
+    const results = {};
+
+    try
+    {
+        const ackResponse = prepareAckResponse(weatherInfo);
+        results.results = ackResponse;
+        response.send(results);        
+        await performPartnerWeatherSearch(weatherInfo);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        await fireErrorEvent(errorInfo, weatherInfo);
+    }
+});
+
+_express.post("/weather/openweather", async (request, response) =>
+{
+    const weatherInfo = prepareOpenWeatherInfo(request);
     const results = {};
 
     try
@@ -285,7 +357,7 @@ _express.post("/weather", async (request, response) =>
         const ackResponse = prepareAckResponse(weatherInfo);
         results.results = ackResponse;
         response.send(results);        
-        await performWeatherSearch(weatherInfo);
+        await performOpenWeatherSearch(weatherInfo);
     }
     catch(exception)
     {
@@ -296,7 +368,7 @@ _express.post("/weather", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10003;
+var port = process.env.port || process.env.PORT || 10001;
 _server.listen(port);
 
 initializeAdapter();

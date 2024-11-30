@@ -4,7 +4,7 @@ import eventEmitter from '../eventEmitter';
 import io from 'socket.io-client';
 import uuid from 'react-native-uuid';
 
-const SEEKER_RECEIVER_HTTP_HOST =
+const EVENT_SERVER_HTTP_HOST =
   'https://seeker-receiver-4encm3loxa-as.a.run.app';
 const MASTER_AGENT_URL = 'https://master-agent-4encm3loxa-as.a.run.app/search';
 const transactionId = uuid.v4();
@@ -19,9 +19,9 @@ class SocketService {
       console.log('Initializing socket...');
       if (!this.socket) {
         axios
-          .post(`${SEEKER_RECEIVER_HTTP_HOST}/init`)
+          .post(`${EVENT_SERVER_HTTP_HOST}/init`)
           .then(() => {
-            this.socket = io(SEEKER_RECEIVER_HTTP_HOST, {
+            this.socket = io(EVENT_SERVER_HTTP_HOST, {
               transports: ['websocket'],
               query: {room: transactionId},
             });

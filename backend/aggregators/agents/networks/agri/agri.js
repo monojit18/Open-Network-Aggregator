@@ -30,11 +30,9 @@ let _allUrls = {};
 
 const KMicroServices =
 {
-    WeatherAdapter: "weather-adapter"
+    GenAITextlib: "genai-textlib",
+    AgriAdapter: "agri-adapter"
 }
-
-const KWeatherAPIKey = "x-api-weather-key";
-const KOpenWeatherKey = "OPEN_WEATHER";
 
 DotEnv.config();
 
@@ -68,37 +66,28 @@ function processGenericResponse(response)
 
 function prepareAllUrls()
 {
-    _allUrls[KMicroServices.WeatherAdapter] = `${process.env.WEATHER_ADAPTER_URL}`;
+    _allUrls[KMicroServices.AgriAdapter] = `${process.env.AGRI_ADAPTER_URL}`;
 }
 
-function prepareWeatherMessage(request)
+function prepareAgriMessage(request)
 {
-    const weatherMessage = {};
-    weatherMessage.context = request.body.context;
-    weatherMessage.message = request.body.message;
-    weatherMessage.preferred_network = request.body.preferred_network;    
-    return weatherMessage;
+    const agriMessage = {};    
+    agriMessage.context = request.body.context;
+    agriMessage.message = request.body.message;
+    agriMessage.preferred_network = request.body.preferred_network;
+    return agriMessage;
 }
 
-function prepareWeatherHeders(request)
-{
-    const weatherheaders = {};
-    weatherheaders[KWeatherAPIKey] = request.headers[KWeatherAPIKey]; 
-    return weatherheaders;
-}
-
-async function callWeatherAdapter(weatherMessage, weatherHeaders, urlPart)
+async function callAgriAdapter(agriMessage)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
-    requestOptions.headers = weatherHeaders;
 
-    const requestBody = weatherMessage;
-
+    const requestBody = agriMessage;
     
     try
     {
-        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.WeatherAdapter]}/weather/${urlPart}`,
+        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}/search`,
                                                     requestBody, requestOptions);
         const adapterResult = processGenericResponse(adapterResponse);
         return adapterResult;        
@@ -120,32 +109,20 @@ async function initializeAgent()
 
 /* API DEFINITIONS - START */
 _express.post("/search", async (request, response) =>
-{    
-    const weatherMessage = prepareWeatherMessage(request);
-    const weatherHeaders = prepareWeatherHeders(request);
+{
+    const agriMessage = prepareAgriMessage(request);
     const results = {};
-    let adapterResponse = null;
-
-    try    
+    
+    try
     {
-        const opendWeatherNetwork = weatherMessage.preferred_network[KOpenWeatherKey];
-        if (opendWeatherNetwork != null)
-        {
-            const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
-            copiedWeatherMessage.preferred_network = opendWeatherNetwork;
-            adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
-                                                        "openweather");            
-        }
-
-        const preferredNetworksList = weatherMessage.preferred_network.partners;
+        const preferredNetworksList = agriMessage.preferred_network;
         if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
         {
             await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
             {
-                const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
-                copiedWeatherMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
-                                                            "partner");
+                const copiedAgriMessage = JSON.parse(JSON.stringify(agriMessage));
+                copiedAgriMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callAgriAdapter(copiedAgriMessage);
             }));
         }
         results.results = adapterResponse;

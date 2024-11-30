@@ -9,6 +9,6 @@ RUN npm install --unsafe-perm
 
 COPY . /master-agent/
 
-EXPOSE 10005
+EXPOSE 10003
 
 CMD npm start

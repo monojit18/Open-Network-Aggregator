@@ -1,23 +1,23 @@
 {
-    "name": "video_adapter_app",
-    "description": "A Video Adapter App for Open Networks",
+    "name": "event_server_app",
+    "description": "A Callback even_server App for Open Networks",
     "version": "1.0.0",
     "private": true,
     "license": "Apache",
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios",
-        "start": "node video.js"
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors socket.io",
+        "start": "node event-server.js"
     },
     "engines": {
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "axios": "^1.7.7",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
-        "express": "^4.21.1",
-        "jshint": "^2.13.6"        
+        "express": "^4.19.2",
+        "jshint": "^2.13.6",
+        "socket.io": "^4.7.5"
     }
 }

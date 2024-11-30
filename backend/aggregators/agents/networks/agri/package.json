@@ -1,14 +1,15 @@
 {
-    "name": "video_adapter_app",
-    "description": "A Video Adapter App for Open Networks",
+    "name": "agri_agent_app",
+    "description": "An Agri Agent App for Open Networks",
     "version": "1.0.0",
     "private": true,
     "license": "Apache",
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios",
-        "start": "node video.js"
+        "start": "node agri.js"
     },
     "engines": {
         "node": ">=16.0.0"
@@ -18,6 +19,6 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.21.1",
-        "jshint": "^2.13.6"        
+        "jshint": "^2.13.6"
     }
 }

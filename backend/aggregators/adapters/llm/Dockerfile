@@ -9,6 +9,6 @@ RUN npm install --unsafe-perm
 
 COPY . /llm-adapter/
 
-EXPOSE 10003
+EXPOSE 10001
 
 CMD npm start

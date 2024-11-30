@@ -29,12 +29,12 @@ let _axiosAgent = null;
 let _allUrls = {};
 
 const KMicroServices =
-{
-    WeatherAdapter: "weather-adapter"
+{    
+    MandiAdapter: "mandi-adapter"
 }
 
-const KWeatherAPIKey = "x-api-weather-key";
-const KOpenWeatherKey = "OPEN_WEATHER";
+const KMandiAPIKey = "x-api-mandi-key";
+const KEnamKey = "ENAM";
 
 DotEnv.config();
 
@@ -68,45 +68,23 @@ function processGenericResponse(response)
 
 function prepareAllUrls()
 {
-    _allUrls[KMicroServices.WeatherAdapter] = `${process.env.WEATHER_ADAPTER_URL}`;
+    _allUrls[KMicroServices.MandiAdapter] = `${process.env.MANDI_ADAPTER_URL}`;
 }
 
-function prepareWeatherMessage(request)
+function prepareMandiMessage(request)
 {
-    const weatherMessage = {};
-    weatherMessage.context = request.body.context;
-    weatherMessage.message = request.body.message;
-    weatherMessage.preferred_network = request.body.preferred_network;    
-    return weatherMessage;
+    const mandiMessage = {};
+    mandiMessage.context = request.body.context;
+    mandiMessage.message = request.body.message;
+    mandiMessage.preferred_network = request.body.preferred_network;  
+    return mandiMessage;
 }
 
-function prepareWeatherHeders(request)
+function prepareMandiHeaders(request)
 {
-    const weatherheaders = {};
-    weatherheaders[KWeatherAPIKey] = request.headers[KWeatherAPIKey]; 
-    return weatherheaders;
-}
-
-async function callWeatherAdapter(weatherMessage, weatherHeaders, urlPart)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-    requestOptions.headers = weatherHeaders;
-
-    const requestBody = weatherMessage;
-
-    
-    try
-    {
-        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.WeatherAdapter]}/weather/${urlPart}`,
-                                                    requestBody, requestOptions);
-        const adapterResult = processGenericResponse(adapterResponse);
-        return adapterResult;        
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
+    const mandiHeaders = {};
+    mandiHeaders[KMandiAPIKey] = request.headers[KMandiAPIKey]; 
+    return mandiHeaders;
 }
 
 async function initializeAgent()
@@ -118,36 +96,57 @@ async function initializeAgent()
     prepareAllUrls();
 }
 
+async function callMandiAdapters(mandiMessage, mandiHeaders, urlPart)
+{
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+    requestOptions.headers = mandiHeaders;
+
+    const requestBody = mandiMessage;
+
+    
+    try
+    {
+        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.MandiAdapter]}/mandi/${urlPart}`,
+                                                    requestBody, requestOptions);
+        const adapterResult = processGenericResponse(adapterResponse);
+        return adapterResult;        
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 /* API DEFINITIONS - START */
 _express.post("/search", async (request, response) =>
 {    
-    const weatherMessage = prepareWeatherMessage(request);
-    const weatherHeaders = prepareWeatherHeders(request);
+    const mandiMessage = prepareMandiMessage(request);
+    const mandiHeaders = prepareMandiHeaders(request);
     const results = {};
     let adapterResponse = null;
-
-    try    
+    
+    try
     {
-        const opendWeatherNetwork = weatherMessage.preferred_network[KOpenWeatherKey];
-        if (opendWeatherNetwork != null)
+        const enamMandiNetwork = mandiMessage.preferred_network[KEnamKey];
+        if (enamMandiNetwork != null)
         {
-            const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
-            copiedWeatherMessage.preferred_network = opendWeatherNetwork;
-            adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
-                                                        "openweather");            
+            const copiedMandiMessage = JSON.parse(JSON.stringify(mandiMessage));
+            copiedMandiMessage.preferred_network = enamMandiNetwork;            
+            adapterResponse = await callMandiAdapters(copiedMandiMessage, mandiHeaders, "enam");
         }
 
-        const preferredNetworksList = weatherMessage.preferred_network.partners;
+        const preferredNetworksList = mandiMessage.preferred_network.partners;
         if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
         {
             await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
             {
-                const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
-                copiedWeatherMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
+                const copiedMandiMessage = JSON.parse(JSON.stringify(mandiMessage));
+                copiedMandiMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callMandiAdapters(copiedMandiMessage, mandiHeaders,
                                                             "partner");
             }));
-        }
+        }        
         results.results = adapterResponse;
         response.send(results);
     }

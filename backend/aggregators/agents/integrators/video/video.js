@@ -37,7 +37,14 @@ const KMicroServices =
     GenAITextlib: "genai-textlib"
 }
 
-const KVideoDomain = "integrator:video";
+const KVideoNetwork =
+{    
+    Youtube: "youtube",
+    Partner: "partner"
+}
+
+const KYoutubeAPIKey = "x-api-video-key";
+const KYoutubeKey = "YOUTUBE";
 
 DotEnv.config();
 
@@ -75,15 +82,6 @@ function prepareAllUrls()
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
 }
 
-function prepareNLPInfo(request)
-{
-    const nlpInfo = {};
-    nlpInfo.transactionId = request.body.transactionId;
-    nlpInfo.messageId = request.body.messageId;
-    nlpInfo.network = request.body.network;
-    return nlpInfo;
-}
-
 function prepareNLPContentInfo(promptInfo)
 {
     const contentInfo = {};
@@ -106,14 +104,20 @@ function prepareLongHeaders()
     return genAIHeaders;
 }
 
-function prepareVideoMessage(nlpInfo)
+function prepareVideoMessage(request)
 {
     const videoMessage = {};
-    videoMessage.domain = KVideoDomain;
-    videoMessage.transaction_id = nlpInfo.transactionId;
-    videoMessage.message_id = nlpInfo.messageId;
-    videoMessage.network = nlpInfo.network;    
+    videoMessage.context = request.body.context;
+    videoMessage.message = request.body.message;
+    videoMessage.preferred_network = request.body.preferred_network;   
     return videoMessage;
+}
+
+function prepareVideoHeaders(request)
+{
+    const videoHeaders = {};       
+    videoHeaders[KYoutubeAPIKey] = request.headers[KYoutubeAPIKey];
+    return videoHeaders;
 }
 
 async function extractAgriAttributes(videoMessage)
@@ -124,7 +128,7 @@ async function extractAgriAttributes(videoMessage)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = `${KAgriAttributesPrompt}\n\n${videoMessage.network.video.query}`;
+    promptInfo.prompt = `${KAgriAttributesPrompt}\n\n${videoMessage.message.network.filters.query}`;
     const contentsList = prepareNLPContentInfo(promptInfo);
     requestBody.contents = contentsList;
 
@@ -146,42 +150,13 @@ async function extractAgriAttributes(videoMessage)
     }
 }
 
-async function extractTechAttributes(videoMessage)
+async function callVideoNetwork(networkName, videoHeaders, videoMessage)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
+    requestOptions.headers = videoHeaders;
 
-    const requestBody = {};
-
-    const promptInfo = {};
-    promptInfo.prompt = `${KTechAttributesPrompt}\n\n${videoMessage.network.video.query}`;
-    const contentsList = prepareNLPContentInfo(promptInfo);
-    requestBody.contents = contentsList;
-
-    const genAIHeaders = prepareLongHeaders();
-    requestOptions.headers = genAIHeaders;
-
-    try
-    {
-        let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
-                                                requestBody, requestOptions);
-        const nlpResponsesList = processGenericResponse(response);
-        const nlpResponse = nlpResponsesList[0];
-        const attributesList = nlpResponse.formatted_response.attributes;
-        return attributesList;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
-
-async function callVideoNetwork(networkName, videoMessage)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-
-    const requestBody = videoMessage;    
+    const requestBody = videoMessage;
     
     try
     {
@@ -207,38 +182,46 @@ async function initializeAgent()
 
 /* API DEFINITIONS - START */
 _express.post("/search", async (request, response) =>
-{
-    const nlpInfo = prepareNLPInfo(request);
-    const videoMessage = prepareVideoMessage(nlpInfo);
+{    
+    const videoMessage = prepareVideoMessage(request);
+    const videHeaders = prepareVideoHeaders(request);
 
+    let adapterResponse = null;
     const results = {};
     
     try
     {
-        let adapterResponse = await callVideoNetwork("youtube", videoMessage);
-
-        const agriAttributesList = await extractAgriAttributes(videoMessage);
-        if (agriAttributesList?.length > 0)
+        const youtubeNetwork = videoMessage.preferred_network[KYoutubeKey];
+        if (youtubeNetwork != null)
         {
-            await Promise.all(agriAttributesList.map(async (attributeString) =>
+            const copiedVideoMessage = JSON.parse(JSON.stringify(videoMessage));
+            copiedVideoMessage.preferred_network = youtubeNetwork;
+            adapterResponse = await callVideoNetwork(KVideoNetwork.Youtube, videHeaders,
+                                                        copiedVideoMessage);  
+        }
+
+        const preferredNetworksList = videoMessage.preferred_network.partners;
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async (preferredNetwork) =>
             {
-                const agriVideoMessage = JSON.parse(JSON.stringify(videoMessage));
-                agriVideoMessage.network.video.query = attributeString;
-                adapterResponse = await callVideoNetwork("ninjacart", agriVideoMessage);
+                const copiedVideoMessage = JSON.parse(JSON.stringify(videoMessage));
+                copiedVideoMessage.preferred_network = preferredNetwork;
+    
+                const agriAttributesList = await extractAgriAttributes(copiedVideoMessage);
+                if (agriAttributesList?.length > 0)
+                {
+                    await Promise.all(agriAttributesList.map(async (attributeString) =>
+                    {
+                        const agriVideoMessage = JSON.parse(JSON.stringify(copiedVideoMessage));
+                        agriVideoMessage.message.network.filters.query = attributeString;
+                        adapterResponse = await callVideoNetwork(KVideoNetwork.Partner, videHeaders,
+                                                                    agriVideoMessage);
+                    }));
+                }
             }));
         }
         
-        const techAttributesList = await extractTechAttributes(videoMessage);
-        if (techAttributesList?.length > 0)
-        {            
-            await Promise.all(techAttributesList.map(async (attributeString) =>
-            {
-                const techVideoMessage = JSON.parse(JSON.stringify(videoMessage));
-                techVideoMessage.network.video.query = attributeString;
-                adapterResponse = await callVideoNetwork("apna", techVideoMessage);
-            }));
-        }
-
         results.results = adapterResponse;
         response.send(results);
     }
@@ -247,11 +230,11 @@ _express.post("/search", async (request, response) =>
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
-    }    
+    }
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10004;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 initializeAgent();
 

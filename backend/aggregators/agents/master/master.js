@@ -36,39 +36,44 @@ const KMicroServices =
     VectorSearchlib: "vector-searchlib",
     GenAITextlib: "genai-textlib",
     GenAIMultimodallib: "genai-multimodallib",
+    AgriAgent: "agri-agent",
     ONDCAgent: "ondc-agent",
     ONESTAgent: "onest-agent",
     VideoAgent: "video-agent",
     WeatherAgent: "weather-agent",
-    EnamMandiAgent: "enam-mandi-agent",
+    MandiAgent: "mandi-agent",
     LLMAgent: "llm-agent"
 }
 
 const KNetworkActions =
 {
-    SearchAction: "search",
-    SelectAction: "select",
-    InitAction: "init",
-    ConfirmAction: "confirm",
-    StatusAction: "status"
+    SearchAction: "search"
 }
 
 const KNetworkNames = 
 {
     ONDC: "ONDC",
     ONEST: "ONEST",
+    AGRI: "AGRI",
     VIDEO: "VIDEO",
     WEATHER: "WEATHER",
-    ENAMMANDI: "ENAM",
-    LLM: "LLM",    
-    UI: "UI"
+    MANDI: "ENAM",
+    LLM: "LLM"
 }
 
-// const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for anything related to Transactional operations in Retail will be \"ONDC\"\nDomain for anything related to Weather Forecast will be \"WEATHER\"\nDomain for anything related to Video and Webinar will be \"VIDEO\"\nDomain for anything related to UI action will be \"UI\"\nDomain for any Generic questions e.g. asking for suggestions, options or guidance will be \"LLM\"";
-// const KEndpointId = "8161966183562608640";
+const KAPIKeys = 
+{
+    ONDC: "",
+    ONEST: "",
+    AGRI: "",
+    VIDEO: "x-api-video-key",
+    WEATHER: "x-api-weather-key",
+    MANDI: "x-api-mandi-key",
+    LLM: ""
+}
 
-const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"\nDomain for anything related to UI action will be \"UI\"";
-const KEndpointId = "2378288730856226816";
+// const KNLPPrompt = "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"\nDomain for anything related to UI action will be \"UI\"";
+// const KEndpointId = "2378288730856226816";
 
 DotEnv.config();
 
@@ -100,18 +105,6 @@ function processGenericResponse(response)
     return genericResponse;
 }
 
-function processListResponse(response)
-{
-    const responsesList = response.data;
-    const consolidatedList = [];
-    for (const response of responsesList)
-    {
-        const genericResponse = response.results;
-        consolidatedList.push(genericResponse);
-    }
-    return consolidatedList;
-}
-
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.StorageLib] = `${process.env.STORAGELIB_HOST}`;
@@ -121,33 +114,32 @@ function prepareAllUrls()
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
     _allUrls[KMicroServices.GenAIMultimodallib] = `${process.env.GENAI_MULTILIB_HOST}`;
     _allUrls[KMicroServices.ONDCAgent] = `${process.env.ONDC_AGENT_URL}`;
+    _allUrls[KMicroServices.AgriAgent] = `${process.env.AGRI_AGENT_URL}`;
     _allUrls[KMicroServices.ONESTAgent] = `${process.env.ONEST_AGENT_URL}`;
     _allUrls[KMicroServices.VideoAgent] = `${process.env.VIDEO_AGENT_URL}`;
     _allUrls[KMicroServices.WeatherAgent] = `${process.env.WEATHER_AGENT_URL}`;
-    _allUrls[KMicroServices.EnamMandiAgent] = `${process.env.ENAM_MANDI_AGENT_URL}`;
+    _allUrls[KMicroServices.MandiAgent] = `${process.env.MANDI_AGENT_URL}`;
     _allUrls[KMicroServices.LLMAgent] = `${process.env.LLM_AGENT_URL}`;
 }
 
 function prepareNLPInfo(request)
 {
     const nlpInfo = {};
-    nlpInfo.transactionId = request.body.transactionId;
-    nlpInfo.messageId = request.body.messageId;
-    nlpInfo.text = request.body.text;
-    nlpInfo.prompt = KNLPPrompt;
-    nlpInfo.endpointId = KEndpointId;
+    nlpInfo.transaction_id = request.body.transaction_id;
+    nlpInfo.message_id = request.body.message_id;
+    nlpInfo.query = request.body.query;
+    nlpInfo.location = request.body.location;
+    nlpInfo.preferred_networks = request.body.preferred_networks;
+    // nlpInfo.prompt = KNLPPrompt;
+    nlpInfo.prompt = process.env.AGENTIC_NLP_PROMPT;
+    nlpInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;
+    nlpInfo.headers = request.headers;
 
     if (request.body.histories != null)
     {
         nlpInfo.histories = request.body.histories
     }
     return nlpInfo;
-}
-
-function prepareNetworkInfo(request)
-{
-    const networkInfo = request.body;
-    return networkInfo;
 }
 
 function prepareNLPContentInfo(promptInfo)
@@ -171,6 +163,35 @@ function prepareShortHeaders(endpointId)
     genAIHeaders.topp = 0.95;    
     genAIHeaders.endpointid = endpointId;
     return genAIHeaders;
+}
+
+function prepareOpenNetworkHeaders(nlpInfo)
+{
+    const openNetworkHeaders = {};    
+    openNetworkHeaders[KAPIKeys.WEATHER] = nlpInfo.headers[KAPIKeys.WEATHER];
+    openNetworkHeaders[KAPIKeys.VIDEO] = nlpInfo.headers[KAPIKeys.VIDEO];
+    openNetworkHeaders[KAPIKeys.MANDI] = nlpInfo.headers[KAPIKeys.MANDI];
+    return openNetworkHeaders;
+}
+
+function prepareAgentMessage(nlpInfo, nlpResponse, domainName)
+{
+    const agentMessage = {};
+
+    const context = {};
+    context.domain = `${process.env.AGENTIC_DOMAIN_PREFIX}${domainName}`;
+    context.version = process.env.AGENTIC_VERSION;
+    context.transaction_id = nlpInfo.transaction_id;
+    context.message_id = nlpInfo.message_id;    
+    context.location = nlpInfo.location;
+    agentMessage.context = context;
+
+    const message = {};
+    message.network = nlpResponse.formatted_response.networks[0]; 
+    agentMessage.message = message;
+
+    agentMessage.preferred_network = nlpInfo.preferred_networks[domainName];
+    return agentMessage;
 }
 
 async function detectText(sourceText)
@@ -203,12 +224,12 @@ async function detectText(sourceText)
 
 async function translateText(nlpInfo)
 {
-    const detectTextInfo = await detectText(nlpInfo.text);
+    const detectTextInfo = await detectText(nlpInfo.query);
     if (detectTextInfo.detections[0].languageCode === "en")
     {
         const translatedInfo = {};
-        translatedInfo.source = nlpInfo.text;
-        translatedInfo.target = nlpInfo.text;
+        translatedInfo.source = nlpInfo.query;
+        translatedInfo.target = nlpInfo.query;
         return translatedInfo;
     }
 
@@ -243,24 +264,17 @@ async function translateText(nlpInfo)
     }
 }
 
-async function searchONDCAgent(nlpResponse, nlpInfo)
+async function searchNetworkAgent(nlpResponse, nlpInfo, domainName, url)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
+    requestOptions.headers = prepareOpenNetworkHeaders(nlpInfo);
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];
-
-    const intent = {};
-    intent.query = nlpInfo.text;
-    requestBody.network.intent[0] = intent;
+    const requestBody = prepareAgentMessage(nlpInfo, nlpResponse, domainName);
 
     try
     {
-        const response = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/${KNetworkActions.SearchAction}`,
-                                                requestBody, requestOptions);
+        const response = await Axios.post(`${url}/search`, requestBody, requestOptions);
         const networkResponse = processGenericResponse(response);
         return networkResponse;
     }
@@ -270,150 +284,124 @@ async function searchONDCAgent(nlpResponse, nlpInfo)
     }
 }
 
-async function actionONDCAgent(networkInfo, actionString)
-{
-    return {};
-}
+// async function searchONDCAgent(nlpResponse, nlpInfo)
+// {
+//     const requestOptions = {};
+//     requestOptions.httpsAgent = _axiosAgent;
+//     requestOptions.headers = prepareOpenNetworkHeaders(nlpInfo);
 
-async function searchONESTAgent(nlpResponse, nlpInfo)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
+//     const requestBody = prepareAgentMessage(nlpInfo, nlpResponse, KNetworkNames.ONDC);
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];
+//     try
+//     {
+//         const response = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/search`,
+//                                                 requestBody, requestOptions);
+//         const networkResponse = processGenericResponse(response);
+//         return networkResponse;
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.ONESTAgent]}/${KNetworkActions.SearchAction}`,
-                                                requestBody, requestOptions);
-        const networkResponse = processListResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+// async function searchONESTAgent(nlpResponse, nlpInfo)
+// {
+//     return null;
+// }
 
-async function searchVideoAgent(nlpResponse, nlpInfo)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
+// async function searchAgriAgent(nlpResponse, nlpInfo)
+// {
+//     return null;
+// }
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];
+// async function searchVideoAgent(nlpResponse, nlpInfo)
+// {    
+//     const requestOptions = {};
+//     requestOptions.httpsAgent = _axiosAgent;
+//     requestOptions.headers = prepareOpenNetworkHeaders(nlpInfo);
 
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.VideoAgent]}/search`,
-                                                requestBody, requestOptions);
-        const networkResponse = processGenericResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+//     const requestBody = prepareAgentMessage(nlpInfo, nlpResponse, KNetworkNames.VIDEO);
 
-async function searchWeatherAgent(nlpResponse, nlpInfo)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
+//     try
+//     {
+//         const response = await Axios.post(`${_allUrls[KMicroServices.VideoAgent]}/search`,
+//                                             requestBody, requestOptions);
+//         const networkResponse = processGenericResponse(response);
+//         return networkResponse;
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];
+// async function searchWeatherAgent(nlpResponse, nlpInfo)
+// {
+//     const requestOptions = {};
+//     requestOptions.httpsAgent = _axiosAgent;
+//     requestOptions.headers = prepareOpenNetworkHeaders(nlpInfo);
 
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.WeatherAgent]}/search`,
-                                                requestBody, requestOptions);
-        const networkResponse = processGenericResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+//     const requestBody = prepareAgentMessage(nlpInfo, nlpResponse, KNetworkNames.WEATHER);
 
-async function searchEnamMandiAgent(nlpResponse, nlpInfo)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
+//     try
+//     {
+//         const response = await Axios.post(`${_allUrls[KMicroServices.WeatherAgent]}/search`,
+//                                                 requestBody, requestOptions);
+//         const networkResponse = processGenericResponse(response);
+//         return networkResponse;
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];    
+// async function searchMandiAgent(nlpResponse, nlpInfo)
+// {    
+//     const requestOptions = {};
+//     requestOptions.httpsAgent = _axiosAgent;
+//     requestOptions.headers = prepareOpenNetworkHeaders(nlpInfo);
 
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.EnamMandiAgent]}/search`,
-                                                requestBody, requestOptions);
-        const networkResponse = processGenericResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+//     const requestBody = prepareAgentMessage(nlpInfo, nlpResponse, "MANDI");
+
+//     try
+//     {
+//         const response = await Axios.post(`${_allUrls[KMicroServices.MandiAgent]}/search`,
+//                                                 requestBody, requestOptions);
+//         const networkResponse = processGenericResponse(response);
+//         return networkResponse;
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
 async function searchLLMAgent(nlpResponse, nlpInfo)
 {
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
+    return null;
 
-    const requestBody = {};
-    requestBody.transactionId = nlpInfo.transactionId;
-    requestBody.messageId = nlpInfo.messageId;
-    requestBody.network = nlpResponse.formatted_response.networks[0];
-    requestBody.network.llm.histories = nlpInfo.histories;
+    // const requestOptions = {};
+    // requestOptions.httpsAgent = _axiosAgent;
 
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
-                                                requestBody, requestOptions);
-        const networkResponse = processGenericResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+    // const requestBody = {};
+    // requestBody.transactionId = nlpInfo.transactionId;
+    // requestBody.messageId = nlpInfo.messageId;
+    // requestBody.network = nlpResponse.formatted_response.networks[0];
+    // requestBody.network.llm.histories = nlpInfo.histories;
 
-async function actionONESTAgent(networkInfo, actionString)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-
-    const requestBody = networkInfo;
-
-    try
-    {
-        const response = await Axios.post(`${_allUrls[KMicroServices.ONESTAgent]}/${actionString}`,
-                                                requestBody, requestOptions);
-        const networkResponse = processGenericResponse(response);
-        return networkResponse;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
-
-function callUIAction(nlpResponse)
-{
-    return nlpResponse.formatted_response;
+    // try
+    // {
+    //     const response = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
+    //                                             requestBody, requestOptions);
+    //     const networkResponse = processGenericResponse(response);
+    //     return networkResponse;
+    // }
+    // catch(exception)
+    // {
+    //     throw exception;
+    // }
 }
 
 async function routeSearchToNetwork(nlpResponse, nlpInfo)
@@ -422,50 +410,61 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
     const networkName = formattedResponse.networks[0].name;
     let networkResponse = null;
     let httpStatusCode = 200;
+    let domainName = null;
+    let url = null;
 
     switch(networkName)
     {
         case KNetworkNames.ONDC:
-            networkResponse = await searchONDCAgent(nlpResponse, nlpInfo);
+            {
+                domainName = KNetworkNames.ONDC;
+                url = `${_allUrls[KMicroServices.ONDCAgent]}`;                
+            }
+            // networkResponse = await searchONDCAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.ONEST:
             networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
+            httpStatusCode = 501;
+            break;
+        case KNetworkNames.AGRI:
+            {
+                domainName = KNetworkNames.AGRI;
+                url = `${_allUrls[KMicroServices.AgriAgent]}`;
+            }
+            // networkResponse = await searchAgriAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.VIDEO:
-            networkResponse = await searchVideoAgent(nlpResponse, nlpInfo);
+            {
+                domainName = KNetworkNames.VIDEO;
+                url = `${_allUrls[KMicroServices.VideoAgent]}`;
+            }
+            // networkResponse = await searchVideoAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.WEATHER:
-            networkResponse = await searchWeatherAgent(nlpResponse, nlpInfo);
+            {
+                domainName = KNetworkNames.WEATHER;
+                url = `${_allUrls[KMicroServices.WeatherAgent]}`;
+            }
+            // networkResponse = await searchWeatherAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.LLM:
-            networkResponse = await searchLLMAgent(nlpResponse, nlpInfo);
+            {
+                domainName = KNetworkNames.LLM;
+                url = `${_allUrls[KMicroServices.LLMAgent]}`;
+            }
+            // networkResponse = await searchLLMAgent(nlpResponse, nlpInfo);
             break;
-        case KNetworkNames.ENAMMANDI:
-            networkResponse = await searchEnamMandiAgent(nlpResponse, nlpInfo);
-            break;
-        case KNetworkNames.UI:
-            networkResponse = callUIAction(nlpResponse);
-            break;
-    }
-    return { networkResponse, httpStatusCode };
-}
-
-async function routeToNetwork(networkInfo, actionString)
-{
-    const domainName = networkInfo.context.domain;
-    const networkName = ((domainName.split(":"))[0]).toUpperCase();
-    let networkResponse = null;
-
-    switch(networkName)
-    {
-        case KNetworkNames.ONDC:
-            networkResponse = await actionONDCAgent(networkInfo, actionString);
-            break;
-        case KNetworkNames.ONEST:
-            networkResponse = await actionONESTAgent(networkInfo, actionString);
+        case KNetworkNames.MANDI:
+            {
+                domainName = "MANDI";
+                url = `${_allUrls[KMicroServices.MandiAgent]}`;
+            }
+            // networkResponse = await searchMandiAgent(nlpResponse, nlpInfo);
             break;        
     }
-    return networkResponse;
+
+    networkResponse = await searchNetworkAgent(nlpResponse, nlpInfo, domainName, url);
+    return { networkResponse, httpStatusCode };
 }
 
 async function processNLPInfo(nlpInfo)
@@ -476,7 +475,7 @@ async function processNLPInfo(nlpInfo)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = `${nlpInfo.prompt}\n\n${nlpInfo.text}`;
+    promptInfo.prompt = `${nlpInfo.prompt}\n\n${nlpInfo.query}`;
     const contentsList = prepareNLPContentInfo(promptInfo);
     requestBody.contents = contentsList;
 
@@ -512,7 +511,7 @@ _express.post("/search", async (request, response) =>
 {
     const nlpInfo = prepareNLPInfo(request);
     const translatedInfo = await translateText(nlpInfo);
-    nlpInfo.text = translatedInfo.target;
+    nlpInfo.query = translatedInfo.target;
 
     const results = {};
 
@@ -529,85 +528,9 @@ _express.post("/search", async (request, response) =>
         response.status(errorInfo.code).send(results);
     }
 });
-
-_express.post("/select", async (request, response) =>
-{
-    const netwrokInfo = prepareNetworkInfo(request);
-    const results = {};
-
-    try
-    {
-        const responseList = await routeToNetwork(netwrokInfo, KNetworkActions.SelectAction);
-        results.results = responseList;
-        response.send(results);
-    }
-    catch(exception)
-    {
-        let errorInfo = prepareErrorMessage(exception);
-        results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);
-    }
-});
-
-_express.post("/init", async (request, response) =>
-{
-    const netwrokInfo = prepareNetworkInfo(request);
-    const results = {};
-
-    try
-    {
-        const responseList = await routeToNetwork(netwrokInfo, KNetworkActions.InitAction);
-        results.results = responseList;
-        response.send(results);
-    }
-    catch(exception)
-    {
-        let errorInfo = prepareErrorMessage(exception);
-        results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);
-    }
-});
-
-_express.post("/confirm", async (request, response) =>
-{
-    const netwrokInfo = prepareNetworkInfo(request);
-    const results = {};
-
-    try
-    {
-        const responseList = await routeToNetwork(netwrokInfo, KNetworkActions.ConfirmAction);
-        results.results = responseList;
-        response.send(results);
-    }
-    catch(exception)
-    {
-        let errorInfo = prepareErrorMessage(exception);
-        results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);
-    }
-});
-
-_express.post("/status", async (request, response) =>
-    {
-        const netwrokInfo = prepareNetworkInfo(request);
-        const results = {};
-    
-        try
-        {
-            const responseList = await routeToNetwork(netwrokInfo, KNetworkActions.StatusAction);
-            results.results = responseList;
-            response.send(results);
-        }
-        catch(exception)
-        {
-            let errorInfo = prepareErrorMessage(exception);
-            results.results = errorInfo.message;
-            response.status(errorInfo.code).send(results);
-        }
-    });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 10005;
+var port = process.env.port || process.env.PORT || 10003;
 _server.listen(port);
 initializeAgent();
 
