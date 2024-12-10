@@ -92,7 +92,13 @@ function prepareLLMChatInfo(request)
     llmInfo.message = request.body.message;
     llmInfo.prompt = `${KLLMChatPrompt}`;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
-    llmInfo.query = llmInfo.message.network.filters[0].query;
+
+    const filters = llmInfo.message.network.filters;
+    if (Array.isArray(filters) == true)
+        llmInfo.query = filters[0].query;
+    else
+        llmInfo.query = filters.query;
+
     return llmInfo;
 }
 
