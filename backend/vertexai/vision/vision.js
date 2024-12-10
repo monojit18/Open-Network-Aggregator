@@ -391,6 +391,17 @@ async function detectFile(textInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /vision/labels
  * @method POST
  * @description Detects Labels in an Image

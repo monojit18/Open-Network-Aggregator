@@ -330,6 +330,17 @@ async function recognizeStream(speechInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /texttospeech/voices
  * @method GET
  * @description List All types of voices supported by the API

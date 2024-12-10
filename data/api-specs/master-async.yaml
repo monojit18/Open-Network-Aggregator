@@ -47,6 +47,7 @@ paths:
                     $ref: '#/components/schemas/PreferredNetwork'                  
                 intended_verticals:
                   type: object
+                  # For future use
                   description: Contains a list of verticals supported by Open Networks and intended by the end user.|
                     This field would be ignored for non-network Content providers viz. Video, Weather etc.
                   properties:

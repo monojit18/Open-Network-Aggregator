@@ -385,6 +385,17 @@ async function generateEmbeddings(contentInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /genai/content/:sessionId?/:type?
  * @method POST
  * @description Generate Description from Images and Videos

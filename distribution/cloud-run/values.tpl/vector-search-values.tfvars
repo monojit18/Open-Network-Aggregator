@@ -1,7 +1,7 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
@@ -14,11 +14,11 @@ cloudrunInfo = {
         traffic = 100
         requests = {
             cpu = "100m"
-            memory = "128Mi"
+            memory = "256Mi"
         }
         limits = {
             cpu = "1000m"
-            memory = "256Mi"
+            memory = "512Mi"
         }
     }
     ports = {
@@ -37,7 +37,7 @@ cloudrunInfo = {
     },    
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
     }]
     members = ["allUsers"]
 }

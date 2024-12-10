@@ -737,6 +737,17 @@ async function performMedLMTextGeneration(medLMInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /genai/text/:sessionId?/:type?
  * @method POST
  * @description Generate Text from Prompts
