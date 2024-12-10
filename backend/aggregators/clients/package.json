@@ -15,11 +15,11 @@
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "axios": "^1.7.5",
+        "axios": "^1.7.9",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
         "jshint": "^2.13.6",
-        "socket.io-client": "^4.7.5"
+        "socket.io-client": "^4.8.1"
     }
 }

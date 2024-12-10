@@ -292,6 +292,17 @@ async function deleteBucket(storageInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /storage/bucket/:bucketName/signeduri/:fileName
  * @method GET
  * @description Retrieve SignedURI of the file within a bucket

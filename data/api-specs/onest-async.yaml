@@ -159,7 +159,7 @@ components:
       - domain
       - country
       - city
-      - core_version
+      - version
       - transaction_id
       - message_id
       - timestamp
@@ -303,8 +303,7 @@ components:
               type: array
               items:
                 type: object
-                description: This can be a list of any type of objects as per the network or domain BAP belongs to;|
-                  and supported by Google Agentic framework e.g. ONDC, ONEST etc.
+                description: This can be a list of any type of objects describing the data from ONEST network.
           required:
           - descriptor
           - embedding_url

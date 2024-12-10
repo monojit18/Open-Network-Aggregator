@@ -1,6 +1,6 @@
 apiVersion: v2
 name: smoke-test-chart
-description: A Helm chart for ServiceMeshWorkshop Infra Smoke Tests
+description: A Helm chart for Smoke Tests
 
 # A chart can be either an 'application' or a 'library' chart.
 #

@@ -14,12 +14,12 @@
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "@google-cloud/aiplatform": "^3.26.0",
-        "axios": "^1.7.4",
+        "@google-cloud/aiplatform": "^3.34.0",
+        "axios": "^1.7.9",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
-        "google-auth-library": "^9.13.0",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "google-auth-library": "^9.15.0",
         "jshint": "^2.13.6"
     }
 }

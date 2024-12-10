@@ -492,7 +492,7 @@ async function processNLPInfo(nlpInfo)
         return domainResponse;
     }
     catch(exception)
-    {
+    {        
         throw exception;
     }
 }
@@ -507,6 +507,12 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 _express.post("/search", async (request, response) =>
 {
     const nlpInfo = prepareNLPInfo(request);

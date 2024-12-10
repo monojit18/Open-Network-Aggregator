@@ -469,6 +469,17 @@ async function performVQA(contentInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /genai/image/gen
  * @method POST
  * @description Generate Image from Prompts
