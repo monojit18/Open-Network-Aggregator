@@ -666,7 +666,10 @@ async function generateMedLMContent(medLMInfo)
             "Authorization": `Bearer ${accessToken}`
         };
 
-        const requestBody = medLMInfo.instances;
+        const requestBody = {};
+        requestBody.instances = medLMInfo.instances;
+        requestBody.parameters = medLMInfo.parameters;
+        
         const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
         const medLMContent = medLMResult.data;
         return medLMContent;
@@ -736,17 +739,6 @@ async function performMedLMTextGeneration(medLMInfo)
 }
 
 /* API DEFINITIONS - START */
-/**
- * @fires /
- * @method GET
- * @description Service Healthcheck
- */
-_express.get("/", async (request, response) =>
-{
-    const results = {};
-    response.status(200).send(results);
-});
-
 /**
  * @fires /genai/text/:sessionId?/:type?
  * @method POST
