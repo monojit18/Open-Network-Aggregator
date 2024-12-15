@@ -1,0 +1,902 @@
+#Open Network Aggregator
+====================================================================================================
+#Set Local Varaibles
+====================
+BASEFOLDERPATH=""
+HELPERS_PATH=""
+OWNER=
+PROJECT_ID=
+GSA_DISPLAY_NAME=
+GSA=$GSA_DISPLAY_NAME@$PROJECT_ID.iam.gserviceaccount.com
+VPC_NAME=
+CLUSTER_SUBNET_NAME=gke-subnet
+PROXY_SUBNET_NAME=proxy-subnet
+PSC_SUBNET_NAME=psc-subnet
+MAINTENANCE_SUBNET_NAME=management_subnet
+CLUSTER=gke-dev-cluster
+NODEPOOL=gkeappspool
+REGION=
+ZONE=
+IP_ADDRESS_NAME=dev-glb-lb-ip
+CERTIFICATE_NAME=
+DOMAIN1_NAME=
+DOMAIN2_NAME=
+DOMAIN3_NAME=
+DOMAIN_LIST=$DOMAIN1_NAME,$DOMAIN2_NAME,$DOMAIN3_NAME
+DNS_ZONE=
+AR_REPO=
+JUMP_SERVER_NAME=
+
+gcloud auth login
+gcloud auth list
+gcloud config set account $OWNER
+
+gcloud config set project $PROJECT_ID
+#gcloud auth application-default login
+
+gcloud config set project $PROJECT_ID
+
+#Enable Services
+====================
+gcloud services enable cloudresourcemanager.googleapis.com
+gcloud services enable compute.googleapis.com
+gcloud services enable container.googleapis.com
+gcloud services enable storage.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+gcloud services enable run.googleapis.com
+gcloud services enable aiplatform.googleapis.com
+gcloud services enable translate.googleapis.com
+gcloud services enable texttospeech.googleapis.com
+gcloud services enable vision.googleapis.com
+gcloud services enable apigee.googleapis.com
+gcloud services enable servicenetworking.googleapis.com
+gcloud services enable cloudkms.googleapis.com
+gcloud services enable mesh.googleapis.com
+gcloud services enable certificatemanager.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable sqladmin.googleapis.com
+gcloud services enable redis.googleapis.com
+gcloud services enable secretmanager.googleapis.com
+
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
+
+#Permissions
+====================
+gcloud iam service-accounts list
+gcloud iam service-accounts create $GSA_DISPLAY_NAME --display-name=$GSA_DISPLAY_NAME --description="GSA for Open Network Aggregator"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/owner
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/iam.serviceAccountUser
+gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/iam.serviceAccountTokenCreator
+
+gcloud iam service-accounts list
+gcloud iam service-accounts keys create $HELPERS_PATH/$GSA_DISPLAY_NAME.json --iam-account=$GSA --key-file-type=json
+gcloud auth activate-service-account $GSA --key-file=$HELPERS_PATH/$GSA_DISPLAY_NAME.json
+#gcloud config set account $GSA
+gcloud auth list
+
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
+
+Storage Buckets
+=====================
+#gcloud storage buckets create gs://$PROJECT_ID-terra-stg --location=us-central1
+#gcloud storage buckets create gs://open-network-aggr-stg-22112024 --location=us-central1
+
+#Manual deployment
+====================================================================================
+====================================================================================
+Artifact Registry
+=====================
+gcloud artifacts repositories create $AR_REPO --repository-format=docker --location=$REGION
+gcloud artifacts repositories list --location=$REGION
+gcloud artifacts repositories describe $AR_REPO --location=$REGION
+#gcloud artifacts repositories delete $AR_REPO --location=$REGION
+==========================================================================================
+#GKE Cluster Approach (Private)
+====================================================================================================
+Network
+====================================
+gcloud compute networks create $VPC_NAME --subnet-mode=custom --bgp-routing-mode=regional --mtu=1460
+#gcloud compute networks delete $VPC_NAME
+
+gcloud compute networks subnets create $CLUSTER_SUBNET_NAME --network=$VPC_NAME --range=10.0.0.0/22 --region=$REGION
+#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME --region=$REGION
+
+gcloud compute networks subnets create $PSC_SUBNET_NAME --purpose=PRIVATE_SERVICE_CONNECT --role=ACTIVE \
+--network=$VPC_NAME --range=10.0.4.0/24
+#gcloud compute networks subnets delete $PSC_SUBNET_NAME
+
+gcloud compute networks subnets create $PROXY_SUBNET_NAME --purpose=REGIONAL_MANAGED_PROXY --role=ACTIVE \
+--network=$VPC_NAME  --range=10.0.5.0/24
+#gcloud compute networks subnets delete $PROXY_SUBNET_NAME
+
+gcloud compute networks subnets update $CLUSTER_SUBNET_NAME \
+--add-secondary-ranges=pods-range=10.1.0.0/16,services-range=10.2.0.0/16
+#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME
+
+gcloud compute networks subnets create $MAINTENANCE_SUBNET_NAME --network=$VPC_NAME --range=10.0.6.0/24
+#gcloud compute networks subnets delete $MAINTENANCE_SUBNET_NAME
+
+gcloud compute networks subnets list --network=$VPC_NAME
+
+gcloud compute firewall-rules create allow-egress --allow=all --destination-ranges=0.0.0.0/0 \
+--direction=EGRESS --network=$VPC_NAME --priority=100
+gcloud compute firewall-rules delete allow-egress
+
+gcloud compute firewall-rules create allow-http-ingress --allow=tcp:80,tcp:443 --source-ranges=0.0.0.0/0 \
+--direction=INGRESS --network=$VPC_NAME --priority=100
+#gcloud compute firewall-rules delete allow-http-ingress
+
+gcloud compute firewall-rules create allow-ssh --allow=tcp:22 --source-ranges=0.0.0.0/0 \
+--direction=INGRESS --network=$VPC_NAME --priority=101
+#gcloud compute firewall-rules delete allow-ssh
+
+gcloud compute firewall-rules create allow-gcp-health-check --network=$VPC_NAME \
+--action=allow --direction=INGRESS --source-ranges=130.211.0.0/22,35.191.0.0/16 \
+--rules=tcp --priority=103
+#gcloud compute firewall-rules delete allow-gcp-health-check
+
+gcloud compute firewall-rules create allow-gcp-proxies --network=$VPC_NAME \
+--action=allow --direction=INGRESS --source-ranges=10.0.5.0/24 \
+--rules=tcp:80,tcp:443,tcp:8080 --priority=104
+#gcloud compute firewall-rules delete allow-gcp-proxies
+
+gcloud compute firewall-rules  list --format="table(name, network)" --filter="network=$VPC_NAME"
+
+#Jumper VM
+===============
+gcloud compute addresses create jump-server-ip --region=$REGION
+#gcloud compute addresses delete jump-server-ip
+JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
+
+gcloud compute addresses create jump-server-private-ip --subnet=$MAINTENANCE_SUBNET_NAME \
+--addresses=10.0.6.100 --region=$REGION
+JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
+#gcloud compute addresses delete jump-server-private-ip
+
+gcloud compute instances create $JUMP_SERVER_NAME --machine-type=n2d-standard-2 \
+--image-family=ubuntu-pro-2004-lts --image-project=ubuntu-os-pro-cloud \
+--network=$VPC_NAME --subnet=$MAINTENANCE_SUBNET_NAME --address=$JUMPSERVER_IP \
+--private-network-ip=$JUMPSERVER_PRIVATE_IP --zone=$ZONE --project=$PROJECT_ID
+#gcloud compute instances delete $JUMP_SERVER_NAME --zone=$ZONE --project=$PROJECT_ID
+
+gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].networkIP)" \
+--project=$PROJECT_ID
+gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].accessConfigs[0].natIP)" \
+--project=$PROJECT_ID
+
+Certificate
+============
+gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
+gcloud compute ssl-certificates list --global
+#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
+
+IP Address
+============
+gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
+gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
+#gcloud compute addresses delete $IP_ADDRESS_NAME --global
+
+#Add DNS Records
+================
+GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
+gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
+--type=A --ttl=60 --zone=$DNS_ZONE
+#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
+
+#Create GKE Private Cluster
+====================================
+gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
+--enable-ip-alias --machine-type=n2d-standard-2 --gateway-api=standard \
+--num-nodes=1 --max-pods-per-node=40 \
+--network=$VPC_NAME --subnetwork=$CLUSTER_SUBNET_NAME \
+--cluster-secondary-range-name=pods-range --services-secondary-range-name=services-range \
+--service-account=$GSA --workload-pool=$PROJECT_ID.svc.id.goog \
+--enable-master-authorized-networks --enable-private-nodes --enable-private-endpoint \
+--master-authorized-networks=$JUMPSERVER_PRIVATE_IP/32 --master-ipv4-cidr=10.0.7.0/28 \
+--addons GcsFuseCsiDriver,HttpLoadBalancing
+#gcloud container clusters delete $CLUSTER --region=$REGION
+
+gcloud container clusters get-credentials $CLUSTER --project=$PROJECT_ID --region=$REGION
+==========================================================================================
+#Create new Nodepool to host application Workloads
+=====================================================
+gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION \
+--num-nodes=1 --enable-autoscaling --machine-type=n2d-standard-4 \
+--min-nodes=1 --max-nodes=50 --max-pods-per-node=30 \
+--service-account=$GSA
+#gcloud container node-pools delete gkeappspool --cluster=$CLUSTER --region=$REGION
+====================================================================================
+====================================================================================
+#Terraform deployment
+====================================================================================
+Pre-Config
+====================================================================================
+PROJECT_NAME=
+DISTRIBUTION_PATH=""
+HELPERS_PATH=""
+WORKING_DIR="gke/cluster/scripts/pre-config"
+TFVARS_PATH="../../values/dev/pre-config"
+TFVARS_FILE_PATH=$TFVARS_PATH/pre-config.tfvars
+BACKEND_CONFIG=$TFVARS_PATH/backend.config
+
+cd $BASEFOLDERPATH/distribution
+
+gcloud builds submit --config="./builds/gke/gke-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
+_BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+#gcloud builds submit --config="./builds/gke/gke-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
+_BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
+====================================================================================
+Setup
+====================================================================================
+PROJECT_NAME=
+DISTRIBUTION_PATH=""
+HELPERS_PATH=""
+WORKING_DIR="gke/cluster/scripts/setup"
+TFVARS_PATH="../../values/dev/setup"
+TFVARS_FILE_PATH=$TFVARS_PATH/setup.tfvars
+BACKEND_CONFIG=$TFVARS_PATH/backend.config
+
+cd $BASEFOLDERPATH/distribution
+
+gcloud builds submit --config="./builds/gke/gke-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
+_BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+#gcloud builds submit --config="./builds/gke/gke-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
+_BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
+====================================================================================
+#Build Microservices
+==========================================================================================
+Storage
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/vertexai/storage
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=storagelib
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Vision
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/vertexai/vision
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=visionlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Speech
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/vertexai/speech
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=speechlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Translation
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/vertexai/translation
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=translatelib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+VectorSearch
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/vertexai/vectorsearch
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME="vector-searchlib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Imagegen
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/genai/image
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME="genai-imagelib"
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Textgen
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/genai/text
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=genai-textlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+MultiModal
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/genai/multimodal
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=genai-multimodallib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+/*
+Chatgenie (not needed)
+==========================================================================================
+Cloud build
+===========
+cd $BASEFOLDERPATH/backend/genai/chatgenie
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=chatgenie
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
+*/
+
+Event-Server
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-serverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR=cloud-run
+RESOURCE_NAME=event-serverlib
+
+gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+Event-Receiver
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-receiverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR=cloud-run
+RESOURCE_NAME=event-receiverlib
+
+gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+=====================================================================================================
+Adaptors
+=======================
+Agri
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/agri
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=agri-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Buyer
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/buyer
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=buyer-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Video
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/video
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=video-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Weather
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/weather
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=weather-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+MANDI
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/mandi
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=mandi-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+LLM
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/adapters/llm
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=llm-adapter
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Network-Agents
+============================================================================================
+Integration-Agents
+=======================
+Agri-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/networks/agri
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=agri-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+ONDC-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/networks/ondc
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=ondc-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Video-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/video
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=video-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Weather-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/weather
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=weather-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+MANDI-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/mandi
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=mandi-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+LLM-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/llm
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=llm-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Master-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/master
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=master-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+===========================================================================
+
+#Connect to the Jumper VM
+===========================================================================
+gcloud compute ssh $JUMP_SERVER_NAME --project=$PROJECT_ID --tunnel-through-iap
+#mkdir csm
+#exit
+
+#Copy necessary files to Jumper VM
+=====================================
+gcloud compute scp --recurse ./distribution sa_116380239112518528212@jumper-server:~/csm
+
+#Connect to the Jumper VM (again)
+=====================================
+gcloud compute ssh $JUMP_SERVER_NAME --project=$PROJECT_ID --tunnel-through-iap
+
+#Install Docker
+=========================
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo groupadd docker
+sudo usermod -aG docker $USER
+#Log out and log back in so that your group membership is re-evaluated
+docker run hello-world
+
+#Install Kubectl
+=========================
+sudo snap install kubectl --classic
+kubectl version --client
+
+#Install Helm
+=========================
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+
+#Install gcloud CLI
+====================
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates gnupg curl
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+sudo apt-get update && sudo apt-get install google-cloud-cli
+gcloud init
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+
+#Create and Operate the Cluster
+================================
+#Set Local Varaibles (inside Jumper VM)
+================================================
+BASEFOLDERPATH="./csm"
+OWNER=
+PROJECT_ID=
+GSA_DISPLAY_NAME=
+GSA=$GSA_DISPLAY_NAME@$PROJECT_ID.iam.gserviceaccount.com
+VPC_NAME=
+CLUSTER_SUBNET_NAME=
+PROXY_SUBNET_NAME=
+PSC_SUBNET_NAME=
+CLUSTER=gke-private-cluster
+NODEPOOL=gkeappspool
+REGION=
+ZONE=
+IP_ADDRESS_NAME=
+CERTIFICATE_NAME=
+DOMAIN1_NAME=
+DOMAIN2_NAME=
+DOMAIN3_NAME=
+DOMAIN_LIST=$DOMAIN1_NAME,$DOMAIN2_NAME,$DOMAIN3_NAME
+DNS_ZONE=
+AR_REPO=$PROJECT_ID-repo
+JUMP_SERVER_NAME=
+MAINTENANCE_SUBNET_NAME=
+JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
+JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
+
+#gcloud auth login
+gcloud auth list
+
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
+===================================================================================================
+#K8s gateway API
+======================================================
+#gcloud container clusters describe $CLUSTER --region=$REGION --format json
+gcloud container clusters get-credentials $CLUSTER --project=$PROJECT_ID --region=$REGION
+
+#External Gateway
+==================
+k create ns gateway-ns
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
+k get Gateway -n gateway-ns
+
+#Smoke services
+===============================================================================================
+#Add Routes
+==============
+k create ns smoke
+k create serviceaccount smoke-sa -n smoke
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+k get HttpRoute -n smoke
+
+#Deploy Smoke Microservices
+============================
+helm upgrade --install --create-namespace smoke-tests-chart-apache $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/ -n smoke \
+-f $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/values/values-apache.yaml
+#helm uninstall smoke-tests-chart-apache -n smoke
+
+k get po -n smoke
+==================================================================================================================
+#open-network-aggr services
+===============================================================================================
+#VertexAI services
+===============================================================================================
+#Add Routes
+==============
+k create ns vertexai
+#k delete ns vertexai
+
+k create serviceaccount vertexai-sa -n vertexai
+#k delete serviceaccount vertexai-sa -n vertexai
+
+gcloud iam service-accounts add-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+#gcloud iam service-accounts remove-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+
+k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account-
+
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+k get HttpRoute -n vertexai
+
+#Deploy Microservicesservices
+==========================================
+helm upgrade --install --create-namespace vertexai-charts-storage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-storage.yaml
+#helm uninstall vertexai-charts-storage -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-translate $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-translate.yaml
+#helm uninstall vertexai-charts-translate -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-vision $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-vision.yaml
+#helm uninstall vertexai-charts-vision -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-speech $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-speech.yaml
+#helm uninstall vertexai-charts-speech -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-genaitext $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaitext.yaml
+#helm uninstall vertexai-charts-genaitext -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-genaimultimodal $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaimultimodal.yaml
+#helm uninstall vertexai-charts-genaimultimodal -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-genaiimage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaiimage.yaml
+#helm uninstall vertexai-charts-genaiimage -n vertexai
+
+helm upgrade --install --create-namespace vertexai-charts-vectorsearch $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-vectorsearch.yaml
+#helm uninstall vertexai-charts-vectorsearch -n vertexai
+
+k get po -n vertexai
+==============================================================================================================================
+#Aggregator services
+===============================================================================================
+#Add Routes
+==============
+k create ns aggregator-dev
+#k delete ns aggregator-dev
+
+k create serviceaccount aggregator-dev-sa -n aggregator-dev
+#k delete serviceaccount aggregator-dev-sa -n aggregator-dev
+
+gcloud iam service-accounts add-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+#gcloud iam service-accounts remove-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+
+k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account-
+
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+k get HttpRoute -n aggregator-dev
+
+
+#Deploy Microservicesservices
+==========================================
+helm upgrade --install --create-namespace aggregator-charts-agri-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
+#helm uninstall aggregator-charts-agri-adapter -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-buyer-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
+#helm uninstall aggregator-charts-buyer-adapter -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-llm-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
+#helm uninstall aggregator-charts-llm-adapter -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-mandi-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
+#helm uninstall aggregator-charts-mandi-adapter -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-video-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
+#helm uninstall aggregator-charts-video-adapter -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-weather-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
+#helm uninstall aggregator-charts-weather-adapter -n aggregator-dev
+
+
+helm upgrade --install --create-namespace aggregator-charts-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
+#helm uninstall aggregator-charts-agri-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-ondc-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
+#helm uninstall aggregator-charts-ondc-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-llm-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
+#helm uninstall aggregator-charts-llm-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-mandi-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
+#helm uninstall aggregator-charts-mandi-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-video-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
+#helm uninstall aggregator-charts-video-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-weather-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
+#helm uninstall aggregator-charts-weather-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-master-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
+#helm uninstall aggregator-charts-master-agri-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-charts-master-retail-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
+#helm uninstall aggregator-charts-master-retail-agent -n aggregator-dev
+
+k get po -n aggregator-dev
+
