@@ -9,6 +9,7 @@
 **/*.plan
 **/*.tfvars
 **/values
+!**/values.tpl/**
 **/ingress
 **/manifests/vertexai
 **/k8s-gateway-api
