@@ -380,11 +380,11 @@ async function deleteGlossary(glossaryInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /
+ * @fires /healthz
  * @method GET
  * @description Service Healthcheck
  */
-_express.get("/", async (request, response) =>
+_express.get("/healthz", async (request, response) =>
 {
     const results = {};
     response.status(200).send(results);
