@@ -149,6 +149,12 @@ async function processOrerDetails(orderDetails)
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 _express.post("/order", async (request, response) =>
 {
     const orderDetails = request.body;

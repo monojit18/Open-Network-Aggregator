@@ -9,6 +9,6 @@ RUN npm install --unsafe-perm
 
 COPY . /order-callback/
 
-EXPOSE 10010
+EXPOSE 10011
 
 CMD npm start
