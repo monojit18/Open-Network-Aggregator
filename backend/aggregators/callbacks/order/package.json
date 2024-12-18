@@ -1,6 +1,6 @@
 {
-    "name": "seeker_client_app",
-    "description": "An ONEST Seeker Client App",
+    "name": "order_callback_app",
+    "description": "An Order callback App",
     "version": "1.0.0",
     "private": true,
     "license": "Apache",
@@ -9,7 +9,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "preinstall": "mkdir -p logs",
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios socket.io-client",
-        "start": "node client.js"
+        "start": "node order.js"
     },
     "engines": {
         "node": ">=16.0.0"

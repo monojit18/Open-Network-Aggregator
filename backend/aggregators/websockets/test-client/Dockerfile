@@ -1,13 +1,13 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /seeker-client
+WORKDIR /test-client
 
-COPY package*.json /seeker-client/
+COPY package*.json /test-client/
 
 RUN npm install --unsafe-perm
 
-COPY . /seeker-client/
+COPY . /test-client/
 
 EXPOSE 10010
 

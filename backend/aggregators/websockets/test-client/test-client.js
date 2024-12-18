@@ -38,11 +38,12 @@ const KRoomKey = "room";
 const KCallbackActions =
 {
     OnBuyerAction: "on_buyer",
+    OnOrderAction: "on_order",
     OnAgriction: "on_agri",
     OnWeatherAction: "on_weather",
     OnVideoAction: "on_video",
     OnLLMAction: "on_llm",
-    OnMandiAction: "on_enam_mandi",
+    OnMandiAction: "on_enam_mandi",    
     OnErrorAction: "on_error"
 }
 
@@ -93,6 +94,11 @@ function prepareSocketClient()
     {
         console.log(message);
     });
+
+    _socketIOClient.on(KCallbackActions.OnOrderAction, (message) =>
+        {
+            console.log(message);
+        });
 
     _socketIOClient.on(KCallbackActions.OnWeatherAction, (message) =>
     {

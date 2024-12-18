@@ -86,7 +86,6 @@ Storage Buckets
 
 #Manual deployment
 ====================================================================================
-====================================================================================
 Artifact Registry
 =====================
 gcloud artifacts repositories create $AR_REPO --repository-format=docker --location=$REGION
@@ -199,8 +198,6 @@ gcloud container clusters create $CLUSTER --release-channel=regular --region=$RE
 --addons GcsFuseCsiDriver,HttpLoadBalancing
 #gcloud container clusters delete $CLUSTER --region=$REGION
 
-gcloud container clusters get-credentials $CLUSTER --project=$PROJECT_ID --region=$REGION
-==========================================================================================
 #Create new Nodepool to host application Workloads
 =====================================================
 gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION \
@@ -209,14 +206,14 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 --service-account=$GSA
 #gcloud container node-pools delete gkeappspool --cluster=$CLUSTER --region=$REGION
 ====================================================================================
-====================================================================================
+
 #Terraform deployment
 ====================================================================================
 Pre-Config
 ====================================================================================
-PROJECT_NAME=
-DISTRIBUTION_PATH=""
-HELPERS_PATH=""
+PROJECT_NAME=onix-agentic
+DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
+HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/pre-config"
 TFVARS_PATH="../../values/dev/pre-config"
 TFVARS_FILE_PATH=$TFVARS_PATH/pre-config.tfvars
@@ -236,9 +233,9 @@ _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 ====================================================================================
 Setup
 ====================================================================================
-PROJECT_NAME=
-DISTRIBUTION_PATH=""
-HELPERS_PATH=""
+PROJECT_NAME=onix-agentic
+DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
+HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/setup"
 TFVARS_PATH="../../values/dev/setup"
 TFVARS_FILE_PATH=$TFVARS_PATH/setup.tfvars
@@ -263,7 +260,7 @@ Storage
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/vertexai/storage
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=storagelib
 PACKAGE_VERSION="v1.0"
@@ -278,7 +275,7 @@ Vision
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/vertexai/vision
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=visionlib
 PACKAGE_VERSION=v1.0
@@ -293,7 +290,7 @@ Speech
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/vertexai/speech
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=speechlib
 PACKAGE_VERSION=v1.0
@@ -308,7 +305,7 @@ Translation
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/vertexai/translation
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=translatelib
 PACKAGE_VERSION=v1.0
@@ -323,7 +320,7 @@ VectorSearch
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/vertexai/vectorsearch
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME="vector-searchlib"
 PACKAGE_VERSION="v1.0"
@@ -338,7 +335,7 @@ Imagegen
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/genai/image
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME="genai-imagelib"
 PACKAGE_VERSION="v1.0"
@@ -353,7 +350,7 @@ Textgen
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/genai/text
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=genai-textlib
 PACKAGE_VERSION=v1.0
@@ -368,7 +365,7 @@ MultiModal
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/genai/multimodal
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=genai-multimodallib
 PACKAGE_VERSION=v1.0
@@ -384,7 +381,7 @@ Chatgenie (not needed)
 Cloud build
 ===========
 cd $BASEFOLDERPATH/backend/genai/chatgenie
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=chatgenie
 PACKAGE_VERSION=v1.0
@@ -397,7 +394,7 @@ _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_V
 Event-Server
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=event-serverlib
 PACKAGE_VERSION=v1.0
@@ -424,7 +421,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
 Event-Receiver
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=event-receiverlib
 PACKAGE_VERSION=v1.0
@@ -455,7 +452,7 @@ Adaptors
 Agri
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/agri
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-adapter
 PACKAGE_VERSION=v1.0
@@ -468,7 +465,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Buyer
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/buyer
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=buyer-adapter
 PACKAGE_VERSION=v1.0
@@ -481,7 +478,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Video
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/video
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-adapter
 PACKAGE_VERSION=v1.0
@@ -494,7 +491,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Weather
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/weather
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-adapter
 PACKAGE_VERSION=v1.0
@@ -507,7 +504,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 MANDI
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/mandi
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-adapter
 PACKAGE_VERSION=v1.0
@@ -520,7 +517,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 LLM
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/llm
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-adapter
 PACKAGE_VERSION=v1.0
@@ -537,7 +534,7 @@ Integration-Agents
 Agri-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/networks/agri
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-agent
 PACKAGE_VERSION=v1.0
@@ -550,7 +547,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 ONDC-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/networks/ondc
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=ondc-agent
 PACKAGE_VERSION=v1.0
@@ -563,7 +560,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Video-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/video
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-agent
 PACKAGE_VERSION=v1.0
@@ -576,7 +573,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Weather-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/weather
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-agent
 PACKAGE_VERSION=v1.0
@@ -589,7 +586,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 MANDI-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/mandi
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-agent
 PACKAGE_VERSION=v1.0
@@ -602,7 +599,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 LLM-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/llm
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-agent
 PACKAGE_VERSION=v1.0
@@ -615,7 +612,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 Master-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/master
-PROJECT_NAME=
+PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=master-agent
 PACKAGE_VERSION=v1.0
@@ -740,9 +737,6 @@ k get Gateway -n gateway-ns
 ==============
 k create ns smoke
 k create serviceaccount smoke-sa -n smoke
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
-k get HttpRoute -n smoke
 
 #Deploy Smoke Microservices
 ============================
@@ -751,13 +745,17 @@ helm upgrade --install --create-namespace smoke-tests-chart-apache $BASEFOLDERPA
 #helm uninstall smoke-tests-chart-apache -n smoke
 
 k get po -n smoke
+
+#Add Routes
+========================
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+k get HttpRoute -n smoke
 ==================================================================================================================
 #open-network-aggr services
 ===============================================================================================
 #VertexAI services
 ===============================================================================================
-#Add Routes
-==============
 k create ns vertexai
 #k delete ns vertexai
 
@@ -773,10 +771,6 @@ gcloud iam service-accounts add-iam-policy-binding $GSA \
 
 k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account=$GSA
 #k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account-
-
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-k get HttpRoute -n vertexai
 
 #Deploy Microservicesservices
 ==========================================
@@ -813,11 +807,15 @@ helm upgrade --install --create-namespace vertexai-charts-vectorsearch $BASEFOLD
 #helm uninstall vertexai-charts-vectorsearch -n vertexai
 
 k get po -n vertexai
+
+#Add Routes
+============================
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+k get HttpRoute -n vertexai
 ==============================================================================================================================
 #Aggregator services
 ===============================================================================================
-#Add Routes
-==============
 k create ns aggregator-dev
 #k delete ns aggregator-dev
 
@@ -833,11 +831,6 @@ gcloud iam service-accounts add-iam-policy-binding $GSA \
 
 k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account=$GSA
 #k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account-
-
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-k get HttpRoute -n aggregator-dev
-
 
 #Deploy Microservicesservices
 ==========================================
@@ -900,3 +893,8 @@ helm upgrade --install --create-namespace aggregator-charts-master-retail-agent 
 
 k get po -n aggregator-dev
 
+#Add Routes
+============================
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+k get HttpRoute -n aggregator-dev

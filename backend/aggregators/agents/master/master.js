@@ -507,7 +507,7 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
-_express.get("/", async (request, response) =>
+_express.get("/healthz", async (request, response) =>
 {
     const results = {};
     response.status(200).send(results);
