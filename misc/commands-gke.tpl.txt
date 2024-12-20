@@ -166,25 +166,6 @@ gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfa
 gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].accessConfigs[0].natIP)" \
 --project=$PROJECT_ID
 
-Certificate
-============
-gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
-gcloud compute ssl-certificates list --global
-#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
-
-IP Address
-============
-gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
-gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
-#gcloud compute addresses delete $IP_ADDRESS_NAME --global
-
-#Add DNS Records
-================
-GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
-gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
---type=A --ttl=60 --zone=$DNS_ZONE
-#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
-
 #Create GKE Private Cluster
 ====================================
 gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
@@ -253,6 +234,26 @@ _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 _WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
 _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 ====================================================================================
+Certificate
+============
+gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
+gcloud compute ssl-certificates list --global
+#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
+
+IP Address
+============
+gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
+gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
+#gcloud compute addresses delete $IP_ADDRESS_NAME --global
+
+#Add DNS Records
+================
+GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
+gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
+--type=A --ttl=60 --zone=$DNS_ZONE
+#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
+==========================================================================================
+
 #Build Microservices
 ==========================================================================================
 Storage
@@ -390,63 +391,8 @@ gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deplo
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
 */
+============================================================================================
 
-Event-Server
-=============================================================================================
-cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
-PROJECT_NAME=onix-agentic
-REPO_NAME=$AR_REPO
-PACKAGE_NAME=event-serverlib
-PACKAGE_VERSION=v1.0
-
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg
-
-cd $BASEFOLDERPATH/distribution
-WORKING_DIR=cloud-run
-RESOURCE_NAME=event-serverlib
-
-gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-Event-Receiver
-=============================================================================================
-cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
-PROJECT_NAME=onix-agentic
-REPO_NAME=$AR_REPO
-PACKAGE_NAME=event-receiverlib
-PACKAGE_VERSION=v1.0
-
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg
-
-cd $BASEFOLDERPATH/distribution
-WORKING_DIR=cloud-run
-RESOURCE_NAME=event-receiverlib
-
-gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
-=====================================================================================================
 Adaptors
 =======================
 Agri
@@ -622,6 +568,62 @@ gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deplo
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 ===========================================================================
+Event-Server
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-serverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR=cloud-run
+RESOURCE_NAME=event-serverlib
+
+gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+Event-Receiver
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-receiverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+cd $BASEFOLDERPATH/distribution
+WORKING_DIR=cloud-run
+RESOURCE_NAME=event-receiverlib
+
+gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
+_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
+
+curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+=====================================================================================================
 
 #Connect to the Jumper VM
 ===========================================================================
@@ -733,8 +735,6 @@ k get Gateway -n gateway-ns
 
 #Smoke services
 ===============================================================================================
-#Add Routes
-==============
 k create ns smoke
 k create serviceaccount smoke-sa -n smoke
 
