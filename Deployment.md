@@ -556,7 +556,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/vertexai/storage
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME=storagelib
   PACKAGE_VERSION="v1.0"
@@ -607,7 +607,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/vertexai/speech
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME=speechlib
   PACKAGE_VERSION=v1.0
@@ -624,7 +624,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/vertexai/translation
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME=translatelib
   PACKAGE_VERSION=v1.0
@@ -641,7 +641,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/genai/image
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME="genai-imagelib"
   PACKAGE_VERSION="v1.0"
@@ -658,7 +658,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/genai/text
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME=genai-textlib
   PACKAGE_VERSION=v1.0
@@ -675,7 +675,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   ```bash
   cd $BASEFOLDERPATH/backend/genai/multimodal
-  PROJECT_NAME=onix-agentic
+  PROJECT_NAME=
   REPO_NAME=$AR_REPO
   PACKAGE_NAME=genai-multimodallib
   PACKAGE_VERSION=v1.0
@@ -696,7 +696,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/agri
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-adapter
 PACKAGE_VERSION=v1.0
@@ -711,7 +711,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/buyer
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=buyer-adapter
 PACKAGE_VERSION=v1.0
@@ -726,7 +726,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/video
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-adapter
 PACKAGE_VERSION=v1.0
@@ -741,7 +741,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/weather
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-adapter
 PACKAGE_VERSION=v1.0
@@ -756,7 +756,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/mandi
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-adapter
 PACKAGE_VERSION=v1.0
@@ -771,7 +771,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/adapters/llm
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-adapter
 PACKAGE_VERSION=v1.0
@@ -790,7 +790,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/networks/agri
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-agent
 PACKAGE_VERSION=v1.0
@@ -805,7 +805,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/networks/ondc
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=ondc-agent
 PACKAGE_VERSION=v1.0
@@ -820,7 +820,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/video
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-agent
 PACKAGE_VERSION=v1.0
@@ -835,7 +835,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/weather
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-agent
 PACKAGE_VERSION=v1.0
@@ -850,7 +850,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/mandi
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-agent
 PACKAGE_VERSION=v1.0
@@ -865,7 +865,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/llm
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-agent
 PACKAGE_VERSION=v1.0
@@ -880,7 +880,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/agents/master
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=master-agent
 PACKAGE_VERSION=v1.0
@@ -901,7 +901,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=event-serverlib
 PACKAGE_VERSION=v1.0
@@ -938,7 +938,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
 
 ```bash
 cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
-PROJECT_NAME=onix-agentic
+PROJECT_NAME=
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=event-receiverlib
 PACKAGE_VERSION=v1.0
@@ -1360,7 +1360,7 @@ gcloud config set compute/zone $ZONE
 
 ## References
 
-- [Open Network Aggregator](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/README.md)
+- [Open Network Aggregator](./README.md)
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
