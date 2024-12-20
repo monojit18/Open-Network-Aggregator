@@ -193,8 +193,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 Pre-Config
 ====================================================================================
 PROJECT_NAME=onix-agentic
-DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
-HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
+DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
 WORKING_DIR="gke/cluster/scripts/pre-config"
 TFVARS_PATH="../../values/dev/pre-config"
 TFVARS_FILE_PATH=$TFVARS_PATH/pre-config.tfvars
@@ -215,8 +214,7 @@ _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 Setup
 ====================================================================================
 PROJECT_NAME=onix-agentic
-DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
-HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
+DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
 WORKING_DIR="gke/cluster/scripts/setup"
 TFVARS_PATH="../../values/dev/setup"
 TFVARS_FILE_PATH=$TFVARS_PATH/setup.tfvars
