@@ -3,7 +3,7 @@
 #Set Local Varaibles
 ====================
 BASEFOLDERPATH=""
-HELPERS_PATH=""
+HELPERSPATH=""
 OWNER=
 PROJECT_ID=
 GSA_DISPLAY_NAME=
@@ -70,8 +70,8 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA 
 gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA --role=roles/iam.serviceAccountTokenCreator
 
 gcloud iam service-accounts list
-gcloud iam service-accounts keys create $HELPERS_PATH/$GSA_DISPLAY_NAME.json --iam-account=$GSA --key-file-type=json
-gcloud auth activate-service-account $GSA --key-file=$HELPERS_PATH/$GSA_DISPLAY_NAME.json
+gcloud iam service-accounts keys create $HELPERSPATH/$GSA_DISPLAY_NAME.json --iam-account=$GSA --key-file-type=json
+gcloud auth activate-service-account $GSA --key-file=$HELPERSPATH/$GSA_DISPLAY_NAME.json
 #gcloud config set account $GSA
 gcloud auth list
 
@@ -213,7 +213,7 @@ Pre-Config
 ====================================================================================
 PROJECT_NAME=onix-agentic
 DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
-HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
+HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/pre-config"
 TFVARS_PATH="../../values/dev/pre-config"
 TFVARS_FILE_PATH=$TFVARS_PATH/pre-config.tfvars
@@ -235,7 +235,7 @@ Setup
 ====================================================================================
 PROJECT_NAME=onix-agentic
 DISTRIBUTION_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Open-Network-Aggregator/distribution"
-HELPERS_PATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
+HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/setup"
 TFVARS_PATH="../../values/dev/setup"
 TFVARS_FILE_PATH=$TFVARS_PATH/setup.tfvars
