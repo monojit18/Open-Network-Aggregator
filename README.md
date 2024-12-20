@@ -12,11 +12,11 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 # High-Level View
 
-![high-level-view](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/high-level-view.png)
+![high-level-view](./assets/high-level-view.png)
 
 # High-Level Architecture
 
-![high-level-arch](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/high-level-arch.png)
+![high-level-arch](./assets/high-level-arch.png)
 
 - Multi-agent architecture
 - Bridge between Demand and Supply
@@ -38,23 +38,23 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 # Logical View
 
-![logical-view](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/logical-view.png)
+![logical-view](./assets/logical-view.png)
 
 # End to End Workflow
 
-![workflow](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/workflow.png)
+![workflow](./assets/workflow.png)
 
 # Sequential Flow
 
 ## All Open Networks
 
-![seqence-all-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-all-open-nw.png)
+![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
 
 
 
 ## Integrator Networks (*Outside Open Network*)
 
-![seqence-non-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-non-open-nw.png)
+![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
 
 # Integrator App
 
@@ -1164,7 +1164,7 @@ components:
 
 ## Order Placement
 
-![order-flow](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/order-flow.png)
+![order-flow](./assets/order-flow.png)
 
 How can Agentic framework integrate Order placement flow and the subsequent payment?
 
@@ -1232,7 +1232,7 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 ## References
 
-- [Open Network Aggregator - Specs](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/Deployment.md)
+- [Open Network Aggregator - Specs](./Deployment.md)
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
