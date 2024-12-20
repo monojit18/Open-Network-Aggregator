@@ -1,6 +1,6 @@
 # Multi Agent Aggregator for Open Network -
 
-## Deployment Approach
+## Api Specifications
 
 # Introduction
 
