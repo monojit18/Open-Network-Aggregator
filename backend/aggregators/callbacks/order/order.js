@@ -47,7 +47,7 @@ _express.use(Express.json
 _express.use(Express.urlencoded
 ({
     extended: true,
-    limit: '1mb'
+    limit: '10mb'
 }));
 
 _express.use(Cors
