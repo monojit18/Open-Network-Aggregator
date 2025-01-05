@@ -1,0 +1,39 @@
+deployment:
+  name: agriadapter-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: agriadapter-deploy 
+    version: v1
+  selectorLabels:
+    app: agriadapter-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: agriadapter-app
+    image: "<repo-name>/agri-adapter:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10001]
+    envVars:    
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: agriadapter-svc
+  selector:
+    app: agriadapter-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10001  

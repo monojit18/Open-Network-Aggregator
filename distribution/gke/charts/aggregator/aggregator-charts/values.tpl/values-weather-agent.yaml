@@ -1,0 +1,41 @@
+deployment:
+  name: weatheragent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: weatheragent-deploy 
+    version: v1
+  selectorLabels:
+    app: weatheragent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: weatheragent-app
+    image: "<repo-name>/weather-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:
+    - name: service
+      value: weather-agent:v1.0    
+    - name: WEATHER_ADAPTER_URL
+      value: http://weatheradapter-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: weatheragent-svc
+  selector:
+    app: weatheragent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  

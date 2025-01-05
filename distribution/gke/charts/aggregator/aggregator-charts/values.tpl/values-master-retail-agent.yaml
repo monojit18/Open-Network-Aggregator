@@ -1,0 +1,67 @@
+deployment:
+  name: master-retailagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: master-retailagent-deploy 
+    version: v1
+  selectorLabels:
+    app: master-retailagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: master-retailagent-app
+    image: "<repo-name>/master-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10003]
+    envVars:    
+    - name: AGENTIC_VERSION
+      value: "1.0.0"
+    - name: AGENTIC_DOMAIN_PREFIX
+      value: "domain:"
+    - name: AGENTIC_NLP_PROMPT
+      value: Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"
+    - name: AGENTIC_MODEL_ENDPOINT_ID
+      value: "4193564836128358400"
+    - name: STORAGELIB_HOST
+      value: http://storageapp-svc.vertexai.svc
+    - name: TRANSLATELIB_HOST
+      value: http://translateapp-svc.vertexai.svc
+    - name: GENAI_IMAGELIB_HOST
+      value: http://genaiimageapp-svc.vertexai.svc
+    - name: GENAI_VECTORSEARCHLIB_HOST
+      value: http://vectorsearchapp-svc.vertexai.svc
+    - name: GENAI_TEXTLIB_HOST
+      value: http://genaitextapp-svc.vertexai.svc
+    - name: GENAI_MULTILIB_HOST
+      value: http://genaimultimodalapp-svc.vertexai.svc
+    - name: ONDC_AGENT_URL
+      value: http://ondcagent-svc.aggregator-dev.svc
+    - name: VIDEO_AGENT_URL
+      value: http://videoagent-svc.aggregator-dev.svc
+    - name: WEATHER_AGENT_URL
+      value: http://weatheragent-svc.aggregator-dev.svc
+    - name: MANDI_AGENT_URL
+      value: http://mandiagent-svc.aggregator-dev.svc
+    - name: LLM_AGENT_URL
+      value: http://llmagent-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: master-retailagent-svc
+  selector:
+    app: master-retailagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10003  

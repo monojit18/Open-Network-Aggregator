@@ -1,0 +1,46 @@
+deployment:
+  name: weatheradapter-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: weatheradapter-deploy 
+    version: v1
+  selectorLabels:
+    app: weatheradapter-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: weatheradapter-app
+    image: "<repo-name>/weather-adapter:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10001]
+    envVars:
+    - name: service
+      value: weather-adapter:v1.0
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: WEATHER_SEARCH_URL
+      value: https://api.openweathermap.org/data/2.5/weather
+    - name: WEATHER_ICON_URL
+      value: https://openweathermap.org/img/wn"
+    - name: PROJECT_ID
+      value: <project-id>
+      
+service:
+  name: weatheradapter-svc
+  selector:
+    app: weatheradapter-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10001  

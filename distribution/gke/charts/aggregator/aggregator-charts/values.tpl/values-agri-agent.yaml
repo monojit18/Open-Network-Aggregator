@@ -1,0 +1,39 @@
+deployment:
+  name: agriagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: agriagent-deploy 
+    version: v1
+  selectorLabels:
+    app: agriagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: agriagent-app
+    image: "<repo-name>/agri-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:    
+    - name: AGRI_ADAPTER_URL
+      value: http://agriadapter-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: agriagent-svc
+  selector:
+    app: agriagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  

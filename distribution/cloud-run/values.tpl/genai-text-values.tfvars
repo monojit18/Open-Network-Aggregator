@@ -44,6 +44,10 @@ cloudrunInfo = {
         value = "us-central1-aiplatform.googleapis.com"
     },
     {
+        name = "GENAI_GEMINI_TEXT_MODEL"
+        value = "gemini-1.5-pro"
+    },
+    {
         name = "WEBSOCK_STREAMER_HTTP_HOST"
         value = "https://event-serverlib-.run.app"
     },
