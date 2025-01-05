@@ -55,7 +55,7 @@ const KCallTypes =
     CallTypeCode: "code"
 }
 
-const KGeminiTextModel = "gemini-1.5-pro";
+// const KGeminiTextModel = "gemini-1.5-pro";
 const KStreamRoom = "stream-room";
 const KStreamData = "stream";
 const KTextStreamRoom = "text-stream-room";
@@ -82,10 +82,10 @@ function prepareErrorMessage(exception)
 
 function prepareRESTErrorMessage(exception)
 {
-    exception.code = ((exception.response.data.error?.code == undefined)
-                        || (exception.response.data.error?.code < 400))
+    exception.code = ((exception.response.data?.error?.code == undefined)
+                        || (exception.response.data?.error?.code < 400))
                         ? 500 : exception.response.data.error?.code;
-    exception.message = exception.response.data.error?.message;
+    exception.message = exception.response.data?.error?.message;
     return exception;
 }
 
@@ -138,13 +138,13 @@ function prepareSocketClient()
 function prepareTextGenClient()
 {
     const vertexAIInfo = {};
-    vertexAIInfo.project = `${process.env.PROJECT_ID}`;
-    vertexAIInfo.location = `${process.env.GENAI_LOCATION}`;
+    vertexAIInfo.project = process.env.PROJECT_ID;
+    vertexAIInfo.location = process.env.GENAI_LOCATION;
     _vertexAIClient = new VertexAI(vertexAIInfo);
     _markDown = new MarkdownIt();
     
     const modelInfo = {};
-    modelInfo.model = KGeminiTextModel;
+    modelInfo.model = process.env.GENAI_GEMINI_TEXT_MODEL;
 
     _generativeAIModel = _vertexAIClient.getGenerativeModel(modelInfo);
     _generativeAIPreviewModel = _vertexAIClient.preview.getGenerativeModel(modelInfo);
@@ -226,7 +226,6 @@ function prepareEmbeddingParameters(request)
     const outputDimensionality = Number(request.headers.outputdimension);
     embeddingInfo.parameters.outputDimensionality = outputDimensionality;
     return embeddingInfo;
-
 }
 
 function prepareEndpointParameters(request)
@@ -237,7 +236,6 @@ function prepareEndpointParameters(request)
     endpointInfo.parameters = prepareGenAIParameters(request);
     endpointInfo.expectJSON = (request.query.type == "json");
     return endpointInfo;
-
 }
 
 function preaprePredictionResponse(prediction, expectJSON)
@@ -370,7 +368,7 @@ async function initSocketClient()
 
 async function initSocketServerConnection()
 {
-    const requestOptions= {};
+    const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     const requestBody = {};
 
@@ -651,7 +649,7 @@ async function generateCodeContent(codeInfo)
     }
 }
 
-async function generateMedLMContent(medLMInfo)
+async function predictMedLMContent(medLMInfo)
 {
     try
     {
@@ -668,7 +666,36 @@ async function generateMedLMContent(medLMInfo)
 
         const requestBody = {};
         requestBody.instances = medLMInfo.instances;
-        requestBody.parameters = medLMInfo.parameters;
+        requestBody.parameters = medLMInfo.parameters; 
+
+        const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
+        const medLMContent = medLMResult.data;
+        return medLMContent;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function generateMedLMContent(medLMInfo)
+{
+    try
+    {
+        const accessToken = await performAuthentication();        
+        const medLMURL = `https://${process.env.GENAI_LOCATION}-aiplatform.googleapis.com/v1/${prepareGenAIEndpoint(medLMInfo.modelId)}:generateContent`;
+
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+        };
+
+        const requestBody = {};
+        requestBody.contents = medLMInfo.contents;
+        requestBody.generationConfig = medLMInfo.parameters;        
         
         const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
         const medLMContent = medLMResult.data;
@@ -718,6 +745,19 @@ async function performCodeContentGeneration(codeInfo)
             predictionContent = await generateCodeContent(codeInfo);
         }
         return predictionContent;        
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performMedLMPrediction(medLMInfo)
+{
+    try
+    {
+        const medLMContent = await predictMedLMContent(medLMInfo);        
+        return medLMContent;        
     }
     catch(exception)
     {
@@ -869,6 +909,30 @@ _express.post("/genai/code/:sessionId?/:type?", async (request, response) =>
 });
 
 /**
+ * @fires /genai/medlm/predict
+ * @method POST
+ * @description Generate Medical suggestions from  Prompts
+ */
+_express.post("/genai/medlm/predict", async (request, response) =>
+{
+    const medLMInfo = prepareMedLMParameters(request);
+    const results = {};
+
+    try
+    {
+        const medLMResponse = await performMedLMPrediction(medLMInfo);
+        results.results = medLMResponse;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareRESTErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
  * @fires /genai/medlm/chat
  * @method POST
  * @description Generate Medical suggestions from  Prompts
@@ -886,7 +950,7 @@ _express.post("/genai/medlm/chat", async (request, response) =>
     }
     catch(exception)
     {
-        let errorInfo = prepareErrorMessage(exception);
+        let errorInfo = prepareRESTErrorMessage(exception);
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }
