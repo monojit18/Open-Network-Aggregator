@@ -1,0 +1,41 @@
+deployment:
+  name: mandiagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: mandiagent-deploy 
+    version: v1
+  selectorLabels:
+    app: mandiagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: mandiagent-app
+    image: "<repo-name>/mandi-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:
+    - name: service
+      value: mandi-agent:v1.0    
+    - name: MANDI_ADAPTER_URL
+      value: http://mandiadapter-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: mandiagent-svc
+  selector:
+    app: mandiagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  

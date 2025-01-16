@@ -1,0 +1,39 @@
+deployment:
+  name: llmagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: llmagent-deploy 
+    version: v1
+  selectorLabels:
+    app: llmagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: llmagent-app
+    image: "<repo-name>/llm-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:    
+    - name: LLM_ADAPTER_URL
+      value: http://llmadapter-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: llmagent-svc
+  selector:
+    app: llmagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  

@@ -1,0 +1,43 @@
+deployment:
+  name: mandiadapter-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: mandiadapter-deploy 
+    version: v1
+  selectorLabels:
+    app: mandiadapter-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: mandiadapter-app
+    image: "<repo-name>/mandi-adapter:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10001]
+    envVars:
+    - name: service
+      value: mandi-adapter:v1.0
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: ENAM_MANDI_SEARCH_URL
+      value: https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: mandiadapter-svc
+  selector:
+    app: mandiadapter-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10001  

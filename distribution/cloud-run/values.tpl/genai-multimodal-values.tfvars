@@ -36,6 +36,10 @@ cloudrunInfo = {
         value = "us-central1"
     },
     {
+        name = "GENAI_GEMINI_VISION_MODEL"
+        value = "gemini-1.5-pro"
+    },
+    {
         name = "WEBSOCK_STREAMER_HTTP_HOST"
         value = "https://streamer-serverlib-run.app"
     },

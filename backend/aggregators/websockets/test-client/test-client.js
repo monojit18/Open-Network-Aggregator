@@ -39,7 +39,7 @@ const KCallbackActions =
 {
     OnBuyerAction: "on_buyer",
     OnOrderAction: "on_order",
-    OnAgriction: "on_agri",
+    OnAgriAction: "on_agri",
     OnWeatherAction: "on_weather",
     OnVideoAction: "on_video",
     OnLLMAction: "on_llm",
@@ -85,7 +85,7 @@ function prepareSocketClient()
     });
 
     /*Callback functions from Adapter - START*/
-    _socketIOClient.on(KCallbackActions.OnAgriction, (message) =>
+    _socketIOClient.on(KCallbackActions.OnAgriAction, (message) =>
     {
         console.log(message);
     });

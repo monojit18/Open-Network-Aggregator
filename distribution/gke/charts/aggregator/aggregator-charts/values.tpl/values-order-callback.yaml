@@ -1,0 +1,41 @@
+deployment:
+  name: ordercallback-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: ordercallback-deploy 
+    version: v1
+  selectorLabels:
+    app: ordercallback-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: ordercallback-app
+    image: "<repo-name>/order-callback:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10011]
+    envVars:
+    - name: AGENTIC_DOMAIN_PREFIX
+      value: "domain:"
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: ordercallback-svc
+  selector:
+    app: ordercallback-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10011  

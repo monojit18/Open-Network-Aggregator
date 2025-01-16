@@ -1,0 +1,43 @@
+deployment:
+  name: videoadapter-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: videoadapter-deploy 
+    version: v1
+  selectorLabels:
+    app: videoadapter-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: videoadapter-app
+    image: "<repo-name>/video-adapter:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10001]
+    envVars:
+    - name: service
+      value: video-adapter:v1.0
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: YOUTUBE_DATA_V3_SEARCH_URL
+      value: https://youtube.googleapis.com/youtube/v3
+    - name: PROJECT_ID
+      value: onix-agentic-151120240130
+service:
+  name: videoadapter-svc
+  selector:
+    app: videoadapter-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10001  

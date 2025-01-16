@@ -1,0 +1,43 @@
+deployment:
+  name: ondcagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: ondcagent-deploy 
+    version: v1
+  selectorLabels:
+    app: ondcagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: ondcagent-app
+    image: "<repo-name>/ondc-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:
+    - name: service
+      value: ondc-agent:v1.0
+    - name: GENAI_TEXTLIB_HOST
+      value: http://genaitextapp-svc.vertexai.svc
+    - name: BUYER_ADAPTER_URL
+      value: http://buyeradapter-svc.aggregator-dev.svc
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: ondcagent-svc
+  selector:
+    app: ondcagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  
