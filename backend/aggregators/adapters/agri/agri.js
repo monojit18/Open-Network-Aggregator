@@ -149,8 +149,8 @@ async function fireErrorEvent(errorInfo, agriInfo)
 
         const message = {};
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
         message.error = errorResponse;
         payload.message = message;
 
@@ -174,7 +174,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
