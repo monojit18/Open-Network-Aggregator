@@ -5,8 +5,7 @@
     "private": true,
     "license": "Apache",
     "author": "Monojit Datta",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+    "scripts": {        
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios",
         "start": "node buyer.js"
     },

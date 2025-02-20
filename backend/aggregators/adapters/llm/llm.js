@@ -23,8 +23,7 @@ const Express = require("express");
 const Cors = require("cors");
 const Axios = require('axios');
 
-const KLLMChatPrompt = "Context: Generate response for the following chat query.Provide accurate and to-the-point information.Do not add irrelevant information.";
-const KLLMNegativePrompt = "Context: Consider the following sentence to be negative, irrelevant.Generate a polite, generous response rejecting this query. Response should be within 100 words and should not contain any violent, abusive languages.";
+// const KLLMNegativePrompt = "Context: Consider the following sentence to be negative, irrelevant.Generate a polite, generous response rejecting this query. Response should be within 100 words and should not contain any violent, abusive languages.";
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -78,11 +77,23 @@ function prepareAllUrls()
 function prepareGenAIHeaders()
 {
     const genAIHeaders = {};
-    genAIHeaders.temperature = 0.4;
+    genAIHeaders.temperature = 1.0;
     genAIHeaders.maxtokens = 2048;
-    genAIHeaders.topk = 40;
+    // genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;
     return genAIHeaders;
+}
+
+function prepareInstructionContentInfo(systemPrompt)
+{
+    const instruction = {};
+
+    const partInfo = {};
+    partInfo.text = systemPrompt;
+
+    instruction.parts = [];
+    instruction.parts.push(partInfo);
+    return instruction;
 }
 
 function prepareLLMChatInfo(request)
@@ -90,7 +101,7 @@ function prepareLLMChatInfo(request)
     const llmInfo = {};    
     llmInfo.context = request.body.context;
     llmInfo.message = request.body.message;
-    llmInfo.prompt = `${KLLMChatPrompt}`;
+    llmInfo.prompt = `${process.env.LLM_CHAT_PROMPT}`;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
 
     const filters = llmInfo.message.network.filters;
@@ -102,14 +113,14 @@ function prepareLLMChatInfo(request)
     return llmInfo;
 }
 
-function prepareLLMNegativeInfo(request)
-{
-    const llmInfo = prepareLLMChatInfo(request);
-    llmInfo.histories = null;
-    llmInfo.prompt = `${KLLMNegativePrompt}`;
-    llmInfo.query = llmInfo.message.network.filters[0].query;    
-    return llmInfo;
-}
+// function prepareLLMNegativeInfo(request)
+// {
+//     const llmInfo = prepareLLMChatInfo(request);
+//     llmInfo.histories = null;
+//     llmInfo.prompt = `${KLLMNegativePrompt}`;
+//     llmInfo.query = llmInfo.message.network.filters[0].query;    
+//     return llmInfo;
+// }
 
 function prepareLLMChatContentInfo(promptInfo)
 {
@@ -118,17 +129,17 @@ function prepareLLMChatContentInfo(promptInfo)
     return [contentInfo];
 }
 
-function prepareLLMNegativeContentInfo(promptInfo)
-{
-    const contentInfo = {};
-    const partInfo = {};
-    partInfo.text = promptInfo.prompt;
+// function prepareLLMNegativeContentInfo(promptInfo)
+// {
+//     const contentInfo = {};
+//     const partInfo = {};
+//     partInfo.text = promptInfo.prompt;
 
-    contentInfo.role = "user";
-    contentInfo.parts = [];
-    contentInfo.parts.push(partInfo);
-    return [contentInfo];
-}
+//     contentInfo.role = "user";
+//     contentInfo.parts = [];
+//     contentInfo.parts.push(partInfo);
+//     return [contentInfo];
+// }
 
 function prepareAckResponse(weatherInfo)
 {
@@ -159,7 +170,7 @@ function preapreLLMChatResponse(llmResult, llmInfo)
     userInfo.parts = [];
     const userPart = {};
     userInfo.role = "user";
-    userPart.text = llmInfo.text;
+    userPart.text = llmInfo.query;
     userInfo.parts.push(userPart);
     histories.push(userInfo);
 
@@ -175,19 +186,19 @@ function preapreLLMChatResponse(llmResult, llmInfo)
     return llmResponse;
 }
 
-function preapreLLMNegativeResponse(llmResult, llmInfo)
-{
-    const response = llmResult.data;
+// function preapreLLMNegativeResponse(llmResult, llmInfo)
+// {
+//     const response = llmResult.data;
 
-    const llmResponse = {};
-    llmResponse.context = llmInfo.context;
-    llmResponse.message = llmInfo.message;
+//     const llmResponse = {};
+//     llmResponse.context = llmInfo.context;
+//     llmResponse.message = llmInfo.message;
 
-    const chat = {};
-    chat.text = response.results[0].original_response;
-    llmResponse.message.chat = chat;
-    return llmResponse;
-}
+//     const chat = {};
+//     chat.text = response.results[0].original_response;
+//     llmResponse.message.chat = chat;
+//     return llmResponse;
+// }
 
 function preapreLLMCallbackData(llmResponse, llmInfo)
 {
@@ -230,8 +241,8 @@ async function fireErrorEvent(errorInfo, llmInfo)
     try
     {
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
 
         const llmData = preapreLLMCallbackData(errorResponse, llmInfo);
         _socketIOClient.emit(KCallbackEvents.OnCallbackAction, llmData);
@@ -254,7 +265,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -285,9 +296,10 @@ async function performLLMChat(llmInfo)
         }
         
         const promptInfo = {};
-        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.query}`;
+        promptInfo.prompt = llmInfo.query;
         const contentsList = prepareLLMChatContentInfo(promptInfo);
         requestBody.contents = contentsList;
+        requestBody.instruction = prepareInstructionContentInfo(llmInfo.prompt);
 
         const genAIHeaders = prepareGenAIHeaders();
         requestOptions.headers = genAIHeaders;
@@ -302,37 +314,37 @@ async function performLLMChat(llmInfo)
     }
 }
 
-async function processNegativeQuery(llmInfo)
-{
-    try
-    {
-        let llmNegativeURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/text`;
+// async function processNegativeQuery(llmInfo)
+// {
+//     try
+//     {
+//         let llmNegativeURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/text`;
 
-        const requestOptions = {};
-        requestOptions.httpsAgent = _axiosAgent;
-        requestOptions.headers =
-        {
-            "content-type": "application/json"            
-        };
+//         const requestOptions = {};
+//         requestOptions.httpsAgent = _axiosAgent;
+//         requestOptions.headers =
+//         {
+//             "content-type": "application/json"            
+//         };
 
-        const requestBody = {};        
-        const promptInfo = {};
-        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.text}`;
-        const contentsList = prepareLLMNegativeContentInfo(promptInfo);
-        requestBody.contents = contentsList;
+//         const requestBody = {};        
+//         const promptInfo = {};
+//         promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.text}`;
+//         const contentsList = prepareLLMNegativeContentInfo(promptInfo);
+//         requestBody.contents = contentsList;
 
-        const genAIHeaders = prepareGenAIHeaders();
-        requestOptions.headers = genAIHeaders;
+//         const genAIHeaders = prepareGenAIHeaders();
+//         requestOptions.headers = genAIHeaders;
 
-        const llmResult = await Axios.post(`${llmNegativeURL}`, requestBody, requestOptions);
-        const llmResponse = preapreLLMNegativeResponse(llmResult, llmInfo);        
-        await fireCallbackEvent(llmResponse, llmInfo);
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+//         const llmResult = await Axios.post(`${llmNegativeURL}`, requestBody, requestOptions);
+//         const llmResponse = preapreLLMNegativeResponse(llmResult, llmInfo);        
+//         await fireCallbackEvent(llmResponse, llmInfo);
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
 /* API DEFINITIONS - START */
 _express.post("/llm/chat", async (request, response) =>
@@ -355,25 +367,25 @@ _express.post("/llm/chat", async (request, response) =>
     }
 });
 
-_express.post("/llm/negative", async (request, response) =>
-{
-    const llmInfo = prepareLLMNegativeInfo(request);
-    const results = {};
+// _express.post("/llm/negative", async (request, response) =>
+// {
+//     const llmInfo = prepareLLMNegativeInfo(request);
+//     const results = {};
 
-    try
-    {        
-        const ackResponse = prepareAckResponse(llmInfo);
-        results.results = ackResponse;
-        response.send(results);        
-        await processNegativeQuery(llmInfo);
-    }
-    catch(exception)
-    {
-        let errorInfo = prepareErrorMessage(exception);
-        results.results = errorInfo.message;
-        await fireErrorEvent(errorInfo, llmInfo);
-    }
-});
+//     try
+//     {        
+//         const ackResponse = prepareAckResponse(llmInfo);
+//         results.results = ackResponse;
+//         response.send(results);        
+//         await processNegativeQuery(llmInfo);
+//     }
+//     catch(exception)
+//     {
+//         let errorInfo = prepareErrorMessage(exception);
+//         results.results = errorInfo.message;
+//         await fireErrorEvent(errorInfo, llmInfo);
+//     }
+// });
 /* API DEFINITIONS - END */
 
 var port = process.env.port || process.env.PORT || 10001;
