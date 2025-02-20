@@ -71,7 +71,8 @@ _express.use(Express.json
     
 _express.use(Express.urlencoded
 ({
-    extended: true
+    extended: true,
+    limit: '100mb'
 }));
 
 function prepareErrorMessage(exception)
@@ -179,6 +180,7 @@ function prepareTextParameters(request)
     textInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeText;
     textInfo.expectJSON = (request.query.type == "json");
+    textInfo.systemInstruction = request.body.instruction;
     return textInfo;
 }
 
@@ -193,6 +195,7 @@ function prepareChatParameters(request)
     chatInfo.parameters = prepareGenAIParameters(request);
     chatInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeChat;
+    chatInfo.systemInstruction = request.body.instruction;
     return chatInfo;
 }
 
@@ -204,6 +207,7 @@ function prepareCodeParameters(request)
     codeInfo.parameters = prepareGenAIParameters(request);
     codeInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeCode;
+    codeInfo.systemInstruction = request.body.instruction;
     return codeInfo;
 }
 
@@ -212,7 +216,8 @@ function prepareMedLMParameters(request)
     const medLMInfo = {};
     medLMInfo.modelId = request.headers.modelid;
     medLMInfo.instances = request.body.instances;
-    medLMInfo.parameters = prepareGenAIParameters(request);    
+    medLMInfo.parameters = prepareGenAIParameters(request);
+    medLMInfo.systemInstruction = request.body.instruction;
     return medLMInfo;
 }
 
@@ -235,6 +240,7 @@ function prepareEndpointParameters(request)
     endpointInfo.endpointId = request.headers.endpointid;
     endpointInfo.parameters = prepareGenAIParameters(request);
     endpointInfo.expectJSON = (request.query.type == "json");
+    endpointInfo.systemInstruction = request.body.instruction;
     return endpointInfo;
 }
 
@@ -374,7 +380,7 @@ async function initSocketServerConnection()
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/event/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -466,6 +472,7 @@ async function generateCustomContent(endpointInfo)
 
         const requestBody = {};
         requestBody.contents = endpointInfo.contents;
+        requestBody.systemInstruction = endpointInfo.systemInstruction;
 
         const endpointResult = await Axios.post(`${endpointURL}`, requestBody, requestOptions);
         const predictionContent = preaprePredictionResponse(endpointResult.data,
@@ -483,7 +490,8 @@ async function generateContent(textInfo)
     const request =
     {
         contents: textInfo.contents,
-        generationConfig: textInfo.parameters
+        generationConfig: textInfo.parameters,
+        systemInstruction: textInfo.systemInstruction
     };
 
     try
@@ -504,7 +512,8 @@ async function generateStreamContent(textInfo)
     const request =
     {
         contents: textInfo.contents,
-        generationConfig: textInfo.parameters
+        generationConfig: textInfo.parameters,
+        systemInstruction: textInfo.systemInstruction
     };
 
     try
@@ -560,7 +569,8 @@ async function generateChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories            
+            history: chatInfo.histories,
+            systemInstruction: chatInfo.systemInstruction
         };
 
         let chatRef = _generativeAIModel.startChat(chatRequest);
