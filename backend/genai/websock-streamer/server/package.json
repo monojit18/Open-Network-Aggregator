@@ -1,0 +1,21 @@
+{
+    "name": "streaming_server_app",
+    "description": "A Streaming Websocket Server App",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {        
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors socket.io",
+        "start": "node streamServer.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "jshint": "^2.13.6",
+        "socket.io": "^4.7.5"
+    }
+}
