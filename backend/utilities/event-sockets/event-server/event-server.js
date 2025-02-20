@@ -133,6 +133,12 @@ function initSocketServer()
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
  * @fires /event/init
  * @method POST
