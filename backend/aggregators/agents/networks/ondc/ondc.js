@@ -74,89 +74,32 @@ function prepareAllUrls()
     _allUrls[KMicroServices.BuyerAdapter] = `${process.env.BUYER_ADAPTER_URL}`;
 }
 
-function prepareNLPInfo(request)
-{
-    const nlpInfo = {};
-    nlpInfo.transactionId = request.body.transactionId;
-    nlpInfo.messageId = request.body.messageId;
-    nlpInfo.network = request.body.network;
-    return nlpInfo;
-}
-
-function prepareNLPContentInfo(promptInfo)
-{
-    const contentInfo = {};
-    const partInfo = {};
-    partInfo.text = promptInfo.prompt;
-
-    contentInfo.role = "user";
-    contentInfo.parts = [];
-    contentInfo.parts.push(partInfo);
-    return [contentInfo];
-}
-
-function prepareShortHeaders()
-{
-    const genAIHeaders = {};
-    genAIHeaders.temperature = 0.2;
-    genAIHeaders.maxtokens = 1024;
-    genAIHeaders.topk = 40;
-    genAIHeaders.topp = 0.95;
-    return genAIHeaders;
-}
-
 function prepareONDCMessage(request)
 {
-    const ondcMessage = {};    
+    const ondcMessage = {};
     ondcMessage.context = request.body.context;
     ondcMessage.message = request.body.message;
     ondcMessage.preferred_network = request.body.preferred_network;
+    ondcMessage.preferred_networks = request.body.preferred_networks;
+    ondcMessage.shouldRetry = request.body.shouldRetry;
+
+    // const headers = {};
+    // headers[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
+    // ondcMessage.headers = headers;
     return ondcMessage;
-}
-
-async function extractRetailAttributes(ondcMessage)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-
-    const requestBody = {};
-
-    const promptInfo = {};
-    promptInfo.prompt = `${KRetailAttributesPrompt}\n\n${ondcMessage.network?.intent[0]?.query}`;
-    const contentsList = prepareNLPContentInfo(promptInfo);
-    requestBody.contents = contentsList;
-
-    const genAIHeaders = prepareShortHeaders();
-    requestOptions.headers = genAIHeaders;
-
-    try
-    {
-        let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
-                                                requestBody, requestOptions);
-        const nlpResponsesList = processGenericResponse(response);
-        const nlpResponse = nlpResponsesList[0];
-        const attributesList = nlpResponse.formatted_response.attributes;
-        return attributesList;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
 }
 
 async function callBuyerAdapter(ondcMessage)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
+    // requestOptions.headers = {};
+    // requestOptions.headers[process.env.VIDEO_API_KEY] = ondcMessage.headers[process.env.VIDEO_API_KEY];
 
     const requestBody = ondcMessage;
     
     try
     {
-        // const retailAttributesList = await extractRetailAttributes(ondcMessage);
-        // const searchString = retailAttributesList.join(",");
-        // ondcMessage.network.relevant_text = searchString;
-
         const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.BuyerAdapter]}/search`,
                                                     requestBody, requestOptions);
         const adapterResult = processGenericResponse(adapterResponse);
@@ -186,16 +129,19 @@ _express.post("/search", async (request, response) =>
     try
     {
         const preferredNetworksList = ondcMessage.preferred_network;
+        const adapterResponseList = [];
         if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
         {
             await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
             {
                 const copiedONDCMessage = JSON.parse(JSON.stringify(ondcMessage));
                 copiedONDCMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callBuyerAdapter(copiedONDCMessage);
-            }));
+                const adapterResponse = await callBuyerAdapter(copiedONDCMessage);
+                adapterResponseList.push(adapterResponse);
+            }));                        
         }
-        results.results = adapterResponse;
+
+        results.results = adapterResponseList;
         response.send(results);
     }
     catch(exception)
