@@ -22,13 +22,25 @@ const Express = require("express");
 const Cors = require("cors");
 const SockertIO = require("socket.io");
 
-const KConnectionEvent = "connection";
-const KConnectedvent = "connected";
-const KEndConnectionEvent = "end";
-const KRoomKey = "room";
-const KCallbackEvent = "callback";
-const KAlreadyInitaited = "Already initiated\n";
-const KSuccessfullyInitaited = "Successfully initiated\n";
+const KSocketEvents =
+{
+    ConnectionEvent: "connection",
+    ConnectedEvent: "connected",
+    EndConnectionEvent: "end",
+    CallbackEvent: "callback"
+}
+
+const KSocketRooms =
+{
+    RoomKey: "room",
+    EventReceiverRoom: "receiver-room"
+}
+
+const KSocketStatus =
+{
+    AlreadyInitaited: "Already initiated\n",
+    SuccessfullyInitaited: "Successfully initiated\n"
+}
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -61,16 +73,16 @@ function prepareErrorMessage(exception)
 
 function prepareSocketServer()
 {    
-    _socketIOServer.on(KConnectionEvent, (socket) =>
+    _socketIOServer.on(KSocketEvents.ConnectionEvent, (socket) =>
     {
-        socket.join(socket.handshake.query[KRoomKey]);
-        socket.emit(KConnectedvent, `${socket.id} ${KConnectedvent}`);
-        socket.on(KCallbackEvent, (seekerData) =>
+        socket.join(socket.handshake.query[KSocketRooms.RoomKey]);
+        socket.emit(KSocketEvents.ConnectedEvent, `${socket.id} ${KSocketEvents.ConnectedEvent}`);
+        socket.on(KSocketEvents.CallbackEvent, (eventData) =>
         {
             try
             {
-                console.log(seekerData);
-                socket.to(seekerData.room).emit(seekerData.event, seekerData.payload);
+                console.log(eventData);
+                socket.to(eventData.room).emit(eventData.event, eventData.payload);
             }
             catch(exception)
             {
@@ -78,10 +90,11 @@ function prepareSocketServer()
             }  
         });
         
-        socket.on(KEndConnectionEvent, (endMessage) =>
+        socket.on(KSocketEvents.EndConnectionEvent, (endMessage) =>
         {
-            socket.leave(socket.handshake.query[KRoomKey]);            
-            socket.to(socket.handshake.query[KRoomKey]).emit(KEndConnectionEvent, endMessage);
+            socket.leave(socket.handshake.query[KSocketRooms.RoomKey]);            
+            socket.to(socket.handshake.query[KSocketRooms.RoomKey])
+                            .emit(KSocketEvents.EndConnectionEvent, endMessage);
         });
     });
 }
@@ -120,23 +133,29 @@ function initSocketServer()
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
- * @fires /init
+ * @fires /event/init
  * @method POST
  * @description Initialize a SocketIO server
  */
-_express.post("/init", async (request, response) =>
+_express.post("/event/init", async (request, response) =>
 {
     try
     {
         const socketInfo = initSocketServer();
         if (socketInfo.alreadyExists == true)
         {
-            response.status(200).send(KAlreadyInitaited);
+            response.status(200).send(KSocketStatus.AlreadyInitaited);
             return;
         }
         prepareSocketServer();
-        response.status(200).send(KSuccessfullyInitaited);
+        response.status(200).send(KSocketStatus.SuccessfullyInitaited);
     }
     catch(exception)
     {

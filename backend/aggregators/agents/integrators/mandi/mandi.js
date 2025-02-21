@@ -33,7 +33,6 @@ const KMicroServices =
     MandiAdapter: "mandi-adapter"
 }
 
-const KMandiAPIKey = "x-api-mandi-key";
 const KEnamKey = "ENAM";
 
 DotEnv.config();
@@ -83,7 +82,7 @@ function prepareMandiMessage(request)
 function prepareMandiHeaders(request)
 {
     const mandiHeaders = {};
-    mandiHeaders[KMandiAPIKey] = request.headers[KMandiAPIKey]; 
+    mandiHeaders[process.env.MANDI_API_KEY] = request.headers[process.env.MANDI_API_KEY]; 
     return mandiHeaders;
 }
 
@@ -128,7 +127,7 @@ _express.post("/search", async (request, response) =>
     
     try
     {
-        const enamMandiNetwork = mandiMessage.preferred_network[KEnamKey];
+        const enamMandiNetwork = mandiMessage.preferred_network[process.env.ENAM_NETWORK_KEY];
         if (enamMandiNetwork != null)
         {
             const copiedMandiMessage = JSON.parse(JSON.stringify(mandiMessage));

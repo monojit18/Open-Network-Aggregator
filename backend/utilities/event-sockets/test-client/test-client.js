@@ -29,11 +29,18 @@ let _server = Http.createServer(_express);
 let _axiosAgent = null;
 let _socketIOClient = null;
 
-const KConnectionEvent = "connection";
-const KConnectedvent = "connected";
-const KEndConnectionEvent = "end";
-const KDisconnectEvent = "disconnect";
-const KRoomKey = "room";
+const KSocketEvents =
+{
+    ConnectionEvent: "connect",
+    Connectedvent: "connected",
+    EndConnectionEvent: "end",
+    DisconnectEvent: "disconnect"
+}
+
+const KSocketRooms =
+{
+    RoomKey: "room"
+}
 
 const KCallbackActions =
 {
@@ -43,7 +50,7 @@ const KCallbackActions =
     OnWeatherAction: "on_weather",
     OnVideoAction: "on_video",
     OnLLMAction: "on_llm",
-    OnMandiAction: "on_enam_mandi",    
+    OnMandiAction: "on_enam_mandi",
     OnErrorAction: "on_error"
 }
 
@@ -74,12 +81,17 @@ function prepareErrorMessage(exception)
 
 function prepareSocketClient()
 {
-    _socketIOClient.on(KConnectionEvent, () =>
+    _socketIOClient.on(KSocketEvents.ConnectionEvent, () =>
     {
         console.log(_socketIOClient.id);
     });
 
-    _socketIOClient.on(KConnectedvent, (message) =>
+    _socketIOClient.on(KSocketEvents.Connectedvent, (message) =>
+    {
+        console.log(message);
+    });
+
+    _socketIOClient.on(KCallbackActions.OnMessageAction, (message) =>
     {
         console.log(message);
     });
@@ -96,9 +108,9 @@ function prepareSocketClient()
     });
 
     _socketIOClient.on(KCallbackActions.OnOrderAction, (message) =>
-        {
-            console.log(message);
-        });
+    {
+        console.log(message);
+    });
 
     _socketIOClient.on(KCallbackActions.OnWeatherAction, (message) =>
     {
@@ -126,12 +138,12 @@ function prepareSocketClient()
     });
     /*Callback functions from Adapter - END*/
 
-    _socketIOClient.on(KEndConnectionEvent, (message) =>
+    _socketIOClient.on(KSocketEvents.EndConnectionEvent, (message) =>
     {
         console.log(message);
     });
 
-    _socketIOClient.on(KDisconnectEvent, () =>
+    _socketIOClient.on(KSocketEvents.DisconnectEvent, () =>
     {
         console.log(_socketIOClient.connected);
     });
@@ -146,7 +158,7 @@ async function initSocketClient(roomId)
     });
 
     const socketQuery = {}
-    socketQuery[KRoomKey] = roomId;
+    socketQuery[KSocketRooms.RoomKey] = roomId;
     _socketIOClient = io(`${process.env.EVENT_SERVER_HTTP_HOST}`,
     {
         query: socketQuery
@@ -163,7 +175,7 @@ async function initSocketServerConnection()
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_SERVER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_SERVER_HTTP_HOST}/event/init`,
                                                 requestBody, requestOptions);        
         console.log(socketResponse);
         return socketResponse;
@@ -177,14 +189,14 @@ async function initSocketServerConnection()
 
 /* API DEFINITIONS - START */
 /* Call this endpoint every time a new Room is to be registered */
-_express.post("/init/:transactionId", async (request, response) =>
+_express.post("/init/:roomId", async (request, response) =>
 {
-    const transactionId = request.params.transactionId;    
-    initSocketClient(transactionId);
-    prepareSocketClient();
-
     try
     {
+        const roomId = request.params.roomId;    
+        initSocketClient(roomId);
+        prepareSocketClient();
+        
         const socketResponse =  await initSocketServerConnection();        
         response.status(socketResponse.status).send(socketResponse.data);
     }

@@ -1,14 +1,13 @@
 {
-    "name": "enam_adapter_app",
-    "description": "A enam Adapter App for Open Networks",
+    "name": "test_client_app",
+    "description": "An Test Client App for Websockets",
     "version": "1.0.0",
     "private": true,
     "license": "Apache",
     "author": "Monojit Datta",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios",
-        "start": "node mandi.js"
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios socket.io-client",
+        "start": "node test-client.js"
     },
     "engines": {
         "node": ">=16.0.0"
@@ -18,6 +17,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "express": "^4.21.2",
-        "jshint": "^2.13.6"
+        "jshint": "^2.13.6",
+        "socket.io-client": "^4.8.1"
     }
 }

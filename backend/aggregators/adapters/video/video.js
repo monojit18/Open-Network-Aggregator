@@ -27,8 +27,6 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 
-// const KYoutubeAPIKey = "AIzaSyAFqjVTw1CJs-kHY5G41NoV1Zq8M45nUa8";
-const KYoutubeAPIKey = "x-api-video-key";
 const KStatusACK = "ACK";
 
 const KCallbackEvents =
@@ -78,7 +76,7 @@ function prepareParnerInfo(request)
     const videoInfo = {};
     videoInfo.context = request.body.context;
     videoInfo.message = request.body.message;
-    videoInfo.apiKey = request.headers[KYoutubeAPIKey];
+    videoInfo.apiKey = request.headers[process.env.VIDEO_API_KEY];
     videoInfo.preferred_network = request.body.preferred_network;
     videoInfo.query = videoInfo.message.network.filters.query;
     return videoInfo;
@@ -243,8 +241,8 @@ async function fireErrorEvent(errorInfo, videoInfo)
         payload.message = videoInfo.message;
 
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
         payload.error = errorResponse;
 
         videoData.payload = payload;
@@ -267,7 +265,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;

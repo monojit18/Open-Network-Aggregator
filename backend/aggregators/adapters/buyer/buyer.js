@@ -26,8 +26,14 @@ const Axios = require('axios');
 let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
+let _allUrls = {};
 
 const KStatusACK = "ACK";
+
+const KMicroServices =
+{
+    PlannerAdapterlib: "planner-adapterlib"
+}
 
 const KCallbackEvents =
 {
@@ -67,12 +73,23 @@ function processGenericResponse(response)
     return genericResponse;
 }
 
+function prepareAllUrls()
+{
+    _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
+}
+
 function prepareBuyerInfo(request)
 {
     const buyerInfo = {};
     buyerInfo.context = request.body.context;    
     buyerInfo.message = request.body.message;
     buyerInfo.preferred_network = request.body.preferred_network;
+    buyerInfo.preferred_networks = request.body.preferred_networks;
+    buyerInfo.shouldRetry = request.body.shouldRetry;
+
+    // const headers = {};
+    // headers[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
+    // buyerInfo.headers = headers;
     return buyerInfo;
 }
 
@@ -81,6 +98,7 @@ function prepareBuyerRequest(buyerInfo)
     const buyerRequest = {};
     buyerRequest.context = buyerInfo.context;    
     buyerRequest.message = buyerInfo.message;
+    buyerRequest.shouldRetry = buyerInfo.shouldRetry;
     return buyerRequest;
 }
 
@@ -104,7 +122,9 @@ function initializeBuyer()
     _axiosAgent = new Https.Agent
     ({
         rejectUnauthorized: false
-    });    
+    });
+
+    prepareAllUrls();
 }
 
 async function fireCallbackEvent(buyerResponse, buyerInfo)
@@ -116,14 +136,13 @@ async function fireCallbackEvent(buyerResponse, buyerInfo)
         buyerData.event = KCallbackEvents.OnBuyerAction;
 
         const payload = {};
-        payload.context = buyerResponse.context;
-        payload.context.domain = buyerInfo.context.domain;
+        payload.context = buyerResponse.context;        
         payload.message = buyerResponse.message;
         buyerData.payload = payload;        
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }    
 }
@@ -140,14 +159,19 @@ async function fireErrorEvent(errorInfo, buyerInfo)
         payload.context = buyerInfo.context;
 
         const message = {};
-        const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
-        message.error = errorResponse;
+
+        const errorMessage = {};
+        errorMessage.code = (buyerInfo.shouldRetry == false) ? 404 : errorInfo.code;
+        errorMessage.message = errorInfo.message;
+        message.error = errorMessage;
         payload.message = message;
 
         buyerData.payload = payload;
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
+        // if (buyerInfo.shouldRetry != false)
+        // {
+        //     await performPlannerSearch(buyerInfo);
+        // }        
     }
     catch(exception)
     {        
@@ -166,13 +190,34 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
     }
     catch(exception)
     {        
+        throw exception;
+    }
+}
+
+async function performPlannerSearch(buyerInfo)
+{
+    try
+    {        
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
+        requestOptions.headers[process.env.VIDEO_API_KEY] = buyerInfo.headers[process.env.VIDEO_API_KEY];
+        
+        const requestBody = buyerInfo;
+        await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);        
+    }
+    catch(exception)
+    {
         throw exception;
     }
 }
@@ -188,7 +233,7 @@ async function performBuyerSearch(buyerInfo)
         requestOptions.headers =
         {
             "content-type": "application/json"            
-        };
+        };        
 
         const requestBody = prepareBuyerRequest(buyerInfo);
         const buyerResult = await Axios.post(`${buyerURL}`, requestBody, requestOptions);

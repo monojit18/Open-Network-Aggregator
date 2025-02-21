@@ -36,19 +36,17 @@ const KSocketEvents =
     DisconnectEvent: "disconnect"
 }
 
+const KStreamData = "stream";
 const KStreamRoom = "stream-room";
-const KEventReceiverRoom = "receiver-room";
 
 _express.use(Express.json
 ({
-    extended: true,
-    limit: '10mb'
+    extended: true
 }));
     
 _express.use(Express.urlencoded
 ({
-    extended: true,
-    limit: '10mb'
+    extended: true
 }));
 
 DotEnv.config();
@@ -71,6 +69,19 @@ function prepareSocketClient()
         console.log(message);
     });
 
+    _socketIOClient.on(KStreamData, (stream) =>
+    {
+        try
+        {
+            console.log(stream.candidates[0]?.content?.parts[0].text);
+        }
+        catch(exception)
+        {
+            console.log("done");
+        }
+            
+    });
+
     _socketIOClient.on(KSocketEvents.EndConnectionEvent, (message) =>
     {
         console.log(message);
@@ -90,22 +101,22 @@ async function initSocketClient()
     });
 
     const socketQuery = {};
-    socketQuery[KStreamRoom] = KEventReceiverRoom;
-    _socketIOClient = io(`${process.env.EVENT_SERVER_HTTP_HOST}`, {
+    socketQuery[KStreamRoom] = process.env.WEBSOCK_ROOM_NAME;
+    _socketIOClient = io(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}`, {
         query: socketQuery
     });
     await initSocketServerConnection();
 }
 
-async function initSocketServerConnection()
+async function initSocketServerConnection(request)
 {
-    const requestOptions= {};
+    const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
-    const requestBody = {};
+    const requestBody = (request != null) ? request.body : {};
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_SERVER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -119,15 +130,31 @@ async function initSocketServerConnection()
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /init
+ * @method POST
+ * @description Initialize connection to a SocketIO server
+ */
+_express.post("/init", async (request, response) =>
+{
+    try
+    {
+       const socketResponse = await initSocketServerConnection(request);
+       response.status(socketResponse.status).send(socketResponse.data);
+    }
+    catch(exception)
+    {
+        response.status(500).send(exception.message);
+    }
+});
+
+/**
  * @fires /stream
  * @method POST
  * @description Send stream to a SocketIO server
  */
 _express.post("/stream", async (request, response) =>
 {
-    const eventName = request.body.eventName;
-    const eventData = request.body.eventData;
-    _socketIOClient.emit(eventName, eventData);
+    _socketIOClient.emit(KStreamData, request.body);
     response.status(200).send("OK");
 });
 
@@ -143,7 +170,7 @@ _express.post("/end", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 8084;
+var port = process.env.port || process.env.PORT || 8083;
 _server.listen(port);
 
 initSocketClient();
