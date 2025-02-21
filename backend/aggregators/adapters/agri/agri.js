@@ -79,8 +79,8 @@ function prepareAgriInfo(request)
 function prepareAgriRequest(agriInfo)
 {
     const agriRequest = {};
-    agriRequest.context = agriInfo.context;    
-    agriRequest.message = agriInfo.message;
+    agriRequest.location = agriInfo.context.location;
+    agriRequest.query = agriInfo.message.network.relevant_text;
     return agriRequest;
 }
 
@@ -107,7 +107,7 @@ function initializeAgriagri()
     });    
 }
 
-async function fireCallbackEvent(agriResponse, agriInfo)
+async function fireAdvriskCallbackEvent(agriResponse, agriInfo)
 {
     try
     {
@@ -127,6 +127,39 @@ async function fireCallbackEvent(agriResponse, agriInfo)
         provider.items = agriResponse;
         catalog.provider = provider;
         payload.message.catalog = catalog;
+        agriData.payload = payload;
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, agriData);
+    }
+    catch(exception)
+    {        
+        throw exception;
+    }    
+}
+
+async function fireCallbackEvent(agriResponse, agriInfo)
+{
+    try
+    {
+        const agriData = {};
+        agriData.room = agriInfo.context.transaction_id;
+        agriData.event = KCallbackEvents.OnAgriAction;
+
+        const payload = {};
+        payload.context = agriResponse.context;
+
+        const message = {};
+        message.network = agriInfo.message.network;
+        
+        const catalog = {};
+        catalog.descriptor = agriResponse.message.catalog.descriptor;
+        catalog.provider = agriResponse.message.catalog.provider;
+        catalog.provider.items = agriResponse.message.catalog.items;
+        catalog.provider.items.forEach((item) =>
+        {
+            item.embedding_url = agriResponse.message.catalog.provider.embedding_url;
+        });
+        message.catalog = catalog;
+        payload.message = message;
         agriData.payload = payload;
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, agriData);
     }
@@ -185,28 +218,44 @@ async function emitAdapterEvent(eventName, eventData)
     }
 }
 
+async function performAdveriskSearch(agriInfo)
+{
+    try
+    {
+        const agriResponseList = [];
+        const agriResponse = {};
+        agriResponse.embedding_url = "https://farmers.advarisk.com/"; 
+        agriResponseList.push(agriResponse);
+        fireAdvriskCallbackEvent(agriResponseList, agriInfo);
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function performAgriSearch(agriInfo)
 {
     try
     {
-        // let agriURL = `${agriInfo.preferred_network.url}`;
-        
-        // const requestOptions = {};
-        // requestOptions.httpsAgent = _axiosAgent;
-        // requestOptions.headers =
-        // {
-        //     "content-type": "application/json"            
-        // };
+        let agriURL = `${agriInfo.preferred_network.url}`;
+        if (agriURL.length == 0)
+        {
+            await performAdveriskSearch(agriInfo);
+            return;
+        }
 
-        // const requestBody = prepareAgriRequest(agriInfo);
-        // const agriResult = await Axios.post(`${agriURL}`, requestBody, requestOptions);
-        // const agriResponse = processGenericResponse(agriResult); 
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"            
+        };
 
-        const agriResponseList = [];
-        const agriResponse = {};
-        agriResponse.embedding_url = "https://farmers.advarisk.com/"; 
-        agriResponseList.push(agriResponse);  
-        fireCallbackEvent(agriResponseList, agriInfo);
+        const requestBody = prepareAgriRequest(agriInfo);        
+        const agriResult = await Axios.post(`${agriURL}`, requestBody, requestOptions);
+        const agriResponse = processGenericResponse(agriResult);
+        fireCallbackEvent(agriResponse.results, agriInfo);        
     }
     catch(exception)
     {
