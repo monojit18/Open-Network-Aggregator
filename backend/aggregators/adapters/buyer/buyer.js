@@ -136,8 +136,7 @@ async function fireCallbackEvent(buyerResponse, buyerInfo)
         buyerData.event = KCallbackEvents.OnBuyerAction;
 
         const payload = {};
-        payload.context = buyerResponse.context;
-        payload.context.domain = buyerInfo.context.domain;
+        payload.context = buyerResponse.context;        
         payload.message = buyerResponse.message;
         buyerData.payload = payload;        
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
