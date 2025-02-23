@@ -27,14 +27,12 @@ DNS_ZONE=
 AR_REPO=
 JUMP_SERVER_NAME=
 
-gcloud auth login
+cloud auth login
 gcloud auth list
 gcloud config set account $OWNER
 
 gcloud config set project $PROJECT_ID
 #gcloud auth application-default login
-
-gcloud config set project $PROJECT_ID
 
 #Enable Services
 ====================
@@ -58,6 +56,7 @@ gcloud services enable sqladmin.googleapis.com
 gcloud services enable redis.googleapis.com
 gcloud services enable secretmanager.googleapis.com
 
+gcloud config set project $PROJECT_ID
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
 
@@ -166,6 +165,25 @@ gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfa
 gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].accessConfigs[0].natIP)" \
 --project=$PROJECT_ID
 
+Certificate
+============
+gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
+gcloud compute ssl-certificates list --global
+#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
+
+IP Address
+============
+gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
+gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
+#gcloud compute addresses delete $IP_ADDRESS_NAME --global
+
+#Add DNS Records
+================
+GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
+gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
+--type=A --ttl=60 --zone=$DNS_ZONE
+#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
+
 #Create GKE Private Cluster
 ====================================
 gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
@@ -194,12 +212,13 @@ Pre-Config
 ====================================================================================
 PROJECT_NAME=onix-agentic
 DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
+HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/pre-config"
 TFVARS_PATH="../../values/dev/pre-config"
 TFVARS_FILE_PATH=$TFVARS_PATH/pre-config.tfvars
 BACKEND_CONFIG=$TFVARS_PATH/backend.config
 
-cd $BASEFOLDERPATH/distribution
+cd $DISTRIBUTION_PATH
 
 gcloud builds submit --config="./builds/gke/gke-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
@@ -215,12 +234,13 @@ Setup
 ====================================================================================
 PROJECT_NAME=onix-agentic
 DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
+HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 WORKING_DIR="gke/cluster/scripts/setup"
 TFVARS_PATH="../../values/dev/setup"
 TFVARS_FILE_PATH=$TFVARS_PATH/setup.tfvars
 BACKEND_CONFIG=$TFVARS_PATH/backend.config
 
-cd $BASEFOLDERPATH/distribution
+cd $DISTRIBUTION_PATH
 
 gcloud builds submit --config="./builds/gke/gke-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
@@ -232,144 +252,150 @@ _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 _WORKING_DIR_=$WORKING_DIR,_TFVARS_FILE_PATH_=$TFVARS_FILE_PATH,\
 _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
 ====================================================================================
-Certificate
-============
-gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
-gcloud compute ssl-certificates list --global
-#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
-
-IP Address
-============
-gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
-gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
-#gcloud compute addresses delete $IP_ADDRESS_NAME --global
-
-#Add DNS Records
-================
-GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
-gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
---type=A --ttl=60 --zone=$DNS_ZONE
-#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
-==========================================================================================
-
 #Build Microservices
 ==========================================================================================
+Websock-Streamer-Server
+====================================================================
+cd $BASEFOLDERPATH/backend/utilities/websock-streamer/server
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=streamer-serverlib
+PACKAGE_VERSION="v1.0"
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Event-Server
+=============================================================================================
+cd $BASEFOLDERPATH/backend/utilities/event-sockets/event-server
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-serverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Event-Receiver
+=============================================================================================
+cd $BASEFOLDERPATH/backend/utilities/event-sockets/event-receiver
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=event-receiverlib
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+
 Storage
 ==========================================================================================
-Cloud build
-===========
-cd $BASEFOLDERPATH/backend/vertexai/storage
+cd $BASEFOLDERPATH/backend/utilities/storage
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=storagelib
 PACKAGE_VERSION="v1.0"
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
+=====================================================================================================
 
 Vision
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/vertexai/vision
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=visionlib
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 Speech
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/vertexai/speech
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=speechlib
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 Translation
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/vertexai/translation
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=translatelib
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 VectorSearch
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/vertexai/vectorsearch
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME="vector-searchlib"
 PACKAGE_VERSION="v1.0"
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 Imagegen
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/genai/image
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME="genai-imagelib"
 PACKAGE_VERSION="v1.0"
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 Textgen
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/genai/text
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=genai-textlib
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
 MultiModal
 ==========================================================================================
-Cloud build
-===========
 cd $BASEFOLDERPATH/backend/genai/multimodal
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=genai-multimodallib
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -385,15 +411,14 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=chatgenie
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
 */
-============================================================================================
 
-Adaptors
+Adapters
 =======================
-Agri
+Agri-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/agri
 PROJECT_NAME=onix-agentic
@@ -401,12 +426,12 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-Buyer
+Buyer-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/buyer
 PROJECT_NAME=onix-agentic
@@ -414,12 +439,12 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=buyer-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-Video
+Video-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/video
 PROJECT_NAME=onix-agentic
@@ -427,12 +452,12 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-Weather
+Weather-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/weather
 PROJECT_NAME=onix-agentic
@@ -440,12 +465,12 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-MANDI
+MANDI-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/mandi
 PROJECT_NAME=onix-agentic
@@ -453,12 +478,12 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-LLM
+LLM-Adapter
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/adapters/llm
 PROJECT_NAME=onix-agentic
@@ -466,7 +491,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-adapter
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -483,7 +508,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=agri-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -496,7 +521,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=ondc-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -509,7 +534,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=video-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -522,7 +547,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=weather-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -535,7 +560,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=mandi-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -548,7 +573,7 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
@@ -561,67 +586,24 @@ REPO_NAME=$AR_REPO
 PACKAGE_NAME=master-agent
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 ===========================================================================
-Event-Server
+Order-Callback
 =============================================================================================
-cd $BASEFOLDERPATH/backend/aggregators/websockets/event-server
+cd $BASEFOLDERPATH/backend/aggregators/callbacks/order
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
-PACKAGE_NAME=event-serverlib
+PACKAGE_NAME=order-callback
 PACKAGE_VERSION=v1.0
 
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
-
-cd $BASEFOLDERPATH/distribution
-WORKING_DIR=cloud-run
-RESOURCE_NAME=event-serverlib
-
-gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-server-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-Event-Receiver
-=============================================================================================
-cd $BASEFOLDERPATH/backend/aggregators/websockets/event-receiver
-PROJECT_NAME=onix-agentic
-REPO_NAME=$AR_REPO
-PACKAGE_NAME=event-receiverlib
-PACKAGE_VERSION=v1.0
-
-gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg
-
-cd $BASEFOLDERPATH/distribution
-WORKING_DIR=cloud-run
-RESOURCE_NAME=event-receiverlib
-
-gcloud builds submit --config="./builds/cloud-run/run-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-#gcloud builds submit --config="./builds/cloud-run/run-destroy.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,\
-_WORKING_DIR_="$WORKING_DIR",_TF_VARS_PATH_="./values/event-receiver-values.tfvars",\
-_LOG_BUCKET_=$PROJECT_ID-terra-stg,_RESOURCE_NAME_=$RESOURCE_NAME
-
-curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
-=====================================================================================================
+===========================================================================
 
 #Connect to the Jumper VM
 ===========================================================================
@@ -687,28 +669,30 @@ sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 #Set Local Varaibles (inside Jumper VM)
 ================================================
 BASEFOLDERPATH="./csm"
-OWNER=
-PROJECT_ID=
-GSA_DISPLAY_NAME=
+DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
+HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
+OWNER=admin@monojitdatta.altostrat.com
+PROJECT_ID=onix-agentic-151120240130
+GSA_DISPLAY_NAME=onix-agentic-sa
 GSA=$GSA_DISPLAY_NAME@$PROJECT_ID.iam.gserviceaccount.com
-VPC_NAME=
-CLUSTER_SUBNET_NAME=
-PROXY_SUBNET_NAME=
-PSC_SUBNET_NAME=
-CLUSTER=gke-private-cluster
+VPC_NAME=onix-agentic-dev-vpc
+CLUSTER_SUBNET_NAME=gke-subnet
+PROXY_SUBNET_NAME=proxy-subnet
+PSC_SUBNET_NAME=psc-subnet
+CLUSTER=gke-dev-cluster
 NODEPOOL=gkeappspool
-REGION=
-ZONE=
-IP_ADDRESS_NAME=
-CERTIFICATE_NAME=
-DOMAIN1_NAME=
-DOMAIN2_NAME=
-DOMAIN3_NAME=
+REGION=asia-southeast1
+ZONE=asia-southeast1-a
+IP_ADDRESS_NAME=dev-glb-lb-ip
+CERTIFICATE_NAME=glb-cloud-lb-cert-071220242130
+DOMAIN1_NAME=onix-dev.gcpwkshpdev.com
+DOMAIN2_NAME=onix-staging.gcpwkshpdev.com
+DOMAIN3_NAME=onix-prod.gcpwkshpdev.com
 DOMAIN_LIST=$DOMAIN1_NAME,$DOMAIN2_NAME,$DOMAIN3_NAME
-DNS_ZONE=
-AR_REPO=$PROJECT_ID-repo
-JUMP_SERVER_NAME=
-MAINTENANCE_SUBNET_NAME=
+DNS_ZONE=cloud-google-dzone
+AR_REPO=onix-agentic-dev-repo
+JUMP_SERVER_NAME=onix-agentic-mgmt-vm
+MAINTENANCE_SUBNET_NAME=management-subnet
 JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
 JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
 
@@ -727,8 +711,8 @@ gcloud container clusters get-credentials $CLUSTER --project=$PROJECT_ID --regio
 #External Gateway
 ==================
 k create ns gateway-ns
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
+#k delete -f $DISTRIBUTION_PATH//gke/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
 k get Gateway -n gateway-ns
 
 #Smoke services
@@ -738,20 +722,66 @@ k create serviceaccount smoke-sa -n smoke
 
 #Deploy Smoke Microservices
 ============================
-helm upgrade --install --create-namespace smoke-tests-chart-apache $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/ -n smoke \
--f $BASEFOLDERPATH/distribution/gke/charts/smoke/smoke-tests-chart/values/values-apache.yaml
+helm upgrade --install --create-namespace smoke-tests-chart-apache $DISTRIBUTION_PATH/gke/charts/smoke/smoke-tests-chart/ -n smoke \
+-f $DISTRIBUTION_PATH/gke/charts/smoke/smoke-tests-chart/values/values-apache.yaml
 #helm uninstall smoke-tests-chart-apache -n smoke
 
 k get po -n smoke
 
 #Add Routes
 ========================
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
 k get HttpRoute -n smoke
 ==================================================================================================================
-#open-network-aggr services
+
+#Utilities services
 ===============================================================================================
+k create ns utilities
+k create serviceaccount utilities-sa -n utilities
+
+#Deploy Utilities Microservices
+==================================
+helm upgrade --install --create-namespace utilities-chart-streamer-server $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-streamer-server.yaml
+#helm uninstall utilities-chart-streamer-server -n utilities
+
+helm upgrade --install --create-namespace utilities-chart-event-server $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-event-server.yaml
+#helm uninstall utilities-chart-event-server -n utilities
+
+helm upgrade --install --create-namespace utilities-chart-event-receiver $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-event-receiver.yaml
+#helm uninstall utilities-chart-event-receiver -n utilities
+
+helm upgrade --install --create-namespace utilities-chart-storage $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-storage.yaml
+#helm uninstall utilities-chart-storage -n utilities
+
+k get po -n utilities
+k get svc -n utilities
+
+#Add Routes
+============================
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
+
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
+
+k get HttpRoute -n utilities
+
+#Add Healthcheck policy
+============================
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
+
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
+
+k get HealthCheckPolicy -n utilities
+==================================================================================================================
+
 #VertexAI services
 ===============================================================================================
 k create ns vertexai
@@ -772,46 +802,48 @@ k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account
 
 #Deploy Microservicesservices
 ==========================================
-helm upgrade --install --create-namespace vertexai-charts-storage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-storage.yaml
-#helm uninstall vertexai-charts-storage -n vertexai
-
-helm upgrade --install --create-namespace vertexai-charts-translate $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-translate.yaml
+helm upgrade --install --create-namespace vertexai-charts-translate $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-translate.yaml
 #helm uninstall vertexai-charts-translate -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-vision $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-vision.yaml
+helm upgrade --install --create-namespace vertexai-charts-vision $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-vision.yaml
 #helm uninstall vertexai-charts-vision -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-speech $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-speech.yaml
+helm upgrade --install --create-namespace vertexai-charts-speech $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-speech.yaml
 #helm uninstall vertexai-charts-speech -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-genaitext $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaitext.yaml
+helm upgrade --install --create-namespace vertexai-charts-genaitext $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaitext.yaml
 #helm uninstall vertexai-charts-genaitext -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-genaimultimodal $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaimultimodal.yaml
+helm upgrade --install --create-namespace vertexai-charts-genaimultimodal $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaimultimodal.yaml
 #helm uninstall vertexai-charts-genaimultimodal -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-genaiimage $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaiimage.yaml
+helm upgrade --install --create-namespace vertexai-charts-genaiimage $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaiimage.yaml
 #helm uninstall vertexai-charts-genaiimage -n vertexai
 
-helm upgrade --install --create-namespace vertexai-charts-vectorsearch $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-vectorsearch.yaml
+helm upgrade --install --create-namespace vertexai-charts-vectorsearch $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
+-n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-vectorsearch.yaml
 #helm uninstall vertexai-charts-vectorsearch -n vertexai
 
 k get po -n vertexai
 
 #Add Routes
 ============================
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
+#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
 k get HttpRoute -n vertexai
+
+(for future use)
+#k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
+#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
+#k get HealthCheckPolicy -n vertexai
 ==============================================================================================================================
+
 #Aggregator services
 ===============================================================================================
 k create ns aggregator-dev
@@ -830,69 +862,88 @@ gcloud iam service-accounts add-iam-policy-binding $GSA \
 k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account=$GSA
 #k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account-
 
-#Deploy Microservicesservices
+#Deploy Micro-services
 ==========================================
-helm upgrade --install --create-namespace aggregator-charts-agri-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
-#helm uninstall aggregator-charts-agri-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-agri-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
+#helm uninstall aggregator-chart-agri-adapter -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-buyer-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
-#helm uninstall aggregator-charts-buyer-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-buyer-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
+#helm uninstall aggregator-chart-buyer-adapter -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-llm-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
-#helm uninstall aggregator-charts-llm-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-llm-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
+#helm uninstall aggregator-chart-llm-adapter -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-mandi-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
-#helm uninstall aggregator-charts-mandi-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-mandi-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
+#helm uninstall aggregator-chart-mandi-adapter -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-video-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
-#helm uninstall aggregator-charts-video-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-video-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
+#helm uninstall aggregator-chart-video-adapter -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-weather-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
-#helm uninstall aggregator-charts-weather-adapter -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-weather-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
+#helm uninstall aggregator-chart-weather-adapter -n aggregator-dev
 
 
-helm upgrade --install --create-namespace aggregator-charts-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
-#helm uninstall aggregator-charts-agri-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-agri-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
+#helm uninstall aggregator-chart-agri-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-ondc-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
-#helm uninstall aggregator-charts-ondc-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-ondc-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
+#helm uninstall aggregator-chart-ondc-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-llm-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
-#helm uninstall aggregator-charts-llm-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-llm-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
+#helm uninstall aggregator-chart-llm-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-mandi-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
-#helm uninstall aggregator-charts-mandi-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-mandi-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
+#helm uninstall aggregator-chart-mandi-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-video-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
-#helm uninstall aggregator-charts-video-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-video-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
+#helm uninstall aggregator-chart-video-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-weather-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
-#helm uninstall aggregator-charts-weather-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-weather-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
+#helm uninstall aggregator-chart-weather-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-master-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
-#helm uninstall aggregator-charts-master-agri-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-master-agri-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
+#helm uninstall aggregator-chart-master-agri-agent -n aggregator-dev
 
-helm upgrade --install --create-namespace aggregator-charts-master-retail-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
-#helm uninstall aggregator-charts-master-retail-agent -n aggregator-dev
+helm upgrade --install --create-namespace aggregator-chart-master-retail-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
+#helm uninstall aggregator-chart-master-retail-agent -n aggregator-dev
+
+helm upgrade --install --create-namespace aggregator-chart-order-callback $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-order-callback.yaml
+#helm uninstall aggregator-chart-order-callback -n aggregator-dev
 
 k get po -n aggregator-dev
+k get svc -n aggregator-dev
 
 #Add Routes
 ============================
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
 k get HttpRoute -n aggregator-dev
+
+#Add Healthcheck policy
+============================
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
+
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
+
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
+
+k get HealthCheckPolicy -n aggregator-dev
+==================================================================================================================
