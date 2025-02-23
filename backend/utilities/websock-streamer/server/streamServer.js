@@ -102,18 +102,18 @@ function prepareSocketServer()
         {
             try
             {
-                const streamData = stream;                
+                const streamData = stream;
                 socket.to(streamData.room).emit(KStreamData, streamData.buffer);
             }
             catch(exception)
             {
                 throw exception;
-            }  
+            }
         });
         
         socket.on(KEndConnectionEvent, (message) =>
         {
-            socket.leave(socket.handshake.query[KStreamRoom]);            
+            socket.leave(socket.handshake.query[KStreamRoom]);
             socket.to(socket.handshake.query[KStreamRoom]).emit(KEndConnectionEvent, message);
         });
     });
@@ -145,10 +145,9 @@ _express.post("/init", async (request, response) =>
         response.status(error.code).send(`${error.message}\n`);
     }
 });
-
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 8081;
+var port = process.env.port || process.env.PORT || 8082;
 _server.listen(port);
 
 console.log("Server running at http://localhost:%d", port);

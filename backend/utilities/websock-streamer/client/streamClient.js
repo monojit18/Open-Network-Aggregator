@@ -73,7 +73,7 @@ function prepareSocketClient()
     {
         try
         {
-            console.log(stream.candidates[0]?.content?.parts[0].text);
+            console.log(stream.candidates[0]?.content?.parts[0].text);            
         }
         catch(exception)
         {
@@ -170,7 +170,7 @@ _express.post("/end", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 8083;
+var port = process.env.port || process.env.PORT || 8085;
 _server.listen(port);
 
 initSocketClient();
