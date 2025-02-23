@@ -121,12 +121,18 @@ function prepareSocketServer()
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
- * @fires /init
+ * @fires /stream/init
  * @method POST
  * @description Initialize a SocketIO server
  */
-_express.post("/init", async (request, response) =>
+_express.post("/stream/init", async (request, response) =>
 {
     try
     {
