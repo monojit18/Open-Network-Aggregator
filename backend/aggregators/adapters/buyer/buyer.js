@@ -225,7 +225,7 @@ _express.post("/search", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 12001;
+var port = process.env.port || process.env.PORT || 10001;
 _server.listen(port);
 
 initializeBuyer();
