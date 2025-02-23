@@ -107,6 +107,15 @@ function prepareInstructionContentInfo(systemPrompt)
     return instruction;
 }
 
+function preparePlannerRequest(llmInfo)
+{
+    const requestBody = {};
+    requestBody.context = llmInfo.context;
+    requestBody.message = llmInfo.message;
+    requestBody.message.network.relevant_text = llmInfo.query;
+    return requestBody;
+}
+
 function prepareLLMChatInfo(request)
 {
     const llmInfo = {};
@@ -311,25 +320,25 @@ async function generateLLMFollowup(llmInfo)
     }
 }
 
-// async function performPlannerSearch(llmInfo)
-// {
-//     try
-//     {        
-//         const requestOptions = {};
-//         requestOptions.httpsAgent = _axiosAgent;
-//         requestOptions.headers =
-//         {
-//             "content-type": "application/json"
-//         };
+async function performPlannerSearch(llmInfo)
+{
+    try
+    {        
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
         
-//         const requestBody = llmInfo;
-//         await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
-//     }
-//     catch(exception)
-//     {
-//         throw exception;
-//     }
-// }
+        const requestBody = preparePlannerRequest(llmInfo);
+        await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
 
 async function performLLMChat(llmInfo, followupResponse)
 {
