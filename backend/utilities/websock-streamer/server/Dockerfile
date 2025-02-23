@@ -9,6 +9,6 @@ RUN npm install --unsafe-perm
 
 COPY . /streamer-serverlib/
 
-EXPOSE 8081
+EXPOSE 8082
 
 CMD npm start

@@ -31,8 +31,8 @@ let _allUrls = {};
 
 const KMicroServices =
 {
-    GenAITextlib: "genai-textlib",
-    PlannerAdapterlib: "planner-adapterlib"
+    GenAITextlib: "genai-textlib"
+    // PlannerAdapterlib: "planner-adapterlib"
 }
 
 const KStatusACK = "ACK";
@@ -72,7 +72,7 @@ function prepareErrorMessage(exception)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
-    _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
+    // _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
 }
 
 function prepareGenAIShortHeaders()
@@ -107,14 +107,14 @@ function prepareInstructionContentInfo(systemPrompt)
     return instruction;
 }
 
-function preparePlannerRequest(llmInfo)
-{
-    const requestBody = {};
-    requestBody.context = llmInfo.context;
-    requestBody.message = llmInfo.message;
-    requestBody.message.network.relevant_text = llmInfo.query;
-    return requestBody;
-}
+// function preparePlannerRequest(llmInfo)
+// {
+//     const requestBody = {};
+//     requestBody.context = llmInfo.context;
+//     requestBody.message = llmInfo.message;
+//     requestBody.message.network.relevant_text = llmInfo.query;
+//     return requestBody;
+// }
 
 function prepareLLMChatInfo(request)
 {
@@ -320,25 +320,25 @@ async function generateLLMFollowup(llmInfo)
     }
 }
 
-async function performPlannerSearch(llmInfo)
-{
-    try
-    {        
-        const requestOptions = {};
-        requestOptions.httpsAgent = _axiosAgent;
-        requestOptions.headers =
-        {
-            "content-type": "application/json"
-        };
+// async function performPlannerSearch(llmInfo)
+// {
+//     try
+//     {        
+//         const requestOptions = {};
+//         requestOptions.httpsAgent = _axiosAgent;
+//         requestOptions.headers =
+//         {
+//             "content-type": "application/json"
+//         };
         
-        const requestBody = preparePlannerRequest(llmInfo);
-        await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
+//         const requestBody = preparePlannerRequest(llmInfo);
+//         await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
 
 async function performLLMChat(llmInfo, followupResponse)
 {
