@@ -82,10 +82,6 @@ function prepareONDCMessage(request)
     ondcMessage.preferred_network = request.body.preferred_network;
     ondcMessage.preferred_networks = request.body.preferred_networks;
     ondcMessage.shouldRetry = request.body.shouldRetry;
-
-    // const headers = {};
-    // headers[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
-    // ondcMessage.headers = headers;
     return ondcMessage;
 }
 
@@ -93,8 +89,6 @@ async function callBuyerAdapter(ondcMessage)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
-    // requestOptions.headers = {};
-    // requestOptions.headers[process.env.VIDEO_API_KEY] = ondcMessage.headers[process.env.VIDEO_API_KEY];
 
     const requestBody = ondcMessage;
     
