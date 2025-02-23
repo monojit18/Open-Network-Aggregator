@@ -380,7 +380,7 @@ async function initSocketServerConnection()
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/event/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
