@@ -115,7 +115,7 @@ function prepareSocketClient()
         console.log(_socketIOClient.id);
     });
 
-    _socketIOClient.on(KSocketEvents.Connectedvent, (message) =>
+    _socketIOClient.on(KSocketEvents.ConnectedEvent, (message) =>
     {
         console.log(message);
     });
@@ -380,7 +380,7 @@ async function initSocketServerConnection()
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/stream/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
