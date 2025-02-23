@@ -81,7 +81,6 @@ function prepareONDCMessage(request)
     ondcMessage.message = request.body.message;
     ondcMessage.preferred_network = request.body.preferred_network;
     ondcMessage.preferred_networks = request.body.preferred_networks;
-    ondcMessage.shouldRetry = request.body.shouldRetry;
     return ondcMessage;
 }
 

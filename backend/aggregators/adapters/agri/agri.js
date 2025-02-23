@@ -79,8 +79,8 @@ function prepareAgriInfo(request)
 function prepareAgriRequest(agriInfo)
 {
     const agriRequest = {};
-    agriRequest.location = agriInfo.context.location;
-    agriRequest.query = agriInfo.message.network.relevant_text;
+    agriRequest.context = agriInfo.context;
+    agriRequest.message = agriInfo.message;    
     return agriRequest;
 }
 

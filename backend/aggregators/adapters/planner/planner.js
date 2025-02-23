@@ -83,10 +83,6 @@ function preparePlannerInfo(request)
     plannerInfo.preferred_networks = request.body.preferred_networks;    
     plannerInfo.prompt = process.env.PLANNER_NLP_PROMPT;
     plannerInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;
-    
-    // const headers = {};
-    // headers[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
-    // plannerInfo.headers = headers;
     return plannerInfo;
 }
 
@@ -149,7 +145,6 @@ function prepareONDCAgentRequest(planner, plannerInfo)
     requestBody.preferred_network = plannerInfo.preferred_network;
     requestBody.preferred_networks = plannerInfo.preferred_networks;
     requestBody.message.network.relevant_text = planner.relevant_text;
-    requestBody.shouldRetry = false;
     return requestBody;
 }
 
@@ -200,7 +195,7 @@ async function callONDCAgent(planner, plannerInfo)
         const agentResponse = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/search`,
                                                     requestBody, requestOptions);
         const agentResult = processGenericResponse(agentResponse);
-        return agentResult;        
+        return agentResult;
     }
     catch(exception)
     {
@@ -257,7 +252,7 @@ async function performPlannerSearch(plannerResponse, plannerInfo)
 
             case "LLM":
             {
-                await callLLMAdapter(plannerInfo);
+                // await callLLMAdapter(plannerInfo);
             }
             break;
         }

@@ -30,11 +30,6 @@ let _allUrls = {};
 
 const KStatusACK = "ACK";
 
-const KMicroServices =
-{
-    PlannerAdapterlib: "planner-adapterlib"
-}
-
 const KCallbackEvents =
 {
     OnBuyerAction: "on_buyer",
@@ -73,11 +68,6 @@ function processGenericResponse(response)
     return genericResponse;
 }
 
-function prepareAllUrls()
-{
-    _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
-}
-
 function prepareBuyerInfo(request)
 {
     const buyerInfo = {};
@@ -93,7 +83,6 @@ function prepareBuyerRequest(buyerInfo)
     const buyerRequest = {};
     buyerRequest.context = buyerInfo.context;    
     buyerRequest.message = buyerInfo.message;
-    buyerRequest.shouldRetry = buyerInfo.shouldRetry;
     return buyerRequest;
 }
 
@@ -117,9 +106,7 @@ function initializeBuyer()
     _axiosAgent = new Https.Agent
     ({
         rejectUnauthorized: false
-    });
-
-    prepareAllUrls();
+    });    
 }
 
 async function fireCallbackEvent(buyerResponse, buyerInfo)
@@ -188,27 +175,6 @@ async function emitAdapterEvent(eventName, eventData)
     }
     catch(exception)
     {        
-        throw exception;
-    }
-}
-
-async function performPlannerSearch(buyerInfo)
-{
-    try
-    {        
-        const requestOptions = {};
-        requestOptions.httpsAgent = _axiosAgent;
-        requestOptions.headers =
-        {
-            "content-type": "application/json"
-        };
-        requestOptions.headers[process.env.VIDEO_API_KEY] = buyerInfo.headers[process.env.VIDEO_API_KEY];
-        
-        const requestBody = buyerInfo;
-        await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);        
-    }
-    catch(exception)
-    {
         throw exception;
     }
 }
