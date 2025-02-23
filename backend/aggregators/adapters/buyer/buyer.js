@@ -85,11 +85,6 @@ function prepareBuyerInfo(request)
     buyerInfo.message = request.body.message;
     buyerInfo.preferred_network = request.body.preferred_network;
     buyerInfo.preferred_networks = request.body.preferred_networks;
-    buyerInfo.shouldRetry = request.body.shouldRetry;
-
-    // const headers = {};
-    // headers[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
-    // buyerInfo.headers = headers;
     return buyerInfo;
 }
 
@@ -167,11 +162,7 @@ async function fireErrorEvent(errorInfo, buyerInfo)
         payload.message = message;
 
         buyerData.payload = payload;
-        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
-        // if (buyerInfo.shouldRetry != false)
-        // {
-        //     await performPlannerSearch(buyerInfo);
-        // }        
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);        
     }
     catch(exception)
     {        
