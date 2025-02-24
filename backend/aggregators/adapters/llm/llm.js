@@ -80,7 +80,7 @@ function prepareGenAIShortHeaders()
     const genAIHeaders = {};
     genAIHeaders.temperature = 0.4;
     genAIHeaders.maxtokens = 1024;
-    genAIHeaders.topk = 40;
+    // genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;
     return genAIHeaders;
 }
@@ -90,7 +90,7 @@ function prepareGenAILongHeaders()
     const genAIHeaders = {};
     genAIHeaders.temperature = 1.0;
     genAIHeaders.maxtokens = 2048;
-    genAIHeaders.topk = 40;
+    // genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;
     return genAIHeaders;
 }
@@ -121,7 +121,7 @@ function prepareLLMChatInfo(request)
     const llmInfo = {};
     llmInfo.context = request.body.context;
     llmInfo.message = request.body.message;
-    llmInfo.prompt = process.env.LLM_CHAT_PROMPT;
+    llmInfo.prompt = process.env.LLM_CHAT_PROMP;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
 
     const filters = llmInfo.message.network.filters;
@@ -254,7 +254,6 @@ async function fireErrorEvent(errorInfo, llmInfo)
         errorResponse.message = errorInfo.message;
 
         const llmData = preapreLLMCallbackData(errorResponse, llmInfo);
-        _socketIOClient.emit(KCallbackEvents.OnCallbackAction, llmData);
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, llmData);
     }
     catch(exception)
