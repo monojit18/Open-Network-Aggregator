@@ -14,6 +14,24 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ![high-level-view](./assets/high-level-view.png)
 
+
+
+# Business View
+
+![business-1](./assets/business-1.png)
+
+
+
+## Scenario 1
+
+![business-scenario-1](./assets/business-scenario-1.png)
+
+
+
+## Scenario 2
+
+![business-scenario-2](./assets/business-scenario-2.png)
+
 # High-Level Architecture
 
 ![high-level-arch](./assets/high-level-arch.png)

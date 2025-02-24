@@ -74,6 +74,14 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ## Self Hosted
 
+### Functional
+
+![self-hosted-graphics](./assets/self-hosted-graphics.png)
+
+
+
+### Technical
+
 ![self-hosted](./assets/self-hosted.png)
 
 - Single Tenant deployment; separate instance for each customer(s) and their environment(s)
@@ -82,11 +90,29 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 
 
-## Deployment Architecture
+### Deployment Architecture
 
 ![self-hosted-deploy-arch](./assets/self-hosted-deploy-arch.png)
 
 
+
+## Managed Service Model
+
+### Functional
+
+![managed-hosted-graphical](./assets/managed-hosted-graphical.png)
+
+
+
+### Technical
+
+![managed-hosted](./assets/managed-hosted.png)
+
+
+
+### Deployment Architecture
+
+![managed-hosted-deploy-arch](./assets/managed-hosted-deploy-arch.png)
 
 ## Prelude
 
