@@ -378,6 +378,11 @@ async function performLLMChat(llmInfo, followupResponse)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of each Affiliate
+ */
 _express.post("/llm/chat", async (request, response) =>
 {
     const llmInfo = prepareLLMChatInfo(request);

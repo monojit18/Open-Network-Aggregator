@@ -149,12 +149,22 @@ async function processOrerDetails(orderDetails)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description Health API for the microservice; can be LBs/Gateways while checking the backend health status
+ */
 _express.get("/healthz", async (request, response) =>
 {
     const results = {};
     response.status(200).send(results);
 });
 
+/**
+ * @fires /order
+ * @method POST
+ * @description Callback from Affiliates after a completing a transaction
+ */
 _express.post("/order", async (request, response) =>
 {
     const orderDetails = request.body;

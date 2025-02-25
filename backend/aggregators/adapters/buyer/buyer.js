@@ -204,6 +204,11 @@ async function performBuyerSearch(buyerInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of each Affiliate
+ */
 _express.post("/search", async (request, response) =>
 {
     const buyerInfo = prepareBuyerInfo(request);
