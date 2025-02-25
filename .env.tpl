@@ -20,7 +20,7 @@ GENAI_LOCATION="us-central1"
 GENAI_PUBLISHER="google"
 DOCAI_LOCATION="us"
 DOCAI_PROJECT_ID=""
-DATASTORE_PROJECT_ID="dbs-project-24022145"
+DATASTORE_PROJECT_ID=""
 VECTOR_SEARCH_TEXT_EMBEDDING_MODEL="text-embedding-005"
 VECTOR_SEARCH_IMAGE_EMBEDDING_MODEL="multimodalembedding@001"
 VECTOR_SEARCH_MULTILINGUAL_EMBEDDING_MODEL="text-multilingual-embedding-002"
@@ -29,17 +29,17 @@ GENAI_GEMINI_TEXT_MODEL="gemini-1.5-flash-002"
 GENAI_GEMINI_VISION_MODEL="gemini-1.5-pro"
 
 # STORAGELIB_HOST="http://localhost:6060"
-STORAGELIB_HOST="https://storagelib-83053558111.asia-southeast1.run.app"
+STORAGELIB_HOST=""
 
 # TRANSLATELIB_HOST="http://localhost:6061"
-TRANSLATELIB_HOST="https://translatelib-83053558111.asia-southeast1.run.app"
+TRANSLATELIB_HOST=""
 
 VISIONLIB_HOST="http://localhost:6062"
 SPEECHLIB_HOST="http://localhost:6063"
 GENAI_VECTORSEARCHLIB_HOST="http://localhost:6064"
 
 GENAI_TEXTLIB_HOST="http://localhost:6065"
-# GENAI_TEXTLIB_HOST="https://genai-textlib-83053558111.asia-southeast1.run.app"
+# GENAI_TEXTLIB_HOST=""
 
 GENAI_IMAGELIB_HOST="http://localhost:6066"
 GENAI_MULTILIB_HOST="http://localhost:6067"
@@ -76,17 +76,11 @@ Response:
 
 AGRI_ATTRIBUTES_PROMPT="Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExamples:\n\nQuery: Show me videos for rice farming\nResponse: {\"attributes\":[\"rice farming\"]}\n\nQuery: Show me videos for mango farming and C++ programming\nResponse: {\"attributes\":[\"mango farming\"]}\n\nQuery: Show me videos on Mango and Rice\nResponse: {\"attributes\":[\"mango\", \"rice\"]}"
 
-# RETAIL
-# LLM_CHAT_PROMPT = "Generate a detailed response to the following chat query.\nTry to provide a complete solution to the query which should provide a defnite answer without asking too many questions back to the user.\nThe response should strictly within 300 words.\nThe response should be in the form of a nicely formatetd paragraph with proper line breaks and spacing.\nThe query needs to be from any one of the following domains:\n\"Retail\", \"Education\", \"Skilling\", \"Jobs\", \"Travel\", \"Hospitality\", \"Health\"\n. If the query is outisde any one of the above mentioned domains or if the query is negative, irrleveant or abusive, then generate a polite, generous response informing your inability to respond to this query.\nIf the query contains a greeting gesture like \"Hi\", \"Hello\" etc. then reciprocate back with a very polite and helpful response to make the user more comfortable with the system."
+# AGRI
+LLM_CHAT_PROMPT = "Generate a detailed response to the following chat query.\nTry to provide a complete solution to the query which should provide a defnite answer without asking too many questions back to the user.\nThe response should strictly within th300 words.\nThe response should be in the form of a nicely formatetd paragraph with proper line breaks and spacing.\nThe query needs to be from any one of the following domains:\n\"Agriculture\", \"Agri Advisory\" or \"Agri Market Linkage\", \"Retail\", \"Education\", \"Skilling\", \"Jobs\", \"Travel\", \"Hospitality\", \"Health\"\n. If the query is outisde any one of the above mentioned domains or if the query is negative, irrleveant or abusive, then generate a polite, generous response informing your inability to respond to this query.\nIf the query contains a greeting gesture like \"Hi\", \"Hello\" etc. then reciprocate back with a very polite and helpful response to make the user more comfortable with the system."
 
 # AGRI
-LLM_CHAT_PROMPT = "Generate a detailed response to the following chat query.\nTry to provide a complete solution to the query which should provide a defnite answer without asking too many questions back to the user.\nThe response should strictly within th300 words.\nThe response should be in the form of a nicely formatetd paragraph with proper line breaks and spacing.\nThe query needs to be from any one of the following domains:\n\"Agriculture\", \"Agri Advisory\" or \"Agri Market Linkage\"\n. If the query is outisde any one of the above mentioned domains or if the query is negative, irrleveant or abusive, then generate a polite, generous response informing your inability to respond to this query.\nIf the query contains a greeting gesture like \"Hi\", \"Hello\" etc. then reciprocate back with a very polite and helpful response to make the user more comfortable with the system."
-
-# RETAIL
-# LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the following query on behalfwhich should help user take some actions.\nThe original query is asked by end user to a conversational bot; the follow up questions should follow the same context and should be aksed on behalf of the user.\nOne of the following question should be related to Video relevant to the original question.\nEach Question should be short and concise.\nReturn the response as a JSON in the following format:\n{\"follow_up\": {\"query\": \"I want to make Chicken Biriyani. Please suggest some nice recipe\", \"follow_ups\": [{\"follow_up\": \"What is the correct rice-to-water ratio and cooking time to achieve perfectly cooked chicken biriyani?\"}, {\"follow_up\": \"How can I effectively layer the chicken and rice to ensure even cooking and a harmonious blend of flavors during the "dum" cooking process?\"}, {\"follow_up\": \"Show me a video tutorial for preparing chicken biriyani\"}]}}"
-
-# AGRI
-LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the following query on behalfwhich should help user take some actions.\nThe original query is asked by end user to a conversational bot; the follow up questions should follow the same context and should be aksed on behalf of the user.\nOne of the following question should be related to Video relevant to the original question.\nEach Question should be short and concise.\nReturn the response as a JSON in the following format:\n{\"follow_up\": {\"query\": \"I want to make Chicken Biriyani. Please suggest some nice recipe\", \"follow_ups\": [{\"follow_up\": \"What is the correct rice-to-water ratio and cooking time to achieve perfectly cooked chicken biriyani?\"}, {\"follow_up\": \"How can I effectively layer the chicken and rice to ensure even cooking and a harmonious blend of flavors during the "dum" cooking process?\"}, {\"follow_up\": \"Show me a video tutorial for preparing chicken biriyani\"}]}}"
+LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the following.\nThe original query is asked by end user to a conversational bot; the follow up questions should follow the same context and should be asked as if user is asking to the bot.\nOne of the alternate question should be related to Video relevant to the original question.\nEach Question should be short and concise.\nReturn the response as a JSON in the following format:\n{\"follow_up\": {\"original_query\": \"I want to plan the marriage of my daughter.\", \"follow_ups\": [{\"follow_up\": \"I am looking for wedding planning advice and guidance for the upcoming marriage of my daughter.\"}, {\"follow_up\": \"What are the steps and resources needed to organize wedding?\"}, {\"follow_up\": \"Show me some videos giving ideas of marriage planning\"}]}}"
 
 
 # RETAIL
@@ -94,10 +88,10 @@ LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the followin
 
 
 # RETAIL
-# AGENTIC_MODEL_ENDPOINT_ID="2479997954472017920"
+# AGENTIC_MODEL_ENDPOINT_ID=""
 
 # AGRI
-AGENTIC_MODEL_ENDPOINT_ID="984310296975769600"
+AGENTIC_MODEL_ENDPOINT_ID=""
 
 WEBSOCK_ROOM_NAME="110600C6-2A13-4BCC-AE8E-36EF992DFCD7"
 WEBSOCK_STREAMER_HTTP_HOST="https://streamer-server.gcpwkshpdev.com"
