@@ -327,6 +327,11 @@ async function performOpenWeatherSearch(weatherInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the partner Affiliate
+ */
 _express.post("/weather/partner", async (request, response) =>
 {
     const weatherInfo = preparePartnerWeatherInfo(request);
@@ -347,6 +352,11 @@ _express.post("/weather/partner", async (request, response) =>
     }
 });
 
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the default Affiliate (e.g. OpenWeather)
+ */
 _express.post("/weather/openweather", async (request, response) =>
 {
     const weatherInfo = prepareOpenWeatherInfo(request);

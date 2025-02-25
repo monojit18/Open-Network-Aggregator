@@ -382,6 +382,11 @@ async function performYoutubeSearch(videoInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the partner Affiliate (e.g. Ninjacart)
+ */
 _express.post("/videos/partner", async (request, response) =>
 {
     const videoInfo = prepareParnerInfo(request);
@@ -402,6 +407,11 @@ _express.post("/videos/partner", async (request, response) =>
     }
 });
 
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the default Affiliate (e.g. Youtube)
+ */
 _express.post("/videos/youtube", async (request, response) =>
 {
     const videoInfo = prepareYoutubeInfo(request);

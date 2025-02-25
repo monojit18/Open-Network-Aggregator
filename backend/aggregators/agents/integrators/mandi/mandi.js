@@ -118,6 +118,11 @@ async function callMandiAdapters(mandiMessage, mandiHeaders, urlPart)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the corresponding Adapter
+ */
 _express.post("/search", async (request, response) =>
 {    
     const mandiMessage = prepareMandiMessage(request);

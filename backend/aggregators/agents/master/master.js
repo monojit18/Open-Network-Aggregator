@@ -373,12 +373,22 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description Health API for the microservice; can be LBs/Gateways while checking the backend health status
+ */
 _express.get("/healthz", async (request, response) =>
 {
     const results = {};
     response.status(200).send(results);
 });
 
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the corresponding Agent
+ */
 _express.post("/search", async (request, response) =>
 {
     const nlpInfo = prepareNLPInfo(request);
