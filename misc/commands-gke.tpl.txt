@@ -27,7 +27,7 @@ DNS_ZONE=
 AR_REPO=
 JUMP_SERVER_NAME=
 
-cloud auth login
+gcloud auth login
 gcloud auth list
 gcloud config set account $OWNER
 
@@ -739,6 +739,19 @@ k get HttpRoute -n smoke
 ===============================================================================================
 k create ns utilities
 k create serviceaccount utilities-sa -n utilities
+
+k create serviceaccount utilities-sa -n utilities
+#k delete serviceaccount utilities-sa -n utilities
+
+gcloud iam service-accounts add-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities/utilities-sa]"
+#gcloud iam service-accounts remove-iam-policy-binding $GSA \
+    --role=roles/iam.workloadIdentityUser \
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities/utilities-sa]"
+
+k annotate serviceaccount utilities-sa -n utilities iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount utilities-sa -n utilities iam.gke.io/gcp-service-account-
 
 #Deploy Utilities Microservices
 ==================================
