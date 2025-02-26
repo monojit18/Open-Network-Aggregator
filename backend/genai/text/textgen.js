@@ -600,7 +600,8 @@ async function generateStreamChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories            
+            history: chatInfo.histories,
+            systemInstruction: chatInfo.systemInstruction
         };
 
         let chatRef = _generativeAIModel.startChat(chatRequest);
