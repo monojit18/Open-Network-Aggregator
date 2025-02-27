@@ -121,7 +121,7 @@ function prepareLLMChatInfo(request)
     const llmInfo = {};
     llmInfo.context = request.body.context;
     llmInfo.message = request.body.message;
-    llmInfo.prompt = process.env.LLM_CHAT_PROMP;
+    llmInfo.prompt = process.env.LLM_CHAT_PROMPT;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
 
     const filters = llmInfo.message.network.filters;
