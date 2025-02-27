@@ -232,6 +232,26 @@ The entrie Terraform deployment is divided into 3 stages -
 
 - Here is a step by step guide on how to deploy this entire infrastructure end to end
 
+### Deploy Fine-tuned model
+
+The framework relies on a gemini-based on a fine-tuned model to understand the intent of the end user (*inferencing by **Master Agent***) and pickup appropriate **Sub Agents** to perform the specific Open Network requests.
+
+#### Examples
+
+**Query**: Show me red coloured handbags
+
+**Step 1**: Inferencing by Master Agent - Intent is Retail (ONDC); route to ONDC Agent
+
+**Step 2**: Action by ONDC Agent - Call all ONDC Affiliates
+
+### How to deploy a fine-tuned model?
+
+This document follows the approach of [Tune Gemini models by using supervised fine-tuning](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini-use-supervised-tuning) where a [Text Tuning](https://cloud.google.com/vertex-ai/generative-ai/docs/models/tune_gemini/text_tune) is used to fine tune a Gemini base model.
+
+- Go to **/data/models** folder under root
+- Use the example files to fine tune a Gemini base model (e.g. *gemini-flash-002*)
+- The saved model will feature in the **[Model Registry](https://cloud.google.com/vertex-ai/docs/model-registry/introduction)** section of Vertex AI
+
 ### Setup CLI environment variables
 
 ```bash
@@ -331,169 +351,44 @@ gcloud storage buckets create gs://$PROJECT_ID-terra-stg --location=us-central1
 gcloud storage buckets create gs://open-network-aggr-stg-<some-random-no> --location=us-central1
 ```
 
+> **Note**
+>
+> Important point to note about sharing secured information through deployment files.
+>
+> This document follows a strict, secured mechanism to share deployment files as every deployment file might have system specific information on where it is getting deployed.
+>
+> All template deployment files will be shared trhough a folder called **values.tpl**; which cna be found under:
+>
+> - **/distribution/gke/charts**
+> - **/distribution/gke/k8s-api-gateway**
+>
+> **Action**
+>
+> - Copy **values.tpl** to a values folder
+> - Modify all template files with the values respective to the target system
+> - All subsequent deployment steps will use the **values** folder
 
 
-### Deployment Methodology
 
-- #### Manual
+## Deployment Methodology
+
+- ### Manual
 
   - Deploy all **Infrastructure**  and **Service** components step by step using **gcloud CLI**
 
-- #### Automated
+- ### Automated
 
   - Deploy all **Infrastructure**  and **Service** components step by step using **Terraform** scripts in just 2 steps
     - **Pre-Config**
     - **Setup**
 
-### Step by Step guide for Manual Deployment
-
-#### Artifact Registry
-
-```bash
-#Create Repository
-gcloud artifacts repositories create $AR_REPO --repository-format=docker --location=$REGION
-
-#List Repository
-gcloud artifacts repositories list --location=$REGION
-
-#Describe Repository
-gcloud artifacts repositories describe $AR_REPO --location=$REGION
-
-#gcloud artifacts repositories delete $AR_REPO --location=$REGION
-```
-
-#### Network
-
-```bash
-gcloud compute networks create $VPC_NAME --subnet-mode=custom --bgp-routing-mode=regional --mtu=1460
-#gcloud compute networks delete $VPC_NAME
-
-gcloud compute networks subnets create $CLUSTER_SUBNET_NAME --network=$VPC_NAME --range=10.0.0.0/22 --region=$REGION
-#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME --region=$REGION
-
-gcloud compute networks subnets create $PSC_SUBNET_NAME --purpose=PRIVATE_SERVICE_CONNECT --role=ACTIVE \
---network=$VPC_NAME --range=10.0.4.0/24
-#gcloud compute networks subnets delete $PSC_SUBNET_NAME
-
-gcloud compute networks subnets create $PROXY_SUBNET_NAME --purpose=REGIONAL_MANAGED_PROXY --role=ACTIVE \
---network=$VPC_NAME  --range=10.0.5.0/24
-#gcloud compute networks subnets delete $PROXY_SUBNET_NAME
-
-gcloud compute networks subnets update $CLUSTER_SUBNET_NAME \
---add-secondary-ranges=pods-range=10.1.0.0/16,services-range=10.2.0.0/16
-#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME
-
-gcloud compute networks subnets create $MAINTENANCE_SUBNET_NAME --network=$VPC_NAME --range=10.0.6.0/24
-#gcloud compute networks subnets delete $MAINTENANCE_SUBNET_NAME
-
-gcloud compute networks subnets list --network=$VPC_NAME
-```
-
-#### Firewall Rules
-
-```bash
-gcloud compute firewall-rules create allow-egress --allow=all --destination-ranges=0.0.0.0/0 \
---direction=EGRESS --network=$VPC_NAME --priority=100
-gcloud compute firewall-rules delete allow-egress
-
-gcloud compute firewall-rules create allow-http-ingress --allow=tcp:80,tcp:443 --source-ranges=0.0.0.0/0 \
---direction=INGRESS --network=$VPC_NAME --priority=100
-#gcloud compute firewall-rules delete allow-http-ingress
-
-gcloud compute firewall-rules create allow-ssh --allow=tcp:22 --source-ranges=0.0.0.0/0 \
---direction=INGRESS --network=$VPC_NAME --priority=101
-#gcloud compute firewall-rules delete allow-ssh
-
-gcloud compute firewall-rules create allow-gcp-health-check --network=$VPC_NAME \
---action=allow --direction=INGRESS --source-ranges=130.211.0.0/22,35.191.0.0/16 \
---rules=tcp --priority=103
-#gcloud compute firewall-rules delete allow-gcp-health-check
-
-gcloud compute firewall-rules create allow-gcp-proxies --network=$VPC_NAME \
---action=allow --direction=INGRESS --source-ranges=10.0.5.0/24 \
---rules=tcp:80,tcp:443,tcp:8080 --priority=104
-#gcloud compute firewall-rules delete allow-gcp-proxies
-
-gcloud compute firewall-rules  list --format="table(name, network)" --filter="network=$VPC_NAME"
-```
-
-#### Bastion Host
-
-- This is primarily for Private GKE cluster where all access to the control plane is blocked
--  Bastion Host acts the single point entry to GKE cluster and also to other services/resources which are behind a private IP or endpoint
-- Good practice to have Bastion host or Jump server for such an end to end deployment
-
-```bash
-gcloud compute addresses create jump-server-ip --region=$REGION
-#gcloud compute addresses delete jump-server-ip
-JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
-
-gcloud compute addresses create jump-server-private-ip --subnet=$MAINTENANCE_SUBNET_NAME \
---addresses=10.0.6.100 --region=$REGION
-JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
-#gcloud compute addresses delete jump-server-private-ip
-
-gcloud compute instances create $JUMP_SERVER_NAME --machine-type=n2d-standard-2 \
---image-family=ubuntu-pro-2004-lts --image-project=ubuntu-os-pro-cloud \
---network=$VPC_NAME --subnet=$MAINTENANCE_SUBNET_NAME --address=$JUMPSERVER_IP \
---private-network-ip=$JUMPSERVER_PRIVATE_IP --zone=$ZONE --project=$PROJECT_ID
-#gcloud compute instances delete $JUMP_SERVER_NAME --zone=$ZONE --project=$PROJECT_ID
-
-gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].networkIP)" \
---project=$PROJECT_ID
-gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].accessConfigs[0].natIP)" \
---project=$PROJECT_ID
-```
-
-#### Create GKE Cluster
-
-#### Private Cluster
-
-```bash
-gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
---enable-ip-alias --machine-type=n2d-standard-2 --gateway-api=standard \
---num-nodes=1 --max-pods-per-node=40 \
---network=$VPC_NAME --subnetwork=$CLUSTER_SUBNET_NAME \
---cluster-secondary-range-name=pods-range --services-secondary-range-name=services-range \
---service-account=$GSA --workload-pool=$PROJECT_ID.svc.id.goog \
---enable-master-authorized-networks --enable-private-nodes --enable-private-endpoint \
---master-authorized-networks=$JUMPSERVER_PRIVATE_IP/32 --master-ipv4-cidr=10.0.7.0/28 \
---addons GcsFuseCsiDriver,HttpLoadBalancing
-#gcloud container clusters delete $CLUSTER --region=$REGION
-```
-
-#### Public Cluster
-
-```bash
-gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
---enable-ip-alias --machine-type=n2d-standard-2 --gateway-api=standard \
---num-nodes=1 --max-pods-per-node=40 \
---network=$VPC_NAME --subnetwork=$CLUSTER_SUBNET_NAME \
---cluster-secondary-range-name=pods-range --services-secondary-range-name=services-range \
---service-account=$GSA --workload-pool=$PROJECT_ID.svc.id.goog \
---addons GcsFuseCsiDriver,HttpLoadBalancing
-#gcloud container clusters delete $CLUSTER --region=$REGION
-```
-
-#### Create Application Node pool
-
-- To host only application services
-
-```bash
-gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION \
---num-nodes=1 --enable-autoscaling --machine-type=n2d-standard-4 \
---min-nodes=1 --max-nodes=50 --max-pods-per-node=30 \
---service-account=$GSA
-#gcloud container node-pools delete gkeappspool --cluster=$CLUSTER --region=$REGION
-```
 
 
-
-### Step by Step guide for Terraform based Deployment
+## Step by Step guide for Automated (*Terraform*) based Deployment
 
 - All steps of manual deployment is clubbed into only to steps
 
-  - #### Pre-Config
+  - ### Pre-Config
 
     ```bash
     #This is used to refer the Google Service account by the Cloud Build script
@@ -519,7 +414,7 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
     _BACKEND_CONFIG_="$BACKEND_CONFIG",_LOG_BUCKET_=$PROJECT_ID-terra-stg
     ```
 
-  - #### Setup
+  - ### Setup
 
     ```bash
     #This is used to refer the Google Service account by the Cloud Build script
@@ -551,165 +446,307 @@ gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION
 
   - This is common for both Manual and Automated deployments
 
+
+
+## Step by Step guide for Manual (*gcloud CLI*) Deployment
+
+### Artifact Registry
+
+```bash
+#Create Repository
+gcloud artifacts repositories create $AR_REPO --repository-format=docker --location=$REGION
+
+#List Repository
+gcloud artifacts repositories list --location=$REGION
+
+#Describe Repository
+gcloud artifacts repositories describe $AR_REPO --location=$REGION
+
+#gcloud artifacts repositories delete $AR_REPO --location=$REGION
+```
+
+### Network
+
+```bash
+gcloud compute networks create $VPC_NAME --subnet-mode=custom --bgp-routing-mode=regional --mtu=1460
+#gcloud compute networks delete $VPC_NAME
+
+gcloud compute networks subnets create $CLUSTER_SUBNET_NAME --network=$VPC_NAME --range=10.0.0.0/22 --region=$REGION
+#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME --region=$REGION
+
+gcloud compute networks subnets create $PSC_SUBNET_NAME --purpose=PRIVATE_SERVICE_CONNECT --role=ACTIVE \
+--network=$VPC_NAME --range=10.0.4.0/24
+#gcloud compute networks subnets delete $PSC_SUBNET_NAME
+
+gcloud compute networks subnets create $PROXY_SUBNET_NAME --purpose=REGIONAL_MANAGED_PROXY --role=ACTIVE \
+--network=$VPC_NAME  --range=10.0.5.0/24
+#gcloud compute networks subnets delete $PROXY_SUBNET_NAME
+
+gcloud compute networks subnets update $CLUSTER_SUBNET_NAME \
+--add-secondary-ranges=pods-range=10.1.0.0/16,services-range=10.2.0.0/16
+#gcloud compute networks subnets delete $CLUSTER_SUBNET_NAME
+
+gcloud compute networks subnets create $MAINTENANCE_SUBNET_NAME --network=$VPC_NAME --range=10.0.6.0/24
+#gcloud compute networks subnets delete $MAINTENANCE_SUBNET_NAME
+
+gcloud compute networks subnets list --network=$VPC_NAME
+```
+
+### Firewall Rules
+
+```bash
+gcloud compute firewall-rules create allow-egress --allow=all --destination-ranges=0.0.0.0/0 \
+--direction=EGRESS --network=$VPC_NAME --priority=100
+gcloud compute firewall-rules delete allow-egress
+
+gcloud compute firewall-rules create allow-http-ingress --allow=tcp:80,tcp:443 --source-ranges=0.0.0.0/0 \
+--direction=INGRESS --network=$VPC_NAME --priority=100
+#gcloud compute firewall-rules delete allow-http-ingress
+
+gcloud compute firewall-rules create allow-ssh --allow=tcp:22 --source-ranges=0.0.0.0/0 \
+--direction=INGRESS --network=$VPC_NAME --priority=101
+#gcloud compute firewall-rules delete allow-ssh
+
+gcloud compute firewall-rules create allow-gcp-health-check --network=$VPC_NAME \
+--action=allow --direction=INGRESS --source-ranges=130.211.0.0/22,35.191.0.0/16 \
+--rules=tcp --priority=103
+#gcloud compute firewall-rules delete allow-gcp-health-check
+
+gcloud compute firewall-rules create allow-gcp-proxies --network=$VPC_NAME \
+--action=allow --direction=INGRESS --source-ranges=10.0.5.0/24 \
+--rules=tcp:80,tcp:443,tcp:8080 --priority=104
+#gcloud compute firewall-rules delete allow-gcp-proxies
+
+gcloud compute firewall-rules  list --format="table(name, network)" --filter="network=$VPC_NAME"
+```
+
+### Bastion Host
+
+- This is primarily for Private GKE cluster where all access to the control plane is blocked
+-  Bastion Host acts the single point entry to GKE cluster and also to other services/resources which are behind a private IP or endpoint
+- Good practice to have Bastion host or Jump server for such an end to end deployment
+
+```bash
+gcloud compute addresses create jump-server-ip --region=$REGION
+#gcloud compute addresses delete jump-server-ip
+JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
+
+gcloud compute addresses create jump-server-private-ip --subnet=$MAINTENANCE_SUBNET_NAME \
+--addresses=10.0.6.100 --region=$REGION
+JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
+#gcloud compute addresses delete jump-server-private-ip
+
+gcloud compute instances create $JUMP_SERVER_NAME --machine-type=n2d-standard-2 \
+--image-family=ubuntu-pro-2004-lts --image-project=ubuntu-os-pro-cloud \
+--network=$VPC_NAME --subnet=$MAINTENANCE_SUBNET_NAME --address=$JUMPSERVER_IP \
+--private-network-ip=$JUMPSERVER_PRIVATE_IP --zone=$ZONE --project=$PROJECT_ID
+#gcloud compute instances delete $JUMP_SERVER_NAME --zone=$ZONE --project=$PROJECT_ID
+
+gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].networkIP)" \
+--project=$PROJECT_ID
+gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfaces[0].accessConfigs[0].natIP)" \
+--project=$PROJECT_ID
+```
+
+### Create GKE Cluster
+
+#### Private Cluster
+
+```bash
+gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
+--enable-ip-alias --machine-type=n2d-standard-2 --gateway-api=standard \
+--num-nodes=1 --max-pods-per-node=40 \
+--network=$VPC_NAME --subnetwork=$CLUSTER_SUBNET_NAME \
+--cluster-secondary-range-name=pods-range --services-secondary-range-name=services-range \
+--service-account=$GSA --workload-pool=$PROJECT_ID.svc.id.goog \
+--enable-master-authorized-networks --enable-private-nodes --enable-private-endpoint \
+--master-authorized-networks=$JUMPSERVER_PRIVATE_IP/32 --master-ipv4-cidr=10.0.7.0/28 \
+--addons GcsFuseCsiDriver,HttpLoadBalancing
+#gcloud container clusters delete $CLUSTER --region=$REGION
+```
+
+#### Public Cluster
+
+```bash
+gcloud container clusters create $CLUSTER --release-channel=regular --region=$REGION \
+--enable-ip-alias --machine-type=n2d-standard-2 --gateway-api=standard \
+--num-nodes=1 --max-pods-per-node=40 \
+--network=$VPC_NAME --subnetwork=$CLUSTER_SUBNET_NAME \
+--cluster-secondary-range-name=pods-range --services-secondary-range-name=services-range \
+--service-account=$GSA --workload-pool=$PROJECT_ID.svc.id.goog \
+--addons GcsFuseCsiDriver,HttpLoadBalancing
+#gcloud container clusters delete $CLUSTER --region=$REGION
+```
+
+### Create Application Node pool
+
+- To host only application services
+
+```bash
+gcloud container node-pools create $NODEPOOL --cluster=$CLUSTER --region=$REGION \
+--num-nodes=1 --enable-autoscaling --machine-type=n2d-standard-4 \
+--min-nodes=1 --max-nodes=50 --max-pods-per-node=30 \
+--service-account=$GSA
+#gcloud container node-pools delete gkeappspool --cluster=$CLUSTER --region=$REGION
+```
+
+#### Create SSL Certificate
+
+```bash
+gcloud compute ssl-certificates create $CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
+gcloud compute ssl-certificates list --global
+#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
+```
+
+#### IP Address
+
+```bash
+gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
+gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
+#gcloud compute addresses delete $IP_ADDRESS_NAME --global
+```
+
+#### Add DNS Records
+
+```bash
+#Add DNS Records
+GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
+
+gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
+--type=A --ttl=60 --zone=$DNS_ZONE
+#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
+```
+
+
+
+### Build Micro-services
+
+- Following micro-services are coming out-of-the-box with this deployment
+
+- Customers are free to choose suitable replacement of these services
+
   
 
-  #### Create SSL Certificate
+#### Vision
 
-  ```bash
-  gcloud compute ssl-certificates create $CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
-  gcloud compute ssl-certificates list --global
-  #gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
-  ```
+- Wrapper around **VertexAI - Cloud Vision** services
 
-  #### IP Address
+```bash
+cd $BASEFOLDERPATH/backend/vertexai/storage
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=storagelib
+PACKAGE_VERSION="v1.0"
 
-  ```bash
-  gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
-  gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
-  #gcloud compute addresses delete $IP_ADDRESS_NAME --global
-  ```
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  #### Add DNS Records
+#### Vision
 
-  ```bash
-  #Add DNS Records
-  GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
-  
-  gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
-  --type=A --ttl=60 --zone=$DNS_ZONE
-  #gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
-  ```
+- Wrapper around **VertexAI - Cloud Vision** services
 
-  
+```bash
+cd $BASEFOLDERPATH/backend/vertexai/vision
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=visionlib
+PACKAGE_VERSION=v1.0
 
-  ### Build Micro-services
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  - Following micro-services are coming out-of-the-box with this deployment
+#### Speech
 
-  - Customers are free to choose suitable replacement of these services
+- Wrapper around **VertexAI - Cloud Speech-to-Text** services
 
-    
+```bash
+cd $BASEFOLDERPATH/backend/vertexai/speech
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=speechlib
+PACKAGE_VERSION=v1.0
 
-  #### Vision
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  - Wrapper around **VertexAI - Cloud Vision** services
+#### Translation
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/vertexai/storage
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=storagelib
-  PACKAGE_VERSION="v1.0"
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
+- Wrapper around **VertexAI - Cloud Translation** services
 
-  #### Vision
+```bash
+cd $BASEFOLDERPATH/backend/vertexai/translation
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=translatelib
+PACKAGE_VERSION=v1.0
 
-  - Wrapper around **VertexAI - Cloud Vision** services
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/vertexai/vision
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=visionlib
-  PACKAGE_VERSION=v1.0
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
+#### Imagegen
 
-  #### Speech
+- Wrapper around **Generative AI - Imagen** services
 
-  - Wrapper around **VertexAI - Cloud Speech-to-Text** services
+```bash
+cd $BASEFOLDERPATH/backend/genai/image
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME="genai-imagelib"
+PACKAGE_VERSION="v1.0"
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/vertexai/speech
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=speechlib
-  PACKAGE_VERSION=v1.0
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  #### Translation
+#### Textgen
 
-  - Wrapper around **VertexAI - Cloud Translation** services
+- Wrapper around **Generative AI - Gemini-1.5 Pro** services
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/vertexai/translation
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=translatelib
-  PACKAGE_VERSION=v1.0
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
+```bash
+cd $BASEFOLDERPATH/backend/genai/text
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=genai-textlib
+PACKAGE_VERSION=v1.0
 
-  #### Imagegen
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  - Wrapper around **Generative AI - Imagen** services
+#### MultiModal
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/genai/image
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME="genai-imagelib"
-  PACKAGE_VERSION="v1.0"
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
+- Wrapper around **Generative AI - Gemini Multimodal** services
 
-  #### Textgen
+```bash
+cd $BASEFOLDERPATH/backend/genai/multimodal
+PROJECT_NAME=
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=genai-multimodallib
+PACKAGE_VERSION=v1.0
 
-  - Wrapper around **Generative AI - Gemini-1.5 Pro** services
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
 
-  ```bash
-  cd $BASEFOLDERPATH/backend/genai/text
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=genai-textlib
-  PACKAGE_VERSION=v1.0
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
 
-  #### MultiModal
-
-  - Wrapper around **Generative AI - Gemini Multimodal** services
-
-  ```bash
-  cd $BASEFOLDERPATH/backend/genai/multimodal
-  PROJECT_NAME=
-  REPO_NAME=$AR_REPO
-  PACKAGE_NAME=genai-multimodallib
-  PACKAGE_VERSION=v1.0
-  
-  gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
-  --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-  _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
-  _LOG_BUCKET_=$PROJECT_ID-terra-stg
-  ```
-
-  
 
 ### Domain specific Services
 
