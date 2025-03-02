@@ -10,7 +10,7 @@ spec:
     name: external-https
     namespace: gateway-ns  
   hostnames:
-  - event-server.gcpwkshpdev.com
+  - <host name>
   rules:  
   - matches:
     - path:
