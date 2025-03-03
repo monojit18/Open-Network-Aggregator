@@ -3,6 +3,7 @@
 #Set Local Varaibles
 ====================
 BASEFOLDERPATH=""
+DISTRIBUTION_PATH=""
 HELPERSPATH=""
 OWNER=
 PROJECT_ID=
@@ -727,12 +728,13 @@ helm upgrade --install --create-namespace smoke-tests-chart-apache $DISTRIBUTION
 #helm uninstall smoke-tests-chart-apache -n smoke
 
 k get po -n smoke
+k get svc -n smoke
 
 #Add Routes
 ========================
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
-k get HttpRoute -n smoke
+k get HttpRoute/smoke-route -n smoke
 ==================================================================================================================
 
 #Utilities services
@@ -776,23 +778,28 @@ k get svc -n utilities
 
 #Add Routes
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
-
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
 
-k get HttpRoute -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
+
+k get HttpRoute/streamer-route -n utilities
+k get HttpRoute/event-route -n utilities
 
 #Add Healthcheck policy
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
-
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
 
-k get HealthCheckPolicy -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
+
+k get HealthCheckPolicy/streamer-healthcheck -n utilities
+k describe HealthCheckPolicy/streamer-healthcheck -n utilities
+
+k get HealthCheckPolicy/event-healthcheck -n utilities
+k describe HealthCheckPolicy/event-healthcheck -n utilities
 ==================================================================================================================
 
 #VertexAI services
@@ -844,17 +851,21 @@ helm upgrade --install --create-namespace vertexai-charts-vectorsearch $DISTRIBU
 #helm uninstall vertexai-charts-vectorsearch -n vertexai
 
 k get po -n vertexai
+k get svc -n vertexai
 
 #Add Routes
 ============================
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
 #k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-k get HttpRoute -n vertexai
+k get HttpRoute/vertexai-route -n vertexai
+k describe HttpRoute/vertexai-route -n vertexai
 
-(for future use)
-#k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
+#Add Healthcheck policy
+============================
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
 #k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
-#k get HealthCheckPolicy -n vertexai
+k get HealthCheckPolicy/vertexai-healthcheck -n vertexai
+k describe HealthCheckPolicy/vertexai-healthcheck -n vertexai
 ==============================================================================================================================
 
 #Aggregator services
@@ -958,5 +969,12 @@ k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
 
-k get HealthCheckPolicy -n aggregator-dev
+k get HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
+k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
+
+k get HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
+k describe HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
+
+k get HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
+k describe HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
 ==================================================================================================================
