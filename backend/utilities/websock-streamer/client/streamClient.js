@@ -129,7 +129,7 @@ async function initSocketServerConnection(request)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /init
+ * @fires /init/:roomId
  * @method POST
  * @description Initialize connection to a SocketIO server
  */
