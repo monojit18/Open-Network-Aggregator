@@ -46,8 +46,8 @@ const KBatchUpdate = "BATCH_UPDATE";
 const KStreamUpdate = "STREAM_UPDATE";
 const KGenAITextlib = "genai-textlib";
 const KGenAIMultimodallib = "genai-multimodallib";
-const KTextEmbeddingsModel = "text-embedding-004";
-const KImageEmbeddingsModel = "multimodalembedding@001";
+// const KTextEmbeddingsModel = "text-embedding-004";
+// const KImageEmbeddingsModel = "multimodalembedding@001";
 
 const KIndexTypeEnum =
 {
@@ -562,7 +562,7 @@ async function createTextEmbedding(embeddingInfo)
         requestOptions.headers =
         {
             "content-type": "application/json",
-            "modelid": KTextEmbeddingsModel,
+            "modelid": `${process.env.VECTOR_SEARCH_TEXT_EMBEDDING_MODEL}`,
             "outputdimension": embeddingInfo.dimensions
         };
 
@@ -663,7 +663,7 @@ async function createImageEmbedding(embeddingInfo)
         requestOptions.headers =
         {
             "content-type": "application/json",
-            "modelid": KImageEmbeddingsModel,
+            "modelid": `${process.env.VECTOR_SEARCH_IMAGE_EMBEDDING_MODEL}`,
             "outputdimension": embeddingInfo.dimensions
         };
 
@@ -1058,7 +1058,7 @@ _express.get("/vector/search/endpoints", async (request, response) =>
 /**
  * @fires /vector/search/text/embedding/create
  * @method POST
- * @description Create new Text Embedding for a specific text conetnt
+ * @description Create new Text Embedding for a specific text content
  */
 _express.post("/vector/search/text/embedding/create", async (request, response) =>
 {

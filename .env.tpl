@@ -1,0 +1,162 @@
+STORAGE_DIR_PATH="<path>storage/data"
+TRANSLATION_DIR_PATH="<path>translation/data"
+VISION_DIR_PATH="<path>vision/data"
+SPEECH_DIR_PATH="<path>speech/data"
+VIDEO_DIR_PATH="<path>video/data"
+DOCAI_DIR_PATH="<path>documentai/data"
+PROJECT_ID=""
+MODEL_PROJECT_ID=""
+PUBSUB_PROJECT_ID=""
+TRANSLATION_LOCATION="us-central1"
+GLOSSARY_LOCATION="us-central1"
+TRANSCODER_LOCATION="us-central1"
+SPEECH_LOCATION="us-central1"
+AUTOML_CUSTOM_MODEL_LOCATION="us-central1"
+VECTOR_SEARCH_LOCATION="us-central1"
+MODEL_LOCATION="us-central1"
+# MODEL_LOCATION="asia-southeast1"
+GENAI_LOCATION="us-central1"
+# GENAI_LOCATION="asia-southeast1"
+GENAI_PUBLISHER="google"
+DOCAI_LOCATION="us"
+DOCAI_PROJECT_ID=""
+DATASTORE_PROJECT_ID=""
+VECTOR_SEARCH_TEXT_EMBEDDING_MODEL="text-embedding-005"
+VECTOR_SEARCH_IMAGE_EMBEDDING_MODEL="multimodalembedding@001"
+VECTOR_SEARCH_MULTILINGUAL_EMBEDDING_MODEL="text-multilingual-embedding-002"
+GENAI_API_ENDPOINT="us-central1-aiplatform.googleapis.com"
+GENAI_GEMINI_TEXT_MODEL="gemini-1.5-flash-002"
+GENAI_GEMINI_VISION_MODEL="gemini-1.5-pro"
+
+# STORAGELIB_HOST="http://localhost:6060"
+STORAGELIB_HOST=""
+
+# TRANSLATELIB_HOST="http://localhost:6061"
+TRANSLATELIB_HOST=""
+
+VISIONLIB_HOST="http://localhost:6062"
+SPEECHLIB_HOST="http://localhost:6063"
+GENAI_VECTORSEARCHLIB_HOST="http://localhost:6064"
+
+GENAI_TEXTLIB_HOST="http://localhost:6065"
+# GENAI_TEXTLIB_HOST=""
+
+GENAI_IMAGELIB_HOST="http://localhost:6066"
+GENAI_MULTILIB_HOST="http://localhost:6067"
+DISCOVERY_ENGINELIB_HOST="http://localhost:6071"
+DATA_STORELIB_HOST="http://localhost:6072"
+
+#Variables for Open Network
+#================================================================================================================================
+AGENTIC_VERSION="1.0.0"
+AGENTIC_DOMAIN_PREFIX="domain:"
+
+# RETAIL
+# AGENTIC_NLP_PROMPT="Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\""
+
+# AGRI
+AGENTIC_NLP_PROMPT="Convert the following sentence into a JSON object and return as a proper JSON.\nDo not add any new items into the response.\nConditions:\nDomain for any query on Agricultural Loan for Farmers will be \"AGRI\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any Agriculture asking for suggestions, guidance, help or queries on Market Linkage, Farming Advisory etc. will be \"LLM\""
+
+PLANNER_NLP_PROMPT=
+"Divide the following query into multiple relevant segments - 'ONDC', 'VIDEO' and 'LLM' and respond with a list of useful alternate suggestions.
+Do not use the name of any particular outlet or brand; each suggestion should be generic.
+Avoid using any special characters in the response.
+Each query should be an alternate suggestion to the original query.
+Include exactly three queries of type 'ONDC' which should  include options which are somehow related to the original query or product e.g. ingredients, raw materials, close by locations etc.
+Include exactly one suggestion of type 'LLM' which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.
+Treat all query to have a domain 'VIDEO' and return exactly one video suggestions.
+Example:
+Query: It's again time for a marriage in the family. My niece is going to get married to a Punjabi guy. I would like to buy some really cool Kurtas with Brown colour and White border. Please suggest.
+Response:
+[{\"domain\": \"ONDC\", \"relevant_text\": \"show me some nice fabric options for Kurtas with Brown colour\"},
+{\"domain\": \"ONDC\", \"relevant_text\": \"suggest some different design options for Kurtas with White border\"},
+{\"domain\": \"ONDC\", \"relevant_text\": \"show me some options for the raw materials for Kurtas\"},
+{\"domain\": \"VIDEO\", \"relevant_text\": \"Give me some suggestions of Marriage halls for Punjabi wedding\"},
+{\"domain\": \"LLM\", \"relevant_text\": \"Give me some suggestions of Honeymoon destinations in India\"}]"
+
+AGRI_ATTRIBUTES_PROMPT="Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExamples:\n\nQuery: Show me videos for rice farming\nResponse: {\"attributes\":[\"rice farming\"]}\n\nQuery: Show me videos for mango farming and C++ programming\nResponse: {\"attributes\":[\"mango farming\"]}\n\nQuery: Show me videos on Mango and Rice\nResponse: {\"attributes\":[\"mango\", \"rice\"]}"
+
+# AGRI
+LLM_CHAT_PROMPT = "Generate a detailed response to the following chat query.\nTry to provide a complete solution to the query which should provide a defnite answer without asking too many questions back to the user.\nThe response should strictly within th300 words.\nThe response should be in the form of a nicely formatetd paragraph with proper line breaks and spacing.\nThe query needs to be from any one of the following domains:\n\"Agriculture\", \"Agri Advisory\" or \"Agri Market Linkage\", \"Retail\", \"Education\", \"Skilling\", \"Jobs\", \"Travel\", \"Hospitality\", \"Health\"\n. If the query is outisde any one of the above mentioned domains or if the query is negative, irrleveant or abusive, then generate a polite, generous response informing your inability to respond to this query.\nIf the query contains a greeting gesture like \"Hi\", \"Hello\" etc. then reciprocate back with a very polite and helpful response to make the user more comfortable with the system."
+
+# AGRI
+LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the following.\nThe original query is asked by end user to a conversational bot; the follow up questions should follow the same context and should be asked as if user is asking to the bot.\nOne of the alternate question should be related to Video relevant to the original question.\nEach Question should be short and concise.\nReturn the response as a JSON in the following format:\n{\"follow_up\": {\"original_query\": \"I want to plan the marriage of my daughter.\", \"follow_ups\": [{\"follow_up\": \"I am looking for wedding planning advice and guidance for the upcoming marriage of my daughter.\"}, {\"follow_up\": \"What are the steps and resources needed to organize wedding?\"}, {\"follow_up\": \"Show me some videos giving ideas of marriage planning\"}]}}"
+
+
+# RETAIL
+# LLM_PLANNER_MODE = "true"
+
+
+# RETAIL
+# AGENTIC_MODEL_ENDPOINT_ID=""
+
+# AGRI
+AGENTIC_MODEL_ENDPOINT_ID=""
+
+WEBSOCK_ROOM_NAME="110600C6-2A13-4BCC-AE8E-36EF992DFCD7"
+WEBSOCK_STREAMER_HTTP_HOST="https://streamer-server.gcpwkshpdev.com"
+# WEBSOCK_STREAMER_HTTP_HOST="http://localhost:8082"
+
+EVENT_SERVER_HTTP_HOST="https://event-server.gcpwkshpdev.com"
+# EVENT_SERVER_HTTP_HOST="http://localhost:8081"
+
+# EVENT_RECEIVER_HTTP_HOST="http://event-receiverapp-svc.aggregator-dev.svc"
+EVENT_RECEIVER_HTTP_HOST="http://localhost:8084"
+
+# PLANNER_ADAPTER_URL=""
+PLANNER_ADAPTER_URL="http://localhost:11001"
+
+# BUYER_ADAPTER_URL=""
+BUYER_ADAPTER_URL="http://localhost:12001"
+
+# ONDC_AGENT_URL=""
+ONDC_AGENT_URL="http://localhost:12002"
+
+# AGRI_ADAPTER_URL=""
+AGRI_ADAPTER_URL="http://localhost:10001"
+
+# AGRI_AGENT_URL=""
+AGRI_AGENT_URL="http://localhost:10002"
+
+# ONEST_AGENT_URL=""
+# ONEST_AGENT_URL="http://localhost:10002"
+
+# VIDEO_ADAPTER_URL=""
+VIDEO_ADAPTER_URL="http://localhost:10001"
+
+# VIDEO_AGENT_URL=""
+VIDEO_AGENT_URL="http://localhost:10002"
+
+# WEATHER_ADAPTER_URL=""
+WEATHER_ADAPTER_URL="http://localhost:10001"
+
+# WEATHER_AGENT_URL=""
+WEATHER_AGENT_URL="http://localhost:10002"
+
+# MANDI_ADAPTER_URL=""
+MANDI_ADAPTER_URL="http://localhost:10001"
+
+# MANDI_AGENT_URL=""
+MANDI_AGENT_URL="http://localhost:10002"
+
+# LLM_ADAPTER_URL=""
+LLM_ADAPTER_URL="http://localhost:10001"
+
+# LLM_AGENT_URL=""
+LLM_AGENT_URL="http://localhost:10002"
+
+VIDEO_API_KEY = "x-api-video-key"
+YOUTUBE_NETWORK_KEY = "YOUTUBE"
+WEATHER_API_KEY = "x-api-weather-key"
+OPEN_WEATHER_NETWORK_KEY = "OPEN_WEATHER"
+MANDI_API_KEY = "x-api-mandi-key"
+ENAM_NETWORK_KEY="ENAM"
+
+
+YOUTUBE_DATA_V3_SEARCH_URL="https://youtube.googleapis.com/youtube/v3"
+NINJA_CART_SEARCH_URL="https://apiv2.ninjacart.in/ninja-agri/onest-video-content"
+# APNA_SEARCH_URL="https://api.production.infra.apna.co/campus-pulse/api/catalog"
+WEATHER_SEARCH_URL="https://api.openweathermap.org/data/2.5/weather"
+WEATHER_ICON_URL="https://openweathermap.org/img/wn"
+ENAM_MANDI_SEARCH_URL="https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
+#================================================================================================================================

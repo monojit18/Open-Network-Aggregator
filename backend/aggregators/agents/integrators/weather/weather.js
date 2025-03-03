@@ -33,9 +33,6 @@ const KMicroServices =
     WeatherAdapter: "weather-adapter"
 }
 
-const KWeatherAPIKey = "x-api-weather-key";
-const KOpenWeatherKey = "OPEN_WEATHER";
-
 DotEnv.config();
 
 _express.use(Express.json
@@ -83,7 +80,7 @@ function prepareWeatherMessage(request)
 function prepareWeatherHeders(request)
 {
     const weatherheaders = {};
-    weatherheaders[KWeatherAPIKey] = request.headers[KWeatherAPIKey]; 
+    weatherheaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY]; 
     return weatherheaders;
 }
 
@@ -119,6 +116,11 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the corresponding Adapter
+ */
 _express.post("/search", async (request, response) =>
 {    
     const weatherMessage = prepareWeatherMessage(request);
@@ -128,7 +130,7 @@ _express.post("/search", async (request, response) =>
 
     try    
     {
-        const opendWeatherNetwork = weatherMessage.preferred_network[KOpenWeatherKey];
+        const opendWeatherNetwork = weatherMessage.preferred_network[process.env.OPEN_WEATHER_NETWORK_KEY];
         if (opendWeatherNetwork != null)
         {
             const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));

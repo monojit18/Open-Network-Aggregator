@@ -106,6 +106,11 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the corresponding Adapter
+ */
 _express.post("/search", async (request, response) =>
 {    
     const llmMessage = prepareLLMMessage(request);

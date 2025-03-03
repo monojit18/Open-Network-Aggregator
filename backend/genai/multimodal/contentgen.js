@@ -37,8 +37,7 @@ let _markDown = null;
 let _axiosAgent = null;
 let _socketIOClient = null;
 
-// const KGeminiVisionModel = "gemini-1.0-pro-vision";
-const KGeminiVisionModel = "gemini-1.5-pro";
+// const KGeminiVisionModel = "gemini-1.5-pro";
 
 const KSocketEvents =
 {
@@ -140,7 +139,7 @@ function prepareContentGenClient()
     _markDown = new MarkdownIt();
 
     const modelInfo = {};
-    modelInfo.model = KGeminiVisionModel;
+    modelInfo.model = process.env.GENAI_GEMINI_VISION_MODEL;
     _generativeAIModel = _vertexAIClient.getGenerativeModel(modelInfo);
 
     const clientOptions = {};
@@ -245,7 +244,7 @@ async function initSocketClient()
 
 async function initSocketServerConnection()
 {
-    const requestOptions= {};
+    const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     const requestBody = {};
 

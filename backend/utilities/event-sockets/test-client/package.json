@@ -1,0 +1,23 @@
+{
+    "name": "test_client_app",
+    "description": "An Test Client App for Websockets",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios socket.io-client",
+        "start": "node test-client.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "axios": "^1.7.9",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "jshint": "^2.13.6",
+        "socket.io-client": "^4.8.1"
+    }
+}

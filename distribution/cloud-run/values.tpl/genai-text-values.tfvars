@@ -1,7 +1,7 @@
 projectInfo = {    
-    project = "<project_id>"
+    project = ""
     region = "asia-southeast1"
-    serviceAccount = "apps-project-sa@<project_id>.iam.gserviceaccount.com"
+    serviceAccount = "-sa@.iam.gserviceaccount.com"
 }
 
 cloudrunInfo = {
@@ -44,12 +44,24 @@ cloudrunInfo = {
         value = "us-central1-aiplatform.googleapis.com"
     },
     {
+        name = "GENAI_GEMINI_TEXT_MODEL"
+        value = "gemini-1.5-pro"
+    },
+    {
         name = "WEBSOCK_STREAMER_HTTP_HOST"
-        value = "https://streamer-serverlib-"
+        value = "https://event-serverlib-.run.app"
     },
     {
         name = "PROJECT_ID"
-        value = "<project_id>"
+        value = ""
+    },
+    {
+        name = "MODEL_PROJECT_ID"
+        value = ""
+    },
+    {
+        name = "MODEL_LOCATION"
+        value = "us-central1"
     }]
     members = ["allUsers"]
 }

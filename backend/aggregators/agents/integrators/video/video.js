@@ -23,9 +23,6 @@ const Express = require("express");
 const Cors = require("cors");
 const Axios = require('axios');
 
-const KAgriAttributesPrompt = "Context: Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExample:\nShow me videos for rice farming\n{\"attributes\":[\"rice farming\"]}\n\nShow me videos for mango farming and C++ programming\n{\"attributes\":[\"mango farming\"]}\n\nShow me videos on Mango and Rice\n{\"attributes\":[\"mango\", \"rice\"]}";
-const KTechAttributesPrompt = "Context: Extract keywords related to Technical, Engineering, Medical, Machine Learning, Data Science, Career, Management, Marketting, Finance etc. courses from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExample:\nShow me videos for web programming\n{\"attributes\":[\"web programming\"]}\n\nShow me videos for Rice farming and .NET programming\n{\"attributes\":[\".NET programming\"]}\n\nShow me videos on Data Science and Machine Learning\n{\"attributes\":[\"Data Science\", \"Machine Learning\"]}";
-
 let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
@@ -42,9 +39,6 @@ const KVideoNetwork =
     Youtube: "youtube",
     Partner: "partner"
 }
-
-const KYoutubeAPIKey = "x-api-video-key";
-const KYoutubeKey = "YOUTUBE";
 
 DotEnv.config();
 
@@ -98,7 +92,7 @@ function prepareLongHeaders()
 {
     const genAIHeaders = {};
     genAIHeaders.temperature = 0.4;
-    genAIHeaders.maxtokens = 8192;
+    genAIHeaders.maxtokens = 2048;
     genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;
     return genAIHeaders;
@@ -109,14 +103,15 @@ function prepareVideoMessage(request)
     const videoMessage = {};
     videoMessage.context = request.body.context;
     videoMessage.message = request.body.message;
-    videoMessage.preferred_network = request.body.preferred_network;   
+    videoMessage.preferred_network = request.body.preferred_network;
+    videoMessage.preferred_networks = request.body.preferred_networks;
     return videoMessage;
 }
 
 function prepareVideoHeaders(request)
 {
-    const videoHeaders = {};       
-    videoHeaders[KYoutubeAPIKey] = request.headers[KYoutubeAPIKey];
+    const videoHeaders = {};
+    videoHeaders[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
     return videoHeaders;
 }
 
@@ -128,7 +123,7 @@ async function extractAgriAttributes(videoMessage)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = `${KAgriAttributesPrompt}\n\n${videoMessage.message.network.filters.query}`;
+    promptInfo.prompt = `${process.env.AGRI_ATTRIBUTES_PROMPT}\n\n${videoMessage.message.network.filters.query}`;
     const contentsList = prepareNLPContentInfo(promptInfo);
     requestBody.contents = contentsList;
 
@@ -181,23 +176,29 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the corresponding Adapter
+ */
 _express.post("/search", async (request, response) =>
 {    
     const videoMessage = prepareVideoMessage(request);
     const videHeaders = prepareVideoHeaders(request);
 
-    let adapterResponse = null;
+    const adapterResponseList = [];
     const results = {};
     
     try
     {
-        const youtubeNetwork = videoMessage.preferred_network[KYoutubeKey];
+        const youtubeNetwork = videoMessage.preferred_network[process.env.YOUTUBE_NETWORK_KEY];
         if (youtubeNetwork != null)
         {
             const copiedVideoMessage = JSON.parse(JSON.stringify(videoMessage));
             copiedVideoMessage.preferred_network = youtubeNetwork;
-            adapterResponse = await callVideoNetwork(KVideoNetwork.Youtube, videHeaders,
-                                                        copiedVideoMessage);  
+            const adapterResponse = await callVideoNetwork(KVideoNetwork.Youtube, videHeaders,
+                                                        copiedVideoMessage);
+            adapterResponseList.push(adapterResponse);
         }
 
         const preferredNetworksList = videoMessage.preferred_network.partners;
@@ -215,14 +216,15 @@ _express.post("/search", async (request, response) =>
                     {
                         const agriVideoMessage = JSON.parse(JSON.stringify(copiedVideoMessage));
                         agriVideoMessage.message.network.filters.query = attributeString;
-                        adapterResponse = await callVideoNetwork(KVideoNetwork.Partner, videHeaders,
+                        const adapterResponse = await callVideoNetwork(KVideoNetwork.Partner, videHeaders,
                                                                     agriVideoMessage);
+                        adapterResponseList.push(adapterResponse);
                     }));
                 }
             }));
         }
-        
-        results.results = adapterResponse;
+                
+        results.results = adapterResponseList;
         response.send(results);
     }
     catch(exception)

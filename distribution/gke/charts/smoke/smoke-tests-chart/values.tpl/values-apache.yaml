@@ -14,7 +14,7 @@ deployment:
     cloud.google.com/gke-nodepool: gkeappspool
   containers:
   - name: apache-app
-    image: "<repo>/httpd:latest"
+    image: "httpd:latest"
     imagePullPolicy: IfNotPresent
     memoryRequest: "250Mi"
     cpuRequest: "100m"

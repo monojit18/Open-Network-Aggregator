@@ -1,0 +1,39 @@
+deployment:
+  name: buyeradapter-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: buyeradapter-deploy 
+    version: v1
+  selectorLabels:
+    app: buyeradapter-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: buyeradapter-app
+    image: "<repo-name>/buyer-adapter:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10001]
+    envVars:    
+    - name: EVENT_RECEIVER_HTTP_HOST
+      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: buyeradapter-svc
+  selector:
+    app: buyeradapter-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10001  

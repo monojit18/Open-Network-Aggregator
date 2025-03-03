@@ -1,0 +1,39 @@
+deployment:
+  name: event-receiverapp-deploy
+  serviceAccount: utilities-sa
+  labels:
+    app: event-receiverapp-deploy 
+    version: v1
+  selectorLabels:
+    app: event-receiverapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: event-receiver-app
+    image: "<repo-name>/event-receiverlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [8084]
+    envVars:
+    - name: EVENT_SERVER_HTTP_HOST
+      value: http://event-serverapp-svc.utilities.svc
+    - name: PROJECT_ID
+      value: <PROJECT_ID>
+service:
+  name: event-receiverapp-svc
+  selector:
+    app: event-receiverapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 8084  

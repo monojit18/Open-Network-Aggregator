@@ -380,6 +380,17 @@ async function deleteGlossary(glossaryInfo)
 
 /* API DEFINITIONS - START */
 /**
+ * @fires /healthz
+ * @method GET
+ * @description Service Healthcheck
+ */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
+/**
  * @fires /languages
  * @method GET
  * @description List All Supported Languages

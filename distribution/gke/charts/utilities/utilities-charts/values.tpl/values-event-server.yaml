@@ -1,0 +1,37 @@
+deployment:
+  name: event-serverapp-deploy
+  serviceAccount: utilities-sa
+  labels:
+    app: event-serverapp-deploy 
+    version: v1
+  selectorLabels:
+    app: event-serverapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: event-server-app
+    image: "<repo-name>/event-serverlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [8081]
+    envVars:
+    - name: PROJECT_ID
+      value: <PROJECT_ID>
+service:
+  name: event-serverapp-svc
+  selector:
+    app: event-serverapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 8081  

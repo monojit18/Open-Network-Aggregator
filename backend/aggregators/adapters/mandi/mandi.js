@@ -213,8 +213,8 @@ async function fireErrorEvent(errorInfo, priceInfo)
         payload.message = priceInfo.message;
 
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
         payload.error = errorResponse;
 
         priceData.payload = payload;
@@ -237,7 +237,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -328,6 +328,11 @@ async function performMandiPriceSearch(priceInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the partner Affiliate
+ */
 _express.post("/mandi/partner", async (request, response) =>
 {
     const priceInfo = prepareMandiPriceInfo(request);
@@ -347,6 +352,12 @@ _express.post("/mandi/partner", async (request, response) =>
         await fireErrorEvent(errorInfo, priceInfo);
     }
 });
+
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the default Affiliate (e.g. ENAM)
+ */
 _express.post("/mandi/enam", async (request, response) =>
 {
     const priceInfo = prepareMandiPriceInfo(request);

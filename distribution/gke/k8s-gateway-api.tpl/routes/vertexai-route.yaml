@@ -1,0 +1,31 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: vertexai-route  
+  labels:
+    gateway: external-https
+spec:
+  parentRefs:
+  - kind: Gateway
+    name: external-https
+    namespace: gateway-ns  
+  hostnames:
+  - <host name>
+  rules:  
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /languages
+    - path:
+        type: PathPrefix
+        value: /translate
+    backendRefs:
+    - name: translateapp-svc
+      port: 80
+  # - matches:
+  #   - path:
+  #       type: PathPrefix
+  #       value: /genai    
+  #   backendRefs:
+  #   - name: genaitextapp-svc
+  #     port: 80

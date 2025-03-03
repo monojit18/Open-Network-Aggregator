@@ -26,6 +26,7 @@ const Axios = require('axios');
 let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
+let _allUrls = {};
 
 const KStatusACK = "ACK";
 
@@ -73,6 +74,7 @@ function prepareBuyerInfo(request)
     buyerInfo.context = request.body.context;    
     buyerInfo.message = request.body.message;
     buyerInfo.preferred_network = request.body.preferred_network;
+    buyerInfo.preferred_networks = request.body.preferred_networks;
     return buyerInfo;
 }
 
@@ -113,12 +115,16 @@ async function fireCallbackEvent(buyerResponse, buyerInfo)
     {
         const buyerData = {};
         buyerData.room = buyerInfo.context.transaction_id;
-        buyerData.event = KCallbackEvents.OnBuyerAction;        
-        buyerData.payload = buyerResponse;
+        buyerData.event = KCallbackEvents.OnBuyerAction;
+
+        const payload = {};
+        payload.context = buyerResponse.context;        
+        payload.message = buyerResponse.message;
+        buyerData.payload = payload;        
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }    
 }
@@ -135,14 +141,15 @@ async function fireErrorEvent(errorInfo, buyerInfo)
         payload.context = buyerInfo.context;
 
         const message = {};
-        const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
-        message.error = errorResponse;
+
+        const errorMessage = {};
+        errorMessage.code = (buyerInfo.shouldRetry == false) ? 404 : errorInfo.code;
+        errorMessage.message = errorInfo.message;
+        message.error = errorMessage;
         payload.message = message;
 
         buyerData.payload = payload;
-        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, buyerData);        
     }
     catch(exception)
     {        
@@ -161,7 +168,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -183,7 +190,7 @@ async function performBuyerSearch(buyerInfo)
         requestOptions.headers =
         {
             "content-type": "application/json"            
-        };
+        };        
 
         const requestBody = prepareBuyerRequest(buyerInfo);
         const buyerResult = await Axios.post(`${buyerURL}`, requestBody, requestOptions);
@@ -197,6 +204,11 @@ async function performBuyerSearch(buyerInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of each Affiliate
+ */
 _express.post("/search", async (request, response) =>
 {
     const buyerInfo = prepareBuyerInfo(request);

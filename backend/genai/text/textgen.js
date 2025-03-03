@@ -55,7 +55,7 @@ const KCallTypes =
     CallTypeCode: "code"
 }
 
-const KGeminiTextModel = "gemini-1.5-pro";
+// const KGeminiTextModel = "gemini-1.5-pro";
 const KStreamRoom = "stream-room";
 const KStreamData = "stream";
 const KTextStreamRoom = "text-stream-room";
@@ -71,7 +71,8 @@ _express.use(Express.json
     
 _express.use(Express.urlencoded
 ({
-    extended: true
+    extended: true,
+    limit: '100mb'
 }));
 
 function prepareErrorMessage(exception)
@@ -82,10 +83,10 @@ function prepareErrorMessage(exception)
 
 function prepareRESTErrorMessage(exception)
 {
-    exception.code = ((exception.response.data.error?.code == undefined)
-                        || (exception.response.data.error?.code < 400))
+    exception.code = ((exception.response.data?.error?.code == undefined)
+                        || (exception.response.data?.error?.code < 400))
                         ? 500 : exception.response.data.error?.code;
-    exception.message = exception.response.data.error?.message;
+    exception.message = exception.response.data?.error?.message;
     return exception;
 }
 
@@ -114,7 +115,7 @@ function prepareSocketClient()
         console.log(_socketIOClient.id);
     });
 
-    _socketIOClient.on(KSocketEvents.Connectedvent, (message) =>
+    _socketIOClient.on(KSocketEvents.ConnectedEvent, (message) =>
     {
         console.log(message);
     });
@@ -138,13 +139,13 @@ function prepareSocketClient()
 function prepareTextGenClient()
 {
     const vertexAIInfo = {};
-    vertexAIInfo.project = `${process.env.PROJECT_ID}`;
-    vertexAIInfo.location = `${process.env.GENAI_LOCATION}`;
+    vertexAIInfo.project = process.env.PROJECT_ID;
+    vertexAIInfo.location = process.env.GENAI_LOCATION;
     _vertexAIClient = new VertexAI(vertexAIInfo);
     _markDown = new MarkdownIt();
     
     const modelInfo = {};
-    modelInfo.model = KGeminiTextModel;
+    modelInfo.model = process.env.GENAI_GEMINI_TEXT_MODEL;
 
     _generativeAIModel = _vertexAIClient.getGenerativeModel(modelInfo);
     _generativeAIPreviewModel = _vertexAIClient.preview.getGenerativeModel(modelInfo);
@@ -179,6 +180,7 @@ function prepareTextParameters(request)
     textInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeText;
     textInfo.expectJSON = (request.query.type == "json");
+    textInfo.systemInstruction = request.body.instruction;
     return textInfo;
 }
 
@@ -193,6 +195,7 @@ function prepareChatParameters(request)
     chatInfo.parameters = prepareGenAIParameters(request);
     chatInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeChat;
+    chatInfo.systemInstruction = request.body.instruction;
     return chatInfo;
 }
 
@@ -204,6 +207,7 @@ function prepareCodeParameters(request)
     codeInfo.parameters = prepareGenAIParameters(request);
     codeInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
                                                                  : KCallTypes.CallTypeCode;
+    codeInfo.systemInstruction = request.body.instruction;
     return codeInfo;
 }
 
@@ -212,7 +216,8 @@ function prepareMedLMParameters(request)
     const medLMInfo = {};
     medLMInfo.modelId = request.headers.modelid;
     medLMInfo.instances = request.body.instances;
-    medLMInfo.parameters = prepareGenAIParameters(request);    
+    medLMInfo.parameters = prepareGenAIParameters(request);
+    medLMInfo.systemInstruction = request.body.instruction;
     return medLMInfo;
 }
 
@@ -226,7 +231,6 @@ function prepareEmbeddingParameters(request)
     const outputDimensionality = Number(request.headers.outputdimension);
     embeddingInfo.parameters.outputDimensionality = outputDimensionality;
     return embeddingInfo;
-
 }
 
 function prepareEndpointParameters(request)
@@ -236,8 +240,8 @@ function prepareEndpointParameters(request)
     endpointInfo.endpointId = request.headers.endpointid;
     endpointInfo.parameters = prepareGenAIParameters(request);
     endpointInfo.expectJSON = (request.query.type == "json");
+    endpointInfo.systemInstruction = request.body.instruction;
     return endpointInfo;
-
 }
 
 function preaprePredictionResponse(prediction, expectJSON)
@@ -370,13 +374,13 @@ async function initSocketClient()
 
 async function initSocketServerConnection()
 {
-    const requestOptions= {};
+    const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     const requestBody = {};
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/stream/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -468,6 +472,7 @@ async function generateCustomContent(endpointInfo)
 
         const requestBody = {};
         requestBody.contents = endpointInfo.contents;
+        requestBody.systemInstruction = endpointInfo.systemInstruction;
 
         const endpointResult = await Axios.post(`${endpointURL}`, requestBody, requestOptions);
         const predictionContent = preaprePredictionResponse(endpointResult.data,
@@ -485,7 +490,8 @@ async function generateContent(textInfo)
     const request =
     {
         contents: textInfo.contents,
-        generationConfig: textInfo.parameters
+        generationConfig: textInfo.parameters,
+        systemInstruction: textInfo.systemInstruction
     };
 
     try
@@ -506,7 +512,8 @@ async function generateStreamContent(textInfo)
     const request =
     {
         contents: textInfo.contents,
-        generationConfig: textInfo.parameters
+        generationConfig: textInfo.parameters,
+        systemInstruction: textInfo.systemInstruction
     };
 
     try
@@ -562,7 +569,8 @@ async function generateChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories            
+            history: chatInfo.histories,
+            systemInstruction: chatInfo.systemInstruction
         };
 
         let chatRef = _generativeAIModel.startChat(chatRequest);
@@ -592,7 +600,8 @@ async function generateStreamChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories            
+            history: chatInfo.histories,
+            systemInstruction: chatInfo.systemInstruction
         };
 
         let chatRef = _generativeAIModel.startChat(chatRequest);
@@ -651,7 +660,7 @@ async function generateCodeContent(codeInfo)
     }
 }
 
-async function generateMedLMContent(medLMInfo)
+async function predictMedLMContent(medLMInfo)
 {
     try
     {
@@ -666,7 +675,39 @@ async function generateMedLMContent(medLMInfo)
             "Authorization": `Bearer ${accessToken}`
         };
 
-        const requestBody = medLMInfo.instances;
+        const requestBody = {};
+        requestBody.instances = medLMInfo.instances;
+        requestBody.parameters = medLMInfo.parameters; 
+
+        const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
+        const medLMContent = medLMResult.data;
+        return medLMContent;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function generateMedLMContent(medLMInfo)
+{
+    try
+    {
+        const accessToken = await performAuthentication();        
+        const medLMURL = `https://${process.env.GENAI_LOCATION}-aiplatform.googleapis.com/v1/${prepareGenAIEndpoint(medLMInfo.modelId)}:generateContent`;
+
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+        };
+
+        const requestBody = {};
+        requestBody.contents = medLMInfo.contents;
+        requestBody.generationConfig = medLMInfo.parameters;        
+        
         const medLMResult = await Axios.post(`${medLMURL}`, requestBody, requestOptions);
         const medLMContent = medLMResult.data;
         return medLMContent;
@@ -715,6 +756,19 @@ async function performCodeContentGeneration(codeInfo)
             predictionContent = await generateCodeContent(codeInfo);
         }
         return predictionContent;        
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performMedLMPrediction(medLMInfo)
+{
+    try
+    {
+        const medLMContent = await predictMedLMContent(medLMInfo);        
+        return medLMContent;        
     }
     catch(exception)
     {
@@ -866,6 +920,30 @@ _express.post("/genai/code/:sessionId?/:type?", async (request, response) =>
 });
 
 /**
+ * @fires /genai/medlm/predict
+ * @method POST
+ * @description Generate Medical suggestions from  Prompts
+ */
+_express.post("/genai/medlm/predict", async (request, response) =>
+{
+    const medLMInfo = prepareMedLMParameters(request);
+    const results = {};
+
+    try
+    {
+        const medLMResponse = await performMedLMPrediction(medLMInfo);
+        results.results = medLMResponse;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareRESTErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
  * @fires /genai/medlm/chat
  * @method POST
  * @description Generate Medical suggestions from  Prompts
@@ -883,7 +961,7 @@ _express.post("/genai/medlm/chat", async (request, response) =>
     }
     catch(exception)
     {
-        let errorInfo = prepareErrorMessage(exception);
+        let errorInfo = prepareRESTErrorMessage(exception);
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }

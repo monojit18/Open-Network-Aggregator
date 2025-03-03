@@ -1,255 +1,1257 @@
-# Multi Agent Aggregator for Open Network
+# Multi Agent Aggregator for Open Network -
 
-![img](./assets/hld2.png)
+## Api Specifications
 
-## What is Open Network?
+# Introduction
 
-An Open Network essentially creates a level playing field for both buyers and sellers. It removes the control that singular platforms have in traditional e-commerce models, fostering a more open and competitive environment that benefits all participants, including those in the education sector. This can be applied to e-commerce marketplaces, but also to online learning platforms. An open network in education (viz. *ONEST*) can empower learners to find courses and programs from various providers, compare prices and quality, and choose the best fit for their needs. Similarly, educators and content creators can reach a wider audience through multiple platforms, increasing their visibility and potential student base.
+**Google Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
 
-Another great example can be ONDC - Open Network for Digital Commerce - which revolutionises the way e-Commerce can work in India by allowing Buyers and Sellers to communicate with each other over the Open Network in a Platform agnostic way and with a seamless experience.
+Google Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
 
-Similar other Open Networks or Agriculture, Healthcare, Energy can be built easily and allow both Demand and Supply-chain ends to communicate easily.
+This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
 
-- **Multi-Platform Access:** Buyers can search and purchase goods or services through various applications, not being confined to a single platform. This empowers them to find the best deals and explore a wider range of options.
-- **Seller Freedom:** Sellers have the flexibility to list their offerings on multiple apps, increasing their reach and potential customer base. This breaks down the dominance of large platforms and creates a more competitive marketplace.
-- **Platform Independence:** The network itself operates independently of any specific application. It establishes protocols and standards that different apps can integrate with to participate. This allows users to choose their preferred apps for buying or selling without limitations imposed by a single platform.
+# High-Level View
 
-**Open Standards:** The network utilizes open-source technology and standardized protocols. This ensures transparency, fosters innovation by allowing developers to create compatible applications, and promotes fair competition within the network.
-
-# What is Beckn Protocol?
-
-The Beckn protocol creates open, decentralized networks for various industries. It lets platforms, organizations, and governments build these networks for e-commerce, mobility, energy, and more. This open approach is managed by a community and aims to reverse the trend of closed, non-competitive platforms. Beckn's networks allow for specialization and reduce reliance on single platforms, empowering businesses and consumers. This fosters collaboration, innovation, and inclusivity while maintaining competition. The result is a barrier-free digital economy with equal access for all, promoting opportunities across various sectors.
-
-One Protocol infinite potential 
-
-![img](./assets/bekn1.png)
-
-Creating a new digital future, one open network at a time
-
-![img](./assets/bekn2.png)
-
-![img](./assets/bekn3.png)
+![high-level-view](./assets/high-level-view.png)
 
 
 
-## Purpose
+# Business View
 
-- Allow frictionless integration experience with the Open Networks for NPs
-- Provide a Single window deployment experience for NPs
-- Pluggable interface to integrate with NPs existing application seamlessly
-- In-built - Best practices, Security, Scale, Protocol upgrades
+![business-1](./assets/business-1.png)
 
-## Objectives
 
-- Build an aggregator of Open Networks - ONDC, ONEST, Agri, Energy and more
-- Build for both Provider and Seeker side of the Open Networks
-- Build a set of pluggable APIs with zero or minimal configuration or knowledge on any Open networks
-- Provide a pair of white-labeled interfaces which can be re-branded easily and plugged into the existing App Eco of the consumer. Consumers would have the ability to integrate into their app flow as well
-- Use Gemini based fine tuned models to do NLP to understand the user’s intent; translate into a set of actionable steps specific to a Network
-- Build the end to end arch as a multi-agent system with one Master Agent and multiple sub-agents
-- Each Sub-agent having domain specific knowledge and can connect to a specific Open Network
-- Consolidated responses comes back to Master Agent which then sent back to the Bot frontend
 
-# Functional Architecture
+## Scenario 1
 
-Users want to leverage Open Networks; but do not want to go through the nitty-gritties; and do not even know how many networks, which network etc.
+![business-scenario-1](./assets/business-scenario-1.png)
 
-### Scenarios
 
-- Users have an existing Mobile or Web App flow. Wants to integrate this Aggregator to seamlessly connect to any Open Networks
-- User does not have an app and replying on us to deliver a complete package - Open Network integration and DFront ends
-- User already has a Bot or wants to build a new one connected to Open Networks
 
-### Functional Flow
+## Scenario 2
 
-![img](./assets/func-flow-1.png)
+![business-scenario-2](./assets/business-scenario-2.png)
 
 # High-Level Architecture
 
-## Level 1
-
-As a first step towards solving the customer pain points to onboard into ONEST, Google Cloud Open Education (GCOE) service envisioned to provide an L1 Accelerator which in the future roadmap could evolve into a strong line of products to support ONEST customers from Google Cloud and also contribute to the One Google Initiative with ONEST.
-
-![img](./assets/hld.png)
+![high-level-arch](./assets/high-level-arch.png)
 
 - Multi-agent architecture
+- Bridge between Demand and Supply
+  - **Demand side**: Buyers/Seekers
+  - **Supply side**: BAPs on Open Network, various Digital Content providers who are not on any Open Networks
 - User’s Voice command runs through an NLP to understand the Intent
-  - Model - gemini 1.5-pro Fine Tuned with a set of 500 examples
-  - Examples are in JSONL format
-- Master Agent is the first responder
-  - Master Agent connects to Gemini 
-  - Responses from Model will return a specific formatted JSON with Providers (*which network to go to?*); **Specific Intents** (Find, Filter, Add, Update); **Action items** (Search, Select, Init, Confirm etc.) and Messages (corresponding data points to send to the Open Network)
-  - Passes the JSON to Platform specific Sub-Agents; decided by the **Provider** field as described above 
-- All responses from multiple networks reach to **Master-agent**, consolidated and send back as one response back to the font end
+- **Master Agent** is the first responder
+  - **Master Agent** connects to Gemini 
+  - Responses from Model will return a specific formatted JSON with **Specific Intents** (*which network to go to?*); **Action items** (*Search*) and **Messages** *(corresponding data points to send to the Open Network*)
+  - Passes the JSON to Platform specific Sub-Agents
+- Responses from each Network is sent back to the front end over a **Websocket connection**
 - Each **Sub-agent** act like an independent unit capable to communicate with a specific Open Networks and for a specific domain
   - JSON data from **Master-agent** is processed to convert it into a request for a specific Open Network
-  - **Sub-agent** send the request to designated Open Network e.g. ONEST (for *Education, Jobs, Skilling*) or VISTAR (for *Agri*)
-  - Each **Sub-agent** would take care of Security, Fan-out, Audit logging etc.
-  - Each **Sub-agent** will perform standard Open Network specific security checks like Payload Signing, Verification of request header etc.
-  - If needed **Sub-agent** will also decide on Fan-out of requests using some event-drive mechanism
-- Open Network will broadcast the request from the Sub-agents to the **Providers** or **Sellers** of the Open Network
-- The responses from Open Network would be sent directly to the Sub-agents directly as per Open Network specs
+  - **Sub-agents** can send the request to Open Networks e.g. ONEST (for *Education, Jobs, Skilling*) or ONDC (for *Retail*) based on the instruction from **Master Agent**
+    - **Sub-agents** will send the request to a BAP interfaces in the Open Network like Buyer Apps or Seeker Apps; which in-turn will call the designated Open Network
+    - **Providers** on the Open network would respond back to the BAPs as per [Beckn protocol](https://becknprotocol.io/); which in-turn sends the response back to the front end apps (*Buyers/Seekers*)
+  - **Sub-agents** can send the request to Content providers outside of any Open Network e.g. Videos, Digital Catalogs, Web/Podcasts etc. based on the instruction from **Master Agent**
+    - Each non-Network Content provider can send the digital contents directly to the front end apps (*Buyers/Seekers*)
 
-**Sub-agents** send the consolidated response back to **Master-agent** and in turn to the frontend and update the same accordingly
+# Logical View
 
-## Level-2
+![logical-view](./assets/logical-view.png)
 
-![img](./assets/hld2.png)
+# End to End Workflow
 
-# Protocol Adapter (*L1 Accelerator*)
-
-![img](./assets/l1-adapter-1.png)
-
-![img](./assets/l1-adapter-2.png)
-
-Communication between Sub-agents to Open networks can be direct; but that would need a lot of boiler plate code to be written and multiple different configurations.
-
-To avoid that, there will be an Adapter interface to make the communication between Domain specific Sub-agents to the corresponding Open Network seamless and extensible.
-
-Primary responsibility of the Protocol Adapter will be to handle:
-
-- Protocol validation
-- Version management
-- Security checks
-- Scalability
-
-Following is a logical flow of the protocol adapter for both Provider and Seeker interfaces
-
-## Logical Flow
-
-![img](./assets/logical-flow-1.png)
-
-## Logical Flow (*Deep dive*)
-
-![img](./assets/logical-flow-2.png)
+![workflow](./assets/workflow.png)
 
 # Sequential Flow
 
 ## All Open Networks
 
-![img](./assets/seq-flow-1.png)
-
-## Integrator Networks (Outside Open Network)
-
-![img](./assets/seq-flow-2.png)
+![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
 
 
 
-# Deployment Architecture
+## Integrator Networks (*Outside Open Network*)
 
-![img](./assets/deploy-arch-1.png)
+![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
 
-## Architecture Highlights
+# Integrator App
 
-- Authentication
-  - Google IAM to be used as Authentication Provider for managing resources on GCP
-  - Identity-aware-Proxy to be enabled for the Global Load Balancer; this will ensure that access to the Front end application and Dashboard app will be authenticated through IAM
-  - SSL Certificates to be attached with the each Forwarding rules of the Load Balancer
-  - Each environment (*Dev, QA, Pre-Prod and Prod*) would have their own certificate
-  - Global HTTPS LB has auto-renewal of certificates
-- Authorization
-  - Google Organization Policy would be used to provide Authorization for each managed service
-  - GKE cluster would have additional layer of RBAC through core K8s
-  - Groups over individual identity - Groups provide better management and security. Any person leaving the group or organization, can be managed easily through Groups
-    - Groups to be used for management access control for all resources
-  - Service Accounts to be used for service level access controls and between service-to-service communication
-    - Separate Service Accounts for each Environment
-    - Service Accounts Key creation not allowed for all environments except Dev and Test
-    - Granular access to Service Accounts as much as possible; avoid higher privileges
-- Secrets/Keys Management
-  - Cloud KMS service to be leveraged for all Certificate and Key management across all environments
-  - Certificate Authority Service - A highly available and scalable Google Cloud service allows us to simplify, automate, and customize the deployment, management and security of private certificate authorities 
-  - Secret Manager service to be leveraged for managing Secrets across all environments
-- Security
-  - Cloud Armor as WAF at global HTTPS Load balancer. Provides protection from multiple types of threats including
-    - DDOS attacks
-    - SQL injection (SQLi)
-    - Cross-site scripting (XSS)
-    - Local File Inclusion (LFI)
-    - Remote File Inclusion (RFI)
-    - Remote Code Execution (RCE)
-  - Advanced Security policies like URL pattern matching, ReCaptcha Enterprise etc.
-  - Geo-fencing of WAF will be 
-  - Automatic rotation of SSL certificates by WAF
-  - In-built Ingress security for the backend K8s cluster using GKE Ingress
-  - Access Security using OAuth and API Keys for each API exposed
-  - Policies and Rules to hide backend APIs and its internal operations
-- Performance
-  - Highly Scalable
-    - GKE cluster would auto-scalable horizontally through HPA
-    - GKE supports Vertical scalability through Nodepool Auto Config feature
-    - Container Native Load balancing to provide highly scalable access to backend APIs within the cluster
-    - This will ensure that Cluster can handle high throughput requirements and create new Microservice instances as CPU/Memory utilization increases. Additionally Nodes also can scale horizontally to accommodate new microservice instances
-    - Solution proposes to start with 4 Node Nodepool for micro-services with 4 vCPU:16GB configuration and 2 threads per core
-      - This will ensure that initial load is well-handled by the system
-      - During subsequent peak load can be distributed horizontally
-      - And this ensures that the SLA of 500 TPS
-  - High Availability
-    - GKE cluster would be deployed as a Regional cluster ensuring HA across 3 Availability Zones
-    - All microservices within the cluster would be deployed with minimum 2 replicas for HA
-    - Cluster will be sized with additional buffer to keep service running even when a GKE upgrade is going on
-  - Service Isolation
-    - GKE cluster would have a default system pool to hold K8s specific services and anything that is across the cluster
-    - All other micro services specific to this requirement will be deployed on a **Dedicated Nodepool** fully isolated from other services
-    - Additional level of segregation of Services through K8s Namespaces
-    - Separate cluster for major environments
-      - **Dev** and **QA** will be one single cluster separated by Namespaces
-      - **Staging** services will be deployed in the same cluster as DEV but in a separate nodepool
-      - **Production** will be a separate dedicated cluster
-  - Easy Failover
-    - System would support Active-Active DR with resources deployed efficiently and cost optimized way; ensuring quick RTO and RPO as well as keeping cost factor into consideration
-    - Managed Database service would allow replication within and across regions to ensure HA and seamless Failover; as well as easy Fallback
-  - Fault tolerance
-    - The Fault Injection and Packet mirroring features for Load Balancer would be used to test system tolerance before deploying onto higher environment
-    - Blue/Green deployment for easy rollback through Anthos Service Mesh
-    - Traffic Splitting to ensure the stability of the newly deployed version
-- Monitoring and Observability
-  - GKE cluster will have **GKE Service Mesh** deployed for 
-    - Detailed insights of each service
-    - Hierarchical view of services within the cluster; detailed view of internal service-to-service communication
-    - Traffic Splitting within the cluster
-    - Blue/Green deployment
-    - Fault Injection
-    - Circuit Breaking
-  - Detailed Insights of Database performance through **Cloud Operations**
-    - Service status
-    - Alerts
-    - Notifications
-    - Workflow to take action if Service is in a pre-defined state; e,g,
-      - Decision to perform DR
-      - Add additional Replicas for scaling
-- Version Management
-  - Seamless versioning of APIs
-  - Support for previous versions through Artifact Registry
-  - Easy Rollback and Rollover
-  - Full and Incremental backups of Database
-  - Backup for GKE for managing config files, policies and states
+![integrator-app](./assets/integrator-app.png)
 
-## DevOps Suite
+- Integrates with **Google Agentic framework**
+- Maintains the state of entire application
+- Manages end user preferences viz. Preferred Networks, Intended Verticals of Open Networketc.
+- Logs all transactions in an Audit Database asynchronously
+- Basic Analytics
+- Future Plans
+  - Advanced Analytics
 
-![img](./assets/devops-1.png)
 
-- **DevOps Flow**
 
-![img](./assets/devops-2.png)
+# API Specifications
 
-- **Build Trigger** is created and attached to the Cloud Source repository. This initiates a **Cloud Build** step
-- Build steps build the source code and generates a **Docker Container** image
-- FInal step of Cloud Build Push image to **Artifact Registry**
-- **Binary Authorization** policy ensures only trusted container images are deployed on Google Kubernetes Engine (GKE)
-- **Cloud Deploy** step is initiated and deploys the image on **GKE (DEV)** environment
-- A test and feedback cycle is performed. Post successful testing, same image is deployed to **GKE (QA)** environment
-- A test and feedback cycle is performed. Post successful testing an **Approval Workflow** **is** initiated for DevOps admin before moving to **Pre-Prod/Staging** environment
-- Post approval, same image is deployed to **GKE (Pre-Prod)** environment
-- A test and feedback cycle is performed. Post successful testing an **Approval Workflow** **is** initiated for DevOps/Production admin before moving to **Production** environment
+## Authentication
+
+- The initial version proposes to use Key based security for APIs
+- Key to be created and managed by Integrator app
+- Key to be passed in the **X-API-Key** header with each API call
+- Multiple Open network API might have their own version of api keys which the Demand side has to send while calling Master Agent API as explained below
+
+# Master Agent
+
+This api is hosted by **Google Agentic framework** and exposed to the Demand side of the Network - Buyers and Seekers.
+
+Any Mobile or Web app integrating with this framework will call this single API to receive content as per Buyers request.
+
+## Async Mode
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Master Agent
+      description: Master Agent of the Google Agentic framework to transform text query into actionable insights
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:                
+                transaction_id:
+                  type: string
+                message_id:
+                  type: string
+                query:
+                  type: string
+                location:
+                  type: object
+                  description: Contains a reverse geocoded address from user's current location (*Mobile Device or Web*).
+                  properties:
+                    address:
+                      type: string
+                    country:
+                      $ref: '#/components/schemas/Country/properties/code'
+                    city:
+                      $ref: '#/components/schemas/City/properties/code'
+                    zip:
+                      type: string
+                preferred_networks:
+                  type: object
+                  description: Contains a list of target BAPs and/or Content providers.|
+                    Google Agentic framework will route requests appropriately to these networks.
+                  properties:                    
+                    $ref: '#/components/schemas/PreferredNetwork'                  
+                intended_verticals:
+                  type: object
+                  # For future use
+                  description: Contains a list of verticals supported by Open Networks and intended by the end user.|
+                    This field would be ignored for non-network Content providers viz. Video, Weather etc.
+                  properties:
+                    type: array
+                    items:
+                      type: string
+              required:
+              - transaction_id
+              - message_id
+              - query
+              - preferred_networks
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - message
+```
+
+
+
+### Description
+
+#### Request
+
+| **Headers**           | **Type** | **Description**                                              |
+| --------------------- | -------- | ------------------------------------------------------------ |
+| **x-api-key**         | string   | This will be provided to the Demand side partner while integrating with the Integrator/Hosting App which stores the Key securely for each Demand side partner. Integrator/Hosting App will validate the key while processing the Master agent api call. |
+| **x-api-video-key**   | string   | API key for Youtube videos                                   |
+| **x-api-mandi-key**   | string   | API key for Mandi API                                        |
+| **x-api-weather-key** | string   | API key for OpenWeatherMap API                               |
+
+| **Fields**             | **Type** | **Description**                                              |
+| ---------------------- | -------- | ------------------------------------------------------------ |
+| **transaction_id**     | string   | Identifies a new Transaction in Buyer/Seeker Apps. Sent by Buyer/Seeker Apps. |
+| **message_id**         | string   | Identifies a new message or action; e.g. Search. Sent by Buyer/Seeker Apps. |
+| **query**              | string   | Query over Voice or Text to be used by Master Agent Sent by Buyer/Seeker Apps. |
+| **location**           | object   | Reverse geocoded address from user's current location (*Mobile Device or Web*). *location:*         *type: object*         *description: Contains a reverse geocoded address from user's current location (\*Mobile Device or Web\*).*         *properties:*          *address:*           *type: string*          *country:*           *$ref: '#/components/schemas/Country/properties/code'*          *city:*           *$ref: '#/components/schemas/City/properties/code'*          *zip:*           *type: string* |
+| **country**            | object   | *Country:*   *description: Describes a country.*   *type: object*   *properties:*    *name:*     *type: string*     *description: Name of the country.*    *code:*     *type: string*     *description: Country code as per ISO 3166-1 and ISO 3166-2 format.* |
+| **city**               | object   | *City:*   *type: object*   *description: Describes a city.*   *properties:*    *name:*     *type: string*     *description: Name of the city.*    *code:*     *type: string*     *description: City code.* |
+| **preferred_networks** | array    | List of target BAPs and/or Content providers. **Google Agentic framework** will route requests appropriately to these networks. *preferred_networks:*         *type: object*         *description: Contains a list of target BAPs and/or Content providers.\|*          *Google Agentic framework will route requests appropriately to these networks.*         *properties:*          *type: array*          *items:*           *$ref: '#/components/schemas/PreferredNetwork'* |
+| **intended_verticals** | array    | List of verticals supported by **Open Networks** and intended by the end user. This field would be ignored for non-network Content providers viz. Video, Weather etc. *intended_verticals:*         *type: object*         *description: Contains a list of verticals supported by Open Networks and intended by the end user.\|*          *This field would be ignored for non-network Content providers viz. Video, Weather etc.*         *properties:*          *type: array*          *items:*           *type: string* |
+
+#### Response
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **message** | object   | *Ack:*   *description: Describes the ACK response.*   *type: object*   *properties:*    *status:*     *type: string*     *description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.*     *enum:*     *- ACK*     *- NACK*   *required:*   *- status* |
+| **error**   | object   | *Error:*   *description: Describes an error object*   *type: object*   *properties:*    *type:*     *type: string*     *enum:*      *- CONTEXT_ERROR*      *- CORE_ERROR*      *- DOMAIN_ERROR*            *- JSON_SCHEMA_ERROR*    *code:*     *type: string*     *description: Error code from a list of error codes from Google Agentic framework.*    *path:*     *type: string*     *description: Path to json schema generating the error. Used only during json schema validation errors.*    *message:*     *type: string*     *description: Human readable message describing the error.*   *required:*   *- type*   *- code* |
+
+
+
+# BAP and Content Provider APIs
+
+## Retail 
+
+This API will be hosted by the Supply side of the Network - Buyer Apps and Seeker Apps on the ONDC network.
+
+- Buyer Apps and Seeker Apps would bring content from Sellers on the Network
+- Communication between Buyer/Seekers and Sellers/Providers would be strictly beckon protocol
+  - Although the **Google Agentic framework** does not enforce any restriction on the same; but is strongly expected.
+- Modes
+  - **Asynchronous Mode**
+    - ONDC Sub-agents calls **/search** API hosted by BAPs
+    - BAPs return search content by **callback_url** hosted by **Google Agentic framework**
+    - Framework return the search results back to the Demand side - Buyers and Seekers through a Websocket connection
+  - **Synchronous Mode**
+    - ONDC Sub-agents calls **/search** API hosted by BAPs
+    - Wait for the BAPs to return the search result. **callback_url** is ignored by BAPs in this case
+    - Framework return the search results back to the Demand side - Buyers and Seekers through a Websocket connection
+
+## Async Mode
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Domain spaecific search by Google Agentic framework in the Open Networks through BAP interfaces.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - message
+```
+
+
+
+### Description
+
+#### Request
+
+| **Fields**     | **Type** | **Description**                                              |
+| -------------- | -------- | ------------------------------------------------------------ |
+| **context**    | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format.    **callback_url**: URL to be called by BAPs in response to the search() function call. This is only needed for the Async mode. |
+| **message**    | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONDC**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** objectsBAPs who do not support semantic search can use this to filter their search. |
+| **SearchItem** |          | **SearchItem**: filter criteria for Search in the ONDC network.     merchant: Name of the Merchant or Business to include in the Search     **colours**: List Colors to include in the Search     price: This will be used in sorting the search results e,g. Low to High     product: Producti to search for     category: Category to include in the Search |
+
+#### Response
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **message** | object   | *Ack:*   *description: Describes the ACK response.*   *type: object*   *properties:*    *status:*     *type: string*     *description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.*     *enum:*     *- ACK*     *- NACK*   *required:*   *- status* |
+| **error**   | object   | *Error:*   *description: Describes an error object*   *type: object*   *properties:*    *type:*     *type: string*     *enum:*      *- CONTEXT_ERROR*      *- CORE_ERROR*      *- DOMAIN_ERROR*            *- JSON_SCHEMA_ERROR*    *code:*     *type: string*     *description: Error code from a list of error codes from Google Agentic framework.*    *path:*     *type: string*     *description: Path to json schema generating the error. Used only during json schema validation errors.*    *message:*     *type: string*     *description: Human readable message describing the error.*   *required:*   *- type*   *- code* |
+
+
+
+### /on_search
+
+This API is hosted by **Google Agentic framework** and is called by BAPs in the Asynchronous mode.
+
+```yaml
+/on_search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Receive Search results from BAP Interfaces.
+      requestBody:
+        description: Payload to be sent by BAP interfaces to the Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    catalog:
+                      $ref: '#/components/schemas/Catalog'
+                    network:
+                      $ref: '#/components/schemas/Network'
+                    next_page_token:
+                      type: string                    
+                  required:
+                  - catalog
+                  - network
+                error:
+                  $ref: '#/components/schemas/Error'
+              required:
+              - context
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - context
+```
+
+
+
+### Description
+
+#### **Request**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:*Contains a reverse geocoded address from user's current location (\*Mobile Device or Web\*).* **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format.    **callback_url**: URL to be called by BAPs in response to the search() function call. This is hosted by **Google Agentic framework** for receiving teh on_seach() callback.This is only needed for the Async mode. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **embedding_url:** AN Url to be sent by every BAP. This url will be opened by Integrator app (*Mobile or Web*) hosting the **Google Agentic framework** in an embedded Webview in the Front end UI. This url should allow the end user to complete all subsequent transactions on the ONDC Network viz. *Select, Init, Confirm* and finally the *Payment.* **items:** List of any type of objects describing the data from ONDC networkBAPs should return this as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONDC**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** objectsBAPs who do not support semantic search can use this to filter their search. **next_page_token:** BAPs supporting pagination in their response can use this field to send the next page token. Agentic framework will use this token to call subsequent pages asynchronously. |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **message** | object   | *Ack:*   *description: Describes the ACK response.*   *type: object*   *properties:*    *status:*     *type: string*     *description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.*     *enum:*     *- ACK*     *- NACK*   *required:*   *- status* |
+| **error**   | object   | *Error:*   *description: Describes an error object*   *type: object*   *properties:*    *type:*     *type: string*     *enum:*      *- CONTEXT_ERROR*      *- CORE_ERROR*      *- DOMAIN_ERROR*            *- JSON_SCHEMA_ERROR*    *code:*     *type: string*     *description: Error code from a list of error codes from Google Agentic framework.*    *path:*     *type: string*     *description: Path to json schema generating the error. Used only during json schema validation errors.*    *message:*     *type: string*     *description: Human readable message describing the error.*   *required:*   *- type*   *- code* |
+
+### components
+
+```yam
+components:
+  ...
+
+    SearchItem:
+      description: Item to Search for in the ONDC network.
+      type: object
+      properties:
+        merchant:
+          type: string
+        colours:
+          type: array
+          items:
+            type: string
+        price:
+          type: string
+        product:
+          type: string
+        category:
+          type: string
+    
+    Catalog:
+      description: Item containing Search response from the BAPs or Content providers.
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+        provider:
+          type: object
+          properties:
+            descriptor:
+              type: object
+              properties:
+                name:
+                  type: string
+            embedding_url:
+              type: string
+            items:
+              type: array
+              items:
+                type: object
+                description: This can be a list of any type of objects as per the network or domain BAP belongs to;|
+                  and supported by Google Agentic framework e.g. ONDC, ONEST etc.
+          required:
+          - descriptor
+          - embedding_url
+      required:
+      - descriptor
+      - provider
+
+    Error:
+      ...
+```
+
+
+
+## Sync Mode
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Domain spaecific search by Google Agentic framework in the Open Networks through BAP interfaces.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':          
+          description: Receive Search results from BAP Interfaces.
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    context:
+                      $ref: '#/components/schemas/Context'
+                    message:
+                      type: object
+                      properties:
+                        catalog:
+                          $ref: '#/components/schemas/Catalog'
+                        network:
+                          $ref: '#/components/schemas/Network'
+                        next_page_token:
+                          type: string
+                      required:
+                      - catalog
+                      - network
+                    error:
+                      $ref: '#/components/schemas/Error'
+                  required:
+                  - context
+```
+
+
+
+### Description
+
+#### **Request**
+
+| **Fields**     | **Type** | **Description**                                              |
+| -------------- | -------- | ------------------------------------------------------------ |
+| **context**    | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format.    **callback_url**: URL to be called by BAPs in response to the search() function call. This is only needed for the Async mode. |
+| **message**    | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONDC**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** objectsBAPs who do not support semantic search can use this to filter their search. |
+| **searchItem** |          | **SearchItem**: filter criteria for Search in the ONDC network.     **merchant**: Name of the Merchant or Business to include in the Search     **colours**: List Colors to include in the Search     **price**: This will be used in sorting the search results e,g. Low to High     **product**: Producti to search for     **category**: Category to include in the Search |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **embedding_url:** AN Url to be sent by every BAP. This url will be opened by Integrator app (*Mobile or Web*) hosting the **Google Agentic framework** in an embedded Webview in the Front end UI. This url should allow the end user to complete all subsequent transactions on the ONDC Network viz. *Select, Init, Confirm* and finally the *Payment.* **items:** List of any type of objects describing the data from ONDC networkBAPs should return thai as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network.**enum**:     - ONDC      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **searchItem** Object sent to the BAPs in the request bodyBAPs will send this as-is in the response. **next_page_token:** BAPs supporting pagination in their response can use this field to send next page token. Agentic framework will use this token to call subsequent pages asynchronously. |
+
+
+
+## Education & Skilling
+
+## Async Mode
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Domain spaecific search by Google Agentic framework in the Open Networks through BAP interfaces.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - message
+```
+
+### Description
+
+#### **Request**
+
+| **Fields**     | **Type** | **Description**                                              |
+| -------------- | -------- | ------------------------------------------------------------ |
+| **context**    | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format.    **callback_url**: URL to be called by BAPs in response to the search() function call. This is only needed for the Async mode. |
+| **message**    | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONEST** **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** from original Text by end User - Buyers or Seekers.BAPs who do not support semantic search can use this to filter their search. |
+| **SearchItem** | object   | **type**: ONEST domain typeenum:     - learning     - jobs     - scholarships **item**: ONEST specific content **provider**: Provider of the content **location**: Address for the ONEST job search; Free Text **std**: STD code for the ONEST job search **state**: State code for the ONEST job search **country**: Country code for the ONEST job search **industry**: Industry name for the ONEST job search; Free Text **employment**: Employment Type for the ONEST job search; Free Text **gender**: gender for which the ONEST content is searched for.**user**:**age**          **gender**      **skills**           **Items**: List of Skills; Free Text |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **message** | object   | *Ack:*   *description: Describes the ACK response.*   *type: object*   *properties:*    *status:*     *type: string*     *description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.*     *enum:*     *- ACK*     *- NACK*   *required:*   *- status* |
+| **error**   | object   | *Error:*   *description: Describes an error object*   *type: object*   *properties:*    *type:*     *type: string*     *enum:*      *- CONTEXT_ERROR*      *- CORE_ERROR*      *- DOMAIN_ERROR*            *- JSON_SCHEMA_ERROR*    *code:*     *type: string*     *description: Error code from a list of error codes from Google Agentic framework.*    *path:*     *type: string*     *description: Path to json schema generating the error. Used only during json schema validation errors.*    *message:*     *type: string*     *description: Human readable message describing the error.*   *required:*   *- type*   *- code* |
+
+### /on_search
+
+This API is hosted by **Google Agentic framework** and is called by BAPs in the Asynchronous mode.
+
+```yaml
+/on_search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Receive Search results from BAP Interfaces.
+      requestBody:
+        description: Payload to be sent by BAP interfaces to the Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    catalog:
+                      $ref: '#/components/schemas/Catalog'
+                    network:
+                      $ref: '#/components/schemas/Network'
+                    next_page_token:
+                      type: string
+                  required:
+                  - catalog
+                  - network
+                error:
+                  $ref: '#/components/schemas/Error'
+              required:
+              - context
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - context
+```
+
+### Description
+
+#### **Request**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format.    **callback_url**: URL to be called by BAPs in response to the search() function call. This is hosted by **Google Agentic framework** for receiving teh on_seach() callback.This is only needed for the Async mode. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **embedding_url:** AN Url to be sent by every BAP. This url will be opened by Integrator app (*Mobile or Web*) hosting the **Google Agentic framework** in an embedded Webview in the Front end UI. This url should allow the end user to complete all subsequent transactions on the ONDC Network viz. *Select, Init, Confirm* and finally the *Payment.* **items:** List of any type of objects as per the network or domain BAP belongs to and supported by **Google Agentic framework**BAPs should return thai as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONEST**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** from original Text by end User - Buyers or Seekers.BAPs who do not support semantic search can use this to filter their search. **next_page_token:** BAPs supporting pagination in their response can use this field to send next page token. Agentic framework will use this token to call subsequent pages asynchronously. |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **message** | object   | *Ack:*   *description: Describes the ACK response.*   *type: object*   *properties:*    *status:*     *type: string*     *description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.*     *enum:*     *- ACK*     *- NACK*   *required:*   *- status* |
+| **error**   | object   | *Error:*   *description: Describes an error object*   *type: object*   *properties:*    *type:*     *type: string*     *enum:*      *- CONTEXT_ERROR*      *- CORE_ERROR*      *- DOMAIN_ERROR*            *- JSON_SCHEMA_ERROR*    *code:*     *type: string*     *description: Error code from a list of error codes from Google Agentic framework.*    *path:*     *type: string*     *description: Path to json schema generating the error. Used only during json schema validation errors.*    *message:*     *type: string*     *description: Human readable message describing the error.*   *required:*   *- type*   *- code* |
+
+### components
+
+```yaml
+components:
+  ...
+
+    SearchItem:
+      description: Item to Search for in the ONEST network.
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - learning
+          - jobs
+          - scholarships
+        item:
+          type: string
+        provider:
+          type: string
+        location:
+          type: string
+        std:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        industry:
+          type: string
+        employment:
+          type: string
+        gender:
+          type: string
+        user:
+          type: object
+          properties:
+            age:
+              type: integer
+            gender:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+        backgrouns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Background'
+        academics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Academic'
+      required:
+      - type
+    
+    Academic:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+      - value
+
+    Background:
+      type: object
+      properties:
+        social:
+          type: string
+      required:
+      - social
+
+    Catalog:
+      description: Item containing Search response from the BAPs or Content providers.
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+        provider:
+          type: object
+          properties:
+            descriptor:
+              type: object
+              properties:
+                name:
+                  type: string
+            embedding_url:
+              type: string
+            items:
+              type: array
+              items:
+                type: object
+                description: This can be a list of any type of objects as per the network or domain BAP belongs to;|
+                  and supported by Google Agentic framework e.g. ONDC, ONEST etc.
+          required:
+          - descriptor
+          - embedding_url
+      required:
+      - descriptor
+      - provider
+
+    Error:
+      ...
+```
+
+
+
+## Sync Mode
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Open Networks      
+      description: Domain spaecific search by Google Agentic framework in the Open Networks through BAP interfaces.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    catalog:
+                      $ref: '#/components/schemas/Catalog'
+                    network:
+                      $ref: '#/components/schemas/Network'
+                    next_page_token:
+                      type: string
+                  required:
+                  - catalog
+                  - network
+                error:
+                  $ref: '#/components/schemas/Error'
+              required:
+              - context
+```
+
+### Description
+
+#### **Request**
+
+| **Fields**     | **Type** | **Description**                                              |
+| -------------- | -------- | ------------------------------------------------------------ |
+| **context**    | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message**    | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **ONEST**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** from original Text by end User - Buyers or Seekers.BAPs who do not support semantic search can use this to filter their search. |
+| **SearchItem** | object   | **type**: ONEST domain typeenum:     - learning     - jobs     - scholarships **item**: ONEST specific content **provider**: Provider of the content **location**: Address for the ONEST job search; Free Text **std**: STD code for the ONEST job search **state**: State code for the ONEST job search **country**: Country code for the ONEST job search **industry**: Industry name for the ONEST job search; Free Text **employment**: Employment Type for the ONEST job search; Free Text **gender**: gender for which the ONEST content is searched for.**user**:**age**          **gender**      **skills**           **Items**: List of Skills; Free Text |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **embedding_url:** AN Url to be sent by every BAP. This url will be opened by Integrator app (*Mobile or Web*) hosting the **Google Agentic framework** in an embedded Webview in the Front end UI. This url should allow the end user to complete all subsequent transactions on the ONDC Network viz. *Select, Init, Confirm* and finally the *Payment.* **items:** list of any type of objects as per the network or domain BAP belongs to and supported by **Google Agentic framework**BAPs should return thai as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network.**enum**:          - ONEST **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **SearchItem** from original Text by end User - Buyers or Seekers.BAPs who do not support semantic search can use this to filter their search. **next_page_token:** BAPs supporting pagination in their response can use this field to send the next page token. Agentic framework will use this token to call subsequent pages asynchronously. |
+
+
+
+## VIDEO
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Video, Webcast, Podcasts
+      description: Domain spaecific search by Google Agentic framework from various Content Providers |
+        outside the Open Networks - Videos, Webcasts, Podcasts
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    catalog:
+                      $ref: '#/components/schemas/Catalog'
+                    network:
+                      $ref: '#/components/schemas/Network'
+                  required:
+                  - catalog
+                  - network
+                error:
+                  $ref: '#/components/schemas/Error'
+              required:
+              - context  
+```
+
+### Description
+
+#### **Request**
+
+| **Fields**    | **Type** | **Description**                                              |
+| ------------- | -------- | ------------------------------------------------------------ |
+| **context**   | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message**   | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **VIDEO**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **VideoItem** objects |
+| **VideoItem** | object   | **VideoItem**: Item containing Video search query to the Video content providers.     **query**: Contains the relevant text to include in Video search query |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **items:** list of any type of objects as per the network or domain BAP belongs to and supported by **Google Agentic framework**BAPs should return thai as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network.**enum**:          - VIDEO      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **VideoItem** objects |
+
+### components
+
+```yaml
+components:
+  ...
+
+    Network:      
+      type: object
+      description: Describes details of the target network.
+      properties:
+        name:
+          type: string      
+        relevant_text:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/VideoItem'
+      required:
+      - name    
+      - relevant_text
+      - filters
+
+    Catalog:
+      description: Item containing Search response from the BAPs or Content providers.
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+        provider:
+          type: object
+          properties:
+            descriptor:
+              type: object
+              properties:
+                name:
+                  type: string          
+            items:
+              type: array
+              items:
+                type: object
+                description: This can be a list of any type of objects describing the data from Video providers.
+          required:
+          - descriptor
+          - embedding_url
+      required:
+      - descriptor
+      - provider
+
+    VideoItem:
+      description: Item containing Video search query to the Video content providers.
+      type: object
+      properties:
+        query:
+          type: string
+      required:
+      - query
+
+    Error:
+      ...
+```
+
+
+
+## Weather
+
+This Api will talk to various providers to fetch Weather details.
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Weather
+      description: Domain spaecific search by Google Agentic framework from various Weather data providers.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    catalog:
+                      $ref: '#/components/schemas/Catalog'
+                    network:
+                      $ref: '#/components/schemas/Network'
+                  required:                  
+                  - network
+                error:
+                  $ref: '#/components/schemas/Error'
+              required:
+              - context
+              - message
+```
+
+### Description
+
+#### **Request**
+
+| **Fields**      | **Type** | **Description**                                              |
+| --------------- | -------- | ------------------------------------------------------------ |
+| **context**     | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message**     | string   | **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network; viz. **WEATHER**      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **AddressItem** containing the location details for which the Weather is requested. |
+| **AddressItem** | object   | Address details for Weather content providers to get weather data. **address**: Address; Free text**city**: City code**zip**: Zip code |
+
+#### **Response**
+
+| **Fields**  | **Type** | **Description**                                              |
+| ----------- | -------- | ------------------------------------------------------------ |
+| **context** | string   | Context set by **Google Agentic framework** Provides contextual information that can help BAPs while searching on the network **location**:Contains a reverse geocoded address from user's current location (*Mobile Device or Web*). **address**: Free Text**country**: Country code as per ISO 3166-1 and ISO 3166-2 format.**city**: City code.**zip**: Zip/PIN code. **version**: Version of **Google Agentic framework** API specs. **transaction_id**: This is a unique value which persists across all API calls from search through confirm. **message_id**: This is a unique value which persists during a request / callback cycle. **timestamp**: date-time. Time of request generation in RFC3339 format. |
+| **message** | string   | **catalog:** Contains Search results returned by BAPs**descriptor:** **Name:** Catalog description. Free text. **items:** List of any type of objects as per the network or domain BAP belongs to and supported by **Google Agentic framework.**BAPs should return thai as an array of JSON objects containing the search results. **network:** Contains parameters for performing Search query by BAPs **name**: Name of the target Network.**enum**:          - VIDEO      **Action**: Action be performed by the BAP. Currently set to only *search* **relevant_text**: Meaningful extract from original Text by end User - Buyers or Seekers.BAPs can use this to perform a semantic search on their backend and filter out the results. **filters**: An Array of **AddressItem** containing the location details for which the Weather is requested. |
+
+### components
+
+```yaml
+components:
+  ....
+
+    Network:      
+      type: object
+      description: Describes deatils of the target network.
+      properties:
+        name:
+          type: string
+        filters:
+          type: object          
+          $ref: '#/components/schemas/AddressItem'
+      required:
+      - name
+      - filters
+
+    AddressItem:
+      description: Address details for Weather content providers to get weather data.
+      type: object
+      properties:
+        address:
+          type: string        
+    
+    Catalog:
+      description: Item containing Search response from the BAPs or Content providers.
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+        provider:
+          type: object
+          properties:                     
+            items:
+              type: array
+              items:
+                type: object
+                description: This can be a list of any type of objects describing the data from Weather providers.
+          required:
+          - descriptor          
+      required:
+      - descriptor
+      - provider
+
+    Error:
+      ...
+```
+
+
+
+## Order Placement
+
+![order-flow](./assets/order-flow.png)
+
+How can Agentic framework integrate Order placement flow and the subsequent payment?
+
+- This is primarily done by Integrator or hosting app with Agentic facilitating the integration
+- Integrator app Searches for an item
+- Each search result contains an embedded url for that particular product
+- Integrator app launches an embedded Webview to show the product details within Webview/IFrame
+- Add-to-Cart and Check-out happens through the embedded webview
+- Once Order is placed, Integrator app receives Order confirmation response along with details Order Info as JSON object
+
+
+
+## Launch Webview
+
+```bash
+https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&actid=<action_id>&mob=<mobile_no>&zip=<zip_code>&cb=<payment_callback>
+```
+
+## Order Response
+
+```JSON
+{
+    context:
+    {
+        transaction_id: <tr_id>,
+        message_id: <msg_id>,
+        action_id: <act_id>        
+    },
+    message:
+    {
+        orders:
+        [{
+            <order_info> object
+            // structure will be decided and sent by Mystore
+            // Integrator app will store this json as-is in the transaction log db    
+           
+        }]
+    }  
+}
+```
+
+
+
+# Points to Note
+
+> - **Google Agentic framework** would completely **Stateless**
+>   - Understand user’s intent from Text or Voice
+>   - Break that into Actionable insights
+>   - Route requests to appropriate BAPs and/or Content Providers(*Outside Network*)
+> - Integrator App will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
+>   - **Demand side**
+>     - The configuration options for Buyers and Seekers would be managed by Interator App in its own database
+>     - Preferred Networks - Preferred target networks to connect from **Google Agentic framework**
+>     - Intended Verticals - Preferred Verticals to support by **Google Agentic framework**
+>     - Maintain API security by creating and managing API key which needs to be sent through API header
+>
+> - **Supply Side**
+>   - Maintain a list of default BAPs and Content Providers(*Outside Network*)
+>   - Log all transactions in an Audit DB
+>
+> - Implement Basic Analytics
+> - Implement Advanced Analytics (*Future*)
 
 
 
 ## References
 
-- ### [ONEST Low Level Design](./assets/ONEST-Aggregator-LLD.pdf)
-
-- ### [ONDC: Tech Quickstart Guide](https://github.com/ONDC-Official/ONDC-Protocol-Specs/blob/master/protocol-specifications/docs/draft/Tech%20Quickstart%20Guide.md)
-
-- ### [ONEST Starter Pack](https://starterpack.onest.network/)
-
+- [Open Network Aggregator - Specs](./Deployment.md)
+- [Vertex AI](https://cloud.google.com/vertex-ai/docs)
+- [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
+- [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
+  - This is a Private GH repo and hence is allow-listed

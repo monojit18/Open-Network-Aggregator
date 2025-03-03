@@ -27,8 +27,6 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 
-// const KWeatherAPIKey = "5901703212373e462f51de78f4efc4f7";
-const KWeatherAPIKey = "x-api-weather-key";
 const KStatusACK = "ACK";
 
 const KCallbackEvents =
@@ -73,7 +71,7 @@ function preparePartnerWeatherInfo(request)
     const weatherInfo = {};
     weatherInfo.context = request.body.context;
     weatherInfo.message = request.body.message;
-    weatherInfo.apiKey = (request.headers != null) ? request.headers[KWeatherAPIKey] : null;
+    weatherInfo.apiKey = (request.headers != null) ? request.headers[process.env.WEATHER_API_KEY] : null;
     weatherInfo.preferred_network = request.body.preferred_network;
     weatherInfo.address = weatherInfo.message.network.filters.address;    
     return weatherInfo;
@@ -243,12 +241,12 @@ async function fireErrorEvent(errorInfo, weatherInfo)
         payload.message = weatherInfo.message;
 
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
-        payload.error = errorResponse;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
+        payload.error = errorResponse;        
 
         weatherData.payload = payload;
-        await emitAdapterEvent(KCallbackEvents.OnErrorAction, weatherData);
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, weatherData);
     }
     catch(exception)
     {
@@ -267,7 +265,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -309,6 +307,8 @@ async function performOpenWeatherSearch(weatherInfo)
         let weatherURL = `${process.env.WEATHER_SEARCH_URL}`;
         weatherURL += `?units=${weatherInfo.units}&q=${weatherInfo.address}&appId=${weatherInfo.apiKey}`;
 
+        console.log(`URL: ${weatherURL}`);
+
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
         requestOptions.headers =
@@ -321,12 +321,17 @@ async function performOpenWeatherSearch(weatherInfo)
         await fireCallbackEvent(weatherResponse, weatherInfo);
     }
     catch(exception)
-    {
+    {        
         throw exception;
     }
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the partner Affiliate
+ */
 _express.post("/weather/partner", async (request, response) =>
 {
     const weatherInfo = preparePartnerWeatherInfo(request);
@@ -347,6 +352,11 @@ _express.post("/weather/partner", async (request, response) =>
     }
 });
 
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of the default Affiliate (e.g. OpenWeather)
+ */
 _express.post("/weather/openweather", async (request, response) =>
 {
     const weatherInfo = prepareOpenWeatherInfo(request);
@@ -360,7 +370,7 @@ _express.post("/weather/openweather", async (request, response) =>
         await performOpenWeatherSearch(weatherInfo);
     }
     catch(exception)
-    {
+    {        
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
         await fireErrorEvent(errorInfo, weatherInfo);

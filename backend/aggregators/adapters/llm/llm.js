@@ -21,10 +21,8 @@ const Https = require("https");
 const DotEnv = require("dotenv");
 const Express = require("express");
 const Cors = require("cors");
+const { v4: uuidv4 } = require('uuid');
 const Axios = require('axios');
-
-const KLLMChatPrompt = "Context: Generate response for the following chat query.Provide accurate and to-the-point information.Do not add irrelevant information.";
-const KLLMNegativePrompt = "Context: Consider the following sentence to be negative, irrelevant.Generate a polite, generous response rejecting this query. Response should be within 100 words and should not contain any violent, abusive languages.";
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -34,6 +32,7 @@ let _allUrls = {};
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib"
+    // PlannerAdapterlib: "planner-adapterlib"
 }
 
 const KStatusACK = "ACK";
@@ -73,46 +72,72 @@ function prepareErrorMessage(exception)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
+    // _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
 }
 
-function prepareGenAIHeaders()
+function prepareGenAIShortHeaders()
 {
     const genAIHeaders = {};
     genAIHeaders.temperature = 0.4;
-    genAIHeaders.maxtokens = 2048;
-    genAIHeaders.topk = 40;
+    genAIHeaders.maxtokens = 1024;
+    // genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;
     return genAIHeaders;
 }
 
+function prepareGenAILongHeaders()
+{
+    const genAIHeaders = {};
+    genAIHeaders.temperature = 1.0;
+    genAIHeaders.maxtokens = 2048;
+    // genAIHeaders.topk = 40;
+    genAIHeaders.topp = 0.95;
+    return genAIHeaders;
+}
+
+function prepareInstructionContentInfo(systemPrompt)
+{
+    const instruction = {};
+
+    const partInfo = {};
+    partInfo.text = systemPrompt;
+
+    instruction.parts = [];
+    instruction.parts.push(partInfo);
+    return instruction;
+}
+
+// function preparePlannerRequest(llmInfo)
+// {
+//     const requestBody = {};
+//     requestBody.context = llmInfo.context;
+//     requestBody.message = llmInfo.message;
+//     requestBody.message.network.relevant_text = llmInfo.query;
+//     return requestBody;
+// }
+
 function prepareLLMChatInfo(request)
 {
-    const llmInfo = {};    
+    const llmInfo = {};
     llmInfo.context = request.body.context;
     llmInfo.message = request.body.message;
-    llmInfo.prompt = `${KLLMChatPrompt}`;
+    llmInfo.prompt = process.env.LLM_CHAT_PROMPT;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
-    llmInfo.query = llmInfo.message.network.filters[0].query;
+
+    const filters = llmInfo.message.network.filters;
+    if (Array.isArray(filters) == true)
+        llmInfo.query = filters[0].query;
+    else
+        llmInfo.query = filters.query;
+
+    const followupInfo = {};
+    followupInfo.query = llmInfo.query;
+    followupInfo.prompt = process.env.LLM_FOLLOW_UP_PROMPT;
+    llmInfo.followup = followupInfo;
     return llmInfo;
 }
 
-function prepareLLMNegativeInfo(request)
-{
-    const llmInfo = prepareLLMChatInfo(request);
-    llmInfo.histories = null;
-    llmInfo.prompt = `${KLLMNegativePrompt}`;
-    llmInfo.query = llmInfo.message.network.filters[0].query;    
-    return llmInfo;
-}
-
-function prepareLLMChatContentInfo(promptInfo)
-{
-    const contentInfo = {};
-    contentInfo.text = promptInfo.prompt;
-    return [contentInfo];
-}
-
-function prepareLLMNegativeContentInfo(promptInfo)
+function prepareFollowupContentInfo(promptInfo)
 {
     const contentInfo = {};
     const partInfo = {};
@@ -121,6 +146,13 @@ function prepareLLMNegativeContentInfo(promptInfo)
     contentInfo.role = "user";
     contentInfo.parts = [];
     contentInfo.parts.push(partInfo);
+    return [contentInfo];
+}
+
+function prepareLLMChatContentInfo(promptInfo)
+{
+    const contentInfo = {};
+    contentInfo.text = promptInfo.prompt;
     return [contentInfo];
 }
 
@@ -137,7 +169,14 @@ function prepareAckResponse(weatherInfo)
     return ackResponse;
 }
 
-function preapreLLMChatResponse(llmResult, llmInfo)
+function preapreFollowupResponse(followupResult)
+{
+    const response = followupResult.results[0];
+    const followupResponse = response.formatted_response.follow_up;
+    return followupResponse;
+}
+
+function preapreLLMChatResponse(llmResult, llmInfo, followupResponse)
 {
     const response = llmResult.data;
 
@@ -153,7 +192,7 @@ function preapreLLMChatResponse(llmResult, llmInfo)
     userInfo.parts = [];
     const userPart = {};
     userInfo.role = "user";
-    userPart.text = llmInfo.text;
+    userPart.text = llmInfo.query;
     userInfo.parts.push(userPart);
     histories.push(userInfo);
 
@@ -165,20 +204,7 @@ function preapreLLMChatResponse(llmResult, llmInfo)
     modelInfo.parts.push(modelPart);
     histories.push(modelInfo);
     chat.histories = histories;
-    llmResponse.message.chat = chat;
-    return llmResponse;
-}
-
-function preapreLLMNegativeResponse(llmResult, llmInfo)
-{
-    const response = llmResult.data;
-
-    const llmResponse = {};
-    llmResponse.context = llmInfo.context;
-    llmResponse.message = llmInfo.message;
-
-    const chat = {};
-    chat.text = response.results[0].original_response;
+    chat.follow_up = followupResponse;
     llmResponse.message.chat = chat;
     return llmResponse;
 }
@@ -203,14 +229,14 @@ function initializeAdapter()
         rejectUnauthorized: false
     });
     
-    prepareAllUrls();
+    prepareAllUrls();    
 }
 
 async function fireCallbackEvent(llmResponse, llmInfo)
 {
     try
     {
-        const llmData = preapreLLMCallbackData(llmResponse, llmInfo);
+        const llmData = preapreLLMCallbackData(llmResponse, llmInfo);        
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, llmData);
     }
     catch(exception)
@@ -224,11 +250,10 @@ async function fireErrorEvent(errorInfo, llmInfo)
     try
     {
         const errorResponse = {};
-        errorResponse.code = errorInfo.response?.data?.error?.code;
-        errorResponse.message = errorInfo.response?.data?.error?.message;
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
 
         const llmData = preapreLLMCallbackData(errorResponse, llmInfo);
-        _socketIOClient.emit(KCallbackEvents.OnCallbackAction, llmData);
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, llmData);
     }
     catch(exception)
@@ -248,7 +273,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -259,11 +284,66 @@ async function emitAdapterEvent(eventName, eventData)
     }
 }
 
-async function performLLMChat(llmInfo)
+async function generateLLMFollowup(llmInfo)
 {
     try
     {
-        let llmChatURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/chat`;
+        let followupURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`;
+
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
+
+        const requestBody = {};
+        
+        const promptInfo = {};
+        promptInfo.prompt = llmInfo.followup.query;
+        const contentsList = prepareFollowupContentInfo(promptInfo);
+        requestBody.contents = contentsList;
+        requestBody.instruction = prepareInstructionContentInfo(llmInfo.followup.prompt);
+
+        const genAIHeaders = prepareGenAIShortHeaders();
+        requestOptions.headers = genAIHeaders;
+
+        const followupResultList = await Axios.post(`${followupURL}`, requestBody, requestOptions);
+        const followupResult = followupResultList.data;
+        const followupResponse = preapreFollowupResponse(followupResult);
+        return followupResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+// async function performPlannerSearch(llmInfo)
+// {
+//     try
+//     {        
+//         const requestOptions = {};
+//         requestOptions.httpsAgent = _axiosAgent;
+//         requestOptions.headers =
+//         {
+//             "content-type": "application/json"
+//         };
+        
+//         const requestBody = preparePlannerRequest(llmInfo);
+//         await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
+//     }
+//     catch(exception)
+//     {
+//         throw exception;
+//     }
+// }
+
+async function performLLMChat(llmInfo, followupResponse)
+{
+    try
+    {
+        let llmChatURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/chat/${llmInfo.context.transaction_id}/stream`;
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
@@ -279,47 +359,16 @@ async function performLLMChat(llmInfo)
         }
         
         const promptInfo = {};
-        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.query}`;
+        promptInfo.prompt = llmInfo.query;
         const contentsList = prepareLLMChatContentInfo(promptInfo);
         requestBody.contents = contentsList;
+        requestBody.instruction = prepareInstructionContentInfo(llmInfo.prompt);
 
-        const genAIHeaders = prepareGenAIHeaders();
+        const genAIHeaders = prepareGenAILongHeaders();
         requestOptions.headers = genAIHeaders;
 
         const llmResult = await Axios.post(`${llmChatURL}`, requestBody, requestOptions);
-        const llmResponse = preapreLLMChatResponse(llmResult, llmInfo);
-        await fireCallbackEvent(llmResponse, llmInfo);
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
-
-async function processNegativeQuery(llmInfo)
-{
-    try
-    {
-        let llmNegativeURL = `${_allUrls[KMicroServices.GenAITextlib]}/genai/text`;
-
-        const requestOptions = {};
-        requestOptions.httpsAgent = _axiosAgent;
-        requestOptions.headers =
-        {
-            "content-type": "application/json"            
-        };
-
-        const requestBody = {};        
-        const promptInfo = {};
-        promptInfo.prompt = `${llmInfo.prompt}\n\n${llmInfo.text}`;
-        const contentsList = prepareLLMNegativeContentInfo(promptInfo);
-        requestBody.contents = contentsList;
-
-        const genAIHeaders = prepareGenAIHeaders();
-        requestOptions.headers = genAIHeaders;
-
-        const llmResult = await Axios.post(`${llmNegativeURL}`, requestBody, requestOptions);
-        const llmResponse = preapreLLMNegativeResponse(llmResult, llmInfo);        
+        const llmResponse = preapreLLMChatResponse(llmResult, llmInfo, followupResponse);        
         await fireCallbackEvent(llmResponse, llmInfo);
     }
     catch(exception)
@@ -329,6 +378,11 @@ async function processNegativeQuery(llmInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description In turn calls Search API of each Affiliate
+ */
 _express.post("/llm/chat", async (request, response) =>
 {
     const llmInfo = prepareLLMChatInfo(request);
@@ -338,28 +392,16 @@ _express.post("/llm/chat", async (request, response) =>
     {        
         const ackResponse = prepareAckResponse(llmInfo);
         results.results = ackResponse;
-        response.send(results);        
-        await performLLMChat(llmInfo);
-    }
-    catch(exception)
-    {
-        let errorInfo = prepareErrorMessage(exception);
-        results.results = errorInfo.message;
-        await fireErrorEvent(errorInfo, llmInfo);
-    }
-});
+        response.send(results);
 
-_express.post("/llm/negative", async (request, response) =>
-{
-    const llmInfo = prepareLLMNegativeInfo(request);
-    const results = {};
+        // if (process.env.LLM_PLANNER_MODE == "true")
+        // {
+        //     await performPlannerSearch(llmInfo);
+        //     return;
+        // }
 
-    try
-    {        
-        const ackResponse = prepareAckResponse(llmInfo);
-        results.results = ackResponse;
-        response.send(results);        
-        await processNegativeQuery(llmInfo);
+        const followupResponse = await generateLLMFollowup(llmInfo);
+        await performLLMChat(llmInfo, followupResponse);
     }
     catch(exception)
     {
