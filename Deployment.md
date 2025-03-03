@@ -1614,6 +1614,167 @@ gcloud config set compute/zone $ZONE
 
 - Rest of the services are same as in the section [K8s Gateway API](#K8s Gateway API) and onwards.
 
+### How to Test end-to-end
+
+- Following is the way you can test the entire system end to end
+
+#### Receive Data Asyncronously
+
+```bash
+cd $BASEFOLDERPATH/backend/utilities/event-sockets/test-client
+cp .env.tpl .env
+
+#Modify the value of the following environment variable
+EVENT_SERVER_HTTP_HOST=<value as per deployment>
+e.g. https://event-server.<domain_name>
+```
+
+- Launch test-client application using any preferred editor; recommended [VSCode](https://code.visualstudio.com/)
+
+  ![test-client-launch1](./assets/test-client-launch1.png)
+
+  ```bash
+  #Run the following command to create a GUID
+  #This GUID acts as the room name for the Socket and used to receive the data
+  uuidgen
+  e.g. 110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+  
+  #Run the following command to Intialise the socket
+  curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+  
+  ```
+
+  ![test-client-launch2](./assets/test-client-launch2.png)
+
+#### Make Http Request
+
+```bash
+curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
+--header 'Content-Type: application/json' \
+--data '{
+    "location":
+    {
+        "address": "mahadevpura; behind bagmane tech park.",
+        "country":
+        {
+            "name": "India",
+            "code": "IN"
+        },
+        "city":
+        {
+            "name": "Bangalore",
+            "code": "BNG"
+        },
+        "zip": "560032"
+    },
+    
+    #Transaction Id same as Room Id
+    "transaction_id": "110600C6-2A13-4BCC-AE8E-36EF992DFCD7",
+    
+    "message_id": "386e57d0-9054-44e7-a35e-4521b0495d6e",
+    "query": "I would like to buy chicken biriyani",
+    "preferred_networks":
+    {
+        "ONDC":
+        [{
+            "descriptor":
+            {
+                "name": "Products from Mystore"        
+            },
+            "url": "https://mystore3.devhippo.com/ms/utils/gsearch2"
+        }],
+        "ONEST": [],
+        "AGRI": [],
+        "WEATHER": {},
+        "VIDEO": {},
+        "MANDI": {}
+    }
+}'
+```
+
+> **Note**:
+>
+> **transaction_id** need to be same as the room Id created in earlier step
+>
+> This ensures that all data sent by backend comes to this [room](https://socket.io/docs/v3/rooms/)
+
+![test-client-response](./assets/test-client-response.png)
+
+#### Receive Streams Asyncronously
+
+```bash
+cd $BASEFOLDERPATH/backend/utilities/websock-streamer/client
+cp .env.tpl .env
+
+#Modify the value of the following environment variable
+WEBSOCK_STREAMER_HTTP_HOST=<value as per deployment>
+e.g. https://streamer-server.<domain_name>
+```
+
+- Launch test-client application using any preferred editor; recommended [VSCode](https://code.visualstudio.com/)
+
+  ![stream-client-launch1](./assets/stream-client-launch1.png)
+
+  ```bash
+  #Run the following command to create a GUID
+  #This GUID acts as the room name for the Socket and used to receive the data
+  uuidgen
+  e.g. 110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+  
+  #Run the following command to Intialise the socket
+  curl -X POST http://localhost:8085/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
+  
+  ```
+
+  ![stream-client-launch2](./assets/stream-client-launch2.png)
+
+#### Make Http Request
+
+```bash
+curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
+--header 'Content-Type: application/json' \
+--data '{
+    "location":
+    {
+        "address": "mahadevpura; behind bagmane tech park.",
+        "country":
+        {
+            "name": "India",
+            "code": "IN"
+        },
+        "city":
+        {
+            "name": "Bangalore",
+            "code": "BNG"
+        },
+        "zip": "560032"
+    },
+    
+    #Transaction Id same as Room Id
+    "transaction_id": "110600C6-2A13-4BCC-AE8E-36EF992DFCD7",
+   	
+    "message_id": "59a078d1-c009-4f06-af3a-2f4f730c2483",
+    "query": "I am a student of class X1; need some advice",
+    "preferred_networks":
+    {
+        "ONDC": [],
+        "ONEST": [],
+        "AGRI": [],
+        "WEATHER": {},
+        "VIDEO": {},
+        "MANDI": {}
+    }
+}'
+```
+
+> **Note**:
+>
+> **transaction_id** need to be same as the room Id created in earlier step
+>
+> This ensures that all data sent by backend comes to this [room](https://socket.io/docs/v3/rooms/)
+
+![stream-client-response](./assets/stream-client-response.png)
+
 
 
 ## References
