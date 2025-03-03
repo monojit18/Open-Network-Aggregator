@@ -93,7 +93,7 @@ function prepareSocketClient()
     });
 }
 
-async function initSocketClient()
+async function initSocketClient(roomId)
 {
     _axiosAgent = new Https.Agent
     ({
@@ -101,11 +101,10 @@ async function initSocketClient()
     });
 
     const socketQuery = {};
-    socketQuery[KStreamRoom] = process.env.WEBSOCK_ROOM_NAME;
+    socketQuery[KStreamRoom] = roomId;
     _socketIOClient = io(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}`, {
         query: socketQuery
-    });
-    await initSocketServerConnection();
+    });    
 }
 
 async function initSocketServerConnection(request)
@@ -134,12 +133,16 @@ async function initSocketServerConnection(request)
  * @method POST
  * @description Initialize connection to a SocketIO server
  */
-_express.post("/init", async (request, response) =>
+_express.post("/init/:roomId", async (request, response) =>
 {
     try
     {
-       const socketResponse = await initSocketServerConnection(request);
-       response.status(socketResponse.status).send(socketResponse.data);
+        const roomId = request.params.roomId;    
+        initSocketClient(roomId);
+        prepareSocketClient();
+
+        const socketResponse = await initSocketServerConnection(request);
+        response.status(socketResponse.status).send(socketResponse.data);
     }
     catch(exception)
     {
@@ -172,8 +175,5 @@ _express.post("/end", async (request, response) =>
 
 var port = process.env.port || process.env.PORT || 8085;
 _server.listen(port);
-
-initSocketClient();
-prepareSocketClient();
 
 console.log("Server running at http://localhost:%d", port);
