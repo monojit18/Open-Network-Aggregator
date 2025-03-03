@@ -93,7 +93,6 @@ LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the followin
 # AGRI
 AGENTIC_MODEL_ENDPOINT_ID=""
 
-WEBSOCK_ROOM_NAME="110600C6-2A13-4BCC-AE8E-36EF992DFCD7"
 WEBSOCK_STREAMER_HTTP_HOST="https://streamer-server.gcpwkshpdev.com"
 # WEBSOCK_STREAMER_HTTP_HOST="http://localhost:8082"
 
