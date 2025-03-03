@@ -1,13 +1,13 @@
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:  
-  name: utilities-healthcheck
+  name: streamer-healthcheck
 spec:
   default:
     checkIntervalSec: 15
     config:
       httpHealthCheck:
-        port: 8081
+        port: 8082
         portSpecification: USE_FIXED_PORT
         requestPath: "/healthz"
       type: HTTP
@@ -17,4 +17,4 @@ spec:
   targetRef:
     group: ''
     kind: Service
-    name: event-serverapp-svc
+    name: streamer-serverapp-svc
