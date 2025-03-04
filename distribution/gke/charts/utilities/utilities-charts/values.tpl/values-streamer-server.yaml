@@ -1,0 +1,37 @@
+deployment:
+  name: streamer-serverapp-deploy
+  serviceAccount: utilities-sa
+  labels:
+    app: streamer-serverapp-deploy 
+    version: v1
+  selectorLabels:
+    app: streamer-serverapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: streamer-server-app
+    image: "asia-south1-docker.pkg.dev/protean-agentic-ai-poc/agentic-repo/streamer-serverlib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [8082]
+    envVars:
+    - name: PROJECT_ID
+      value: protean-agentic-ai-poc
+service:
+  name: streamer-serverapp-svc
+  selector:
+    app: streamer-serverapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 8082
