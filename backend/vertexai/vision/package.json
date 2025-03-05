@@ -16,8 +16,8 @@
     "devDependencies": {
         "@google-cloud/vision": "^3.1.4",
         "cors": "^2.8.5",
-        "dotenv": "^16.3.1",
-        "express": "^4.18.2",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
         "jshint": "^2.13.6"
     }
 }

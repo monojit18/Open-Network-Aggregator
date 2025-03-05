@@ -6,7 +6,7 @@
     "license": "Apache",
     "author": "Monojit Datta",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",        
+        "test": "echo \"Error: no test specified\" && exit 1",
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv markdown-it axios socket.io-client @google-cloud/vertexai @google-cloud/aiplatform",
         "start": "node contentgen.js"
     },
@@ -14,14 +14,14 @@
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "@google-cloud/aiplatform": "^3.24.0",
+        "@google-cloud/aiplatform": "^3.35.0",
         "@google-cloud/vertexai": "^0.5.0",
-        "axios": "^1.7.2",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
+        "axios": "^1.8.1",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
         "jshint": "^2.13.6",
         "markdown-it": "^14.1.0",
-        "socket.io-client": "^4.7.5"
+        "socket.io-client": "^4.8.1"
     },
     "dependencies": {
         "@ffmpeg-installer/ffmpeg": "^1.1.0",
