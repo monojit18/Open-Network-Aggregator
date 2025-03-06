@@ -87,9 +87,14 @@ function prepareOpenWeatherInfo(request)
 function preparePartnerWeatherRequest(weatherInfo)
 {
     const weatherRequest = {};
-    weatherRequest.context = weatherInfo.context;
-    weatherRequest.message = weatherInfo.message;      
+    weatherRequest.key = "PKzaSyA3Lwgs2xyosQ9zzuWs5foCRIp0LSmTPwq";
+    weatherRequest.districtName = weatherInfo.message.network.filters.address;      
     return weatherRequest;
+
+    // const weatherRequest = {};
+    // weatherRequest.context = weatherInfo.context;
+    // weatherRequest.message = weatherInfo.message;      
+    // return weatherRequest;
 }
 
 function prepareAckResponse(weatherInfo)
@@ -292,7 +297,8 @@ async function performPartnerWeatherSearch(weatherInfo)
         const requestBody = preparePartnerWeatherRequest(weatherInfo);
         const weatherResult = await Axios.post(`${weatherURL}`, requestBody, requestOptions);
         const weatherResponse = preaprePartnerWeatherResponse(weatherResult);        
-        await firePartnerCallbackEvent(weatherResponse);
+        // await firePartnerCallbackEvent(weatherResponse);
+        await fireCallbackEvent(weatherResponse, weatherInfo);
     }
     catch(exception)
     {
