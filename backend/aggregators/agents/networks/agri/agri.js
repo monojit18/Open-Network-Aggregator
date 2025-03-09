@@ -32,7 +32,7 @@ const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
     AgriAdapter: "agri-adapter",
-    PlannerLib: "planerlib"
+    PlannerAgent: "planer-agent"
 }
 
 const KMessageTypes =
@@ -76,7 +76,7 @@ function processGenericResponse(response)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.AgriAdapter] = `${process.env.AGRI_ADAPTER_URL}`;
-    _allUrls[KMicroServices.PlannerLib] = `${process.env.PLANNER_AGENT_URL}`;
+    _allUrls[KMicroServices.PlannerAgent] = `${process.env.PLANNER_AGENT_URL}`;
 }
 
 function prepareAgriInfo(request)
@@ -166,9 +166,10 @@ async function performAgriCommerceSearch(request)
         };
         
         const requestBody = preparePlannerRequest(agriInfo);
-        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerLib]}/agri/search`,
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices. PlannerAgent]}/agri/search`,
                                                     requestBody, requestOptions);
-        return plannerResponse;                                            
+        const planerResult = processGenericResponse(plannerResponse);
+        return planerResult;                                            
     }
     catch(exception)
     {
@@ -190,9 +191,10 @@ async function performRetailCommerceSearch(request)
         };
         
         const requestBody = preparePlannerRequest(agriInfo);
-        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerLib]}/retail/search`,
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices. PlannerAgent]}/retail/search`,
                                                     requestBody, requestOptions);
-        return plannerResponse;                                            
+        const planerResult = processGenericResponse(plannerResponse);
+        return planerResult;
     }
     catch(exception)
     {
