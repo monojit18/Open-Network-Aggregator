@@ -125,7 +125,7 @@ _express.post("/search", async (request, response) =>
     const results = {};
     
     try
-    {
+    {     
         const preferredNetworksList = ondcMessage.preferred_network;
         const adapterResponseList = [];
         if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
