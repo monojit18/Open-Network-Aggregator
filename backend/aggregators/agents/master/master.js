@@ -143,7 +143,7 @@ function prepareShortHeaders(endpointId)
 {
     const genAIHeaders = {};
     genAIHeaders.temperature = 0.2;
-    genAIHeaders.maxtokens = 8192;
+    genAIHeaders.maxtokens = 2048;
     genAIHeaders.topk = 40;
     genAIHeaders.topp = 0.95;    
     genAIHeaders.endpointid = endpointId;
@@ -170,7 +170,7 @@ function prepareAgentMessage(nlpInfo, nlpResponse, domainName)
     context.message_id = nlpInfo.message_id;    
     context.location = nlpInfo.location;
     agentMessage.context = context;
-
+    
     const message = {};
     message.network = nlpResponse.formatted_response.networks[0]; 
     agentMessage.message = message;
@@ -354,7 +354,7 @@ async function processNLPInfo(nlpInfo)
                                                 requestBody, requestOptions);
         const nlpResponsesList = processGenericResponse(response);
         const nlpResponse = nlpResponsesList[0];
-        const domainResponse = await routeSearchToNetwork(nlpResponse, nlpInfo);         
+        const domainResponse = await routeSearchToNetwork(nlpResponse, nlpInfo);        
         return domainResponse;
     }
     catch(exception)
@@ -399,7 +399,7 @@ _express.post("/search", async (request, response) =>
 
     try
     {
-        const { networkResponse, httpStatusCode } = await processNLPInfo(nlpInfo);
+        const { networkResponse, httpStatusCode } = await processNLPInfo(nlpInfo);        
         results.results = networkResponse;
         response.status(httpStatusCode).send(results);
     }
