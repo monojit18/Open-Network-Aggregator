@@ -247,7 +247,7 @@ _express.post("/search", async (request, response) =>
     try
     {
         const adapterResponse = await performByMessageType(request);
-        results.results = processGenericResponse(adapterResponse);
+        results.results = adapterResponse;
         response.send(results);
     }
     catch(exception)
@@ -259,7 +259,7 @@ _express.post("/search", async (request, response) =>
 });
 /* API DEFINITIONS - END */
 
-var port = process.env.port || process.env.PORT || 12002;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 initializeAgent();
 
