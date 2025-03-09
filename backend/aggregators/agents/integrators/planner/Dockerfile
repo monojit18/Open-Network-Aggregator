@@ -1,14 +1,14 @@
 FROM node:18
 
 # Create app directory
-WORKDIR /planner-adapter
+WORKDIR /planner-agent
 
-COPY package*.json /planner-adapter/
+COPY package*.json /planner-agent/
 
 RUN npm install --unsafe-perm
 
-COPY . /planner-adapter/
+COPY . /planner-agent/
 
-EXPOSE 10001
+EXPOSE 10002
 
 CMD npm start
