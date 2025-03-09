@@ -34,7 +34,20 @@ const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
     ONDCAgent: "ondc-agent",
+    LLMAgent: "llm-agent",
     VideoAgent: "video-agent"
+}
+
+const KDomainNames =
+{
+    ONDC: "ONDC",
+    LLM: "LLM"
+}
+
+const KConstantValues =
+{
+    ADVISORY: "advisory",
+    EMPTY: ""
 }
 
 DotEnv.config();
@@ -71,19 +84,29 @@ function prepareAllUrls()
 {
     _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
     _allUrls[KMicroServices.ONDCAgent] = `${process.env.ONDC_AGENT_URL}`;
+    _allUrls[KMicroServices.LLMAgent] = `${process.env.LLM_AGENT_URL}`;
     _allUrls[KMicroServices.VideoAgent] = `${process.env.VIDEO_AGENT_URL}`;
 }
 
-function preparePlannerInfo(request)
+function prepareExtractionInfo(request)
 {
-    const plannerInfo = {};
-    plannerInfo.context = request.body.context;
-    plannerInfo.message = request.body.message;  
-    plannerInfo.preferred_network = request.body.preferred_network;
-    plannerInfo.preferred_networks = request.body.preferred_networks;    
-    plannerInfo.prompt = process.env.PLANNER_NLP_PROMPT;
-    plannerInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;
-    return plannerInfo;
+    const extractionInfo = {};
+    extractionInfo.context = request.body.context;
+    extractionInfo.message = request.body.message;  
+    extractionInfo.preferred_network = request.body.preferred_network;
+    extractionInfo.preferred_networks = request.body.preferred_networks;    
+    extractionInfo.prompt = process.env.PLANNER_EXTRACT_NLP_PROMPT;
+    extractionInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;
+    return extractionInfo;
+}
+
+function prepareAgriInfo(request)
+{
+    const transactionInfo = {};
+    transactionInfo.context = request.body.context;
+    transactionInfo.message = request.body.message;
+    transactionInfo.preferred_networks = request.body.preferred_networks;
+    return transactionInfo;
 }
 
 function preparePlannerContentInfo(promptInfo)
@@ -136,15 +159,13 @@ function prepareAckResponse(plannerInfo)
     return ackResponse;
 }
 
-function prepareONDCAgentRequest(planner, plannerInfo)
+function prepareAgentRequest(plannerInfo, domainName)
 {
     const requestBody = {};
     requestBody.context = plannerInfo.context;
-    requestBody.context.domain = `${process.env.AGENTIC_DOMAIN_PREFIX}${planner.domain}`;
+    requestBody.context.domain = `${process.env.AGENTIC_DOMAIN_PREFIX}${domainName}`;
     requestBody.message = plannerInfo.message;
-    requestBody.preferred_network = plannerInfo.preferred_network;
-    requestBody.preferred_networks = plannerInfo.preferred_networks;
-    requestBody.message.network.relevant_text = planner.relevant_text;
+    requestBody.message.network.name = domainName;    
     return requestBody;
 }
 
@@ -157,6 +178,22 @@ function prepareVideoAgentRequest(planner, plannerInfo)
     requestBody.preferred_network = plannerInfo.preferred_networks[planner.domain];
     requestBody.preferred_networks = plannerInfo.preferred_networks;
     requestBody.message.network.filters.query = planner.relevant_text;
+    return requestBody;
+}
+
+function prepareONDCAgentRequest(plannerInfo)
+{
+    const requestBody = prepareAgentRequest(plannerInfo, KDomainNames.ONDC);
+    requestBody.preferred_network = `${plannerInfo.preferred_networks}[${domainName}]`;
+    requestBody.message.network.relevant_text = plannerInfo.message.network.relevant_text;
+    return requestBody;
+}
+
+function prepareLLMAgentRequest(plannerInfo)
+{
+    const requestBody = prepareAgentRequest(plannerInfo, KDomainNames.LLM);
+    requestBody.message.network.filters[0].type = KConstantValues.ADVISORY;
+    requestBody.message.network.relevant_text = KConstantValues.EMPTY;
     return requestBody;
 }
 
@@ -183,34 +220,14 @@ function initializePlanner()
     prepareAllUrls();
 }
 
-async function callONDCAgent(planner, plannerInfo)
-{
-    const requestOptions = {};
-    requestOptions.httpsAgent = _axiosAgent;
-
-    const requestBody = prepareONDCAgentRequest(planner, plannerInfo);
-    
-    try
-    {
-        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/search`,
-                                                    requestBody, requestOptions);
-        const agentResult = processGenericResponse(agentResponse);
-        return agentResult;
-    }
-    catch(exception)
-    {
-        throw exception;
-    }
-}
-
-async function callVideoAgent(planner, plannerInfo)
+async function callVideoAgent(planner, extractionInfo)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     requestOptions.headers = {};
-    requestOptions.headers[process.env.VIDEO_API_KEY] = plannerInfo.headers[process.env.VIDEO_API_KEY];
+    requestOptions.headers[process.env.VIDEO_API_KEY] = extractionInfo.headers[process.env.VIDEO_API_KEY];
 
-    const requestBody = prepareVideoAgentRequest(planner, plannerInfo);
+    const requestBody = prepareVideoAgentRequest(planner, extractionInfo);
     
     try
     {
@@ -225,47 +242,80 @@ async function callVideoAgent(planner, plannerInfo)
     }
 }
 
-async function callLLMAdapter(plannerInfo)
+async function callONDCAgent(agriInfo)
 {
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = prepareONDCAgentRequest(agriInfo);
     
+    try
+    {
+        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.ONDCAgent]}/search`,
+                                                    requestBody, requestOptions);
+        const agentResult = processGenericResponse(agentResponse);
+        return agentResult;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
 }
 
-async function performPlannerSearch(plannerResponse, plannerInfo)
+async function callLLMAgent(agriInfo)
 {
-    const plannerList = plannerResponse.results[0].formatted_response;
-    // const planner = plannerList[0];
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = prepareLLMAgentRequest(agriInfo);
+    
+    try
+    {
+        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
+                                                    requestBody, requestOptions);
+        const agentResult = processGenericResponse(agentResponse);
+        return agentResult;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performPlannerSearch(plannerList, extractionInfo)
+{    
     await Promise.all(plannerList.map(async (planner) =>
     {
         switch(planner.domain)
         {
             case "ONDC":
             {
-                await callONDCAgent(planner, plannerInfo);
+                // await callONDCAgent(planner, extractionInfo);
             }
             break;
 
             case "VIDEO":
             {
-                // await callVideoAgent(planner, plannerInfo);
+                // await callVideoAgent(planner, extractionInfo);
             }
             break;
 
             case "LLM":
             {
-                // await callLLMAdapter(plannerInfo);
+                // await callLLMAdapter(extractionInfo);
             }
             break;
         }
     }));
 }
 
-async function performPlannerExtract(plannerInfo)
+async function performPlannerExtract(extractionInfo)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
 
-    const requestBody = prepareExtractRequest(plannerInfo);    
-    const genAIHeaders = prepareShortHeaders(plannerInfo.endpointId);
+    const requestBody = prepareExtractRequest(extractionInfo);    
+    const genAIHeaders = prepareShortHeaders(extractionInfo.endpointId);
     requestOptions.headers = genAIHeaders;
 
     try
@@ -273,7 +323,8 @@ async function performPlannerExtract(plannerInfo)
         let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
                                                 requestBody, requestOptions);
         const plannerResponse = processGenericResponse(response);
-        await performPlannerSearch(plannerResponse, plannerInfo);
+        const plannerList = plannerResponse.results[0].formatted_response;
+        await performPlannerSearch(plannerList, extractionInfo);
     }
     catch(exception)
     {
@@ -282,17 +333,57 @@ async function performPlannerExtract(plannerInfo)
 }
 
 /* API DEFINITIONS - START */
-_express.post("/search", async (request, response) =>
+_express.post("/extract/search", async (request, response) =>
 {
-    const plannerInfo = preparePlannerInfo(request);
+    const extractionInfo = prepareExtractionInfo(request);
     const results = {};
 
     try
     {
-        const ackResponse = prepareAckResponse(plannerInfo);
+        const ackResponse = prepareAckResponse(extractionInfo);
         results.results = ackResponse;
         response.send(results);
-        await performPlannerExtract(plannerInfo);
+        await performPlannerExtract(extractionInfo);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);;
+    }
+});
+
+_express.post("/agri/search", async (request, response) =>
+{
+    const agriInfo = prepareAgriInfo(request);
+    const results = {};
+
+    try
+    {
+        const ackResponse = prepareAckResponse(agriInfo);
+        results.results = ackResponse;
+        response.send(results);
+        await callONDCAgent(agriInfo);        
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);;
+    }
+});
+
+_express.post("/retail/search", async (request, response) =>
+{
+    const agriInfo = prepareAgriInfo(request);
+    const results = {};
+
+    try
+    {
+        const ackResponse = prepareAckResponse(agriInfo);
+        results.results = ackResponse;
+        response.send(results);
+        await callLLMAgent(agriInfo);        
     }
     catch(exception)
     {

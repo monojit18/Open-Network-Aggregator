@@ -118,10 +118,19 @@ function prepareAckResponse(priceInfo)
 
 function preparePartnerEnamPriceRequest(priceInfo)
 {
-    const priceRequest = {};    
-    priceRequest.context = priceInfo.context;
-    priceRequest.message = priceInfo.message;    
+    const priceRequest = {};
+    priceRequest.key = "PKzaSyA3Lwgs2xyosQ9zzuWs5foCRIp0LSmTPwq";
+    priceRequest.commodityName = priceInfo.message.network.price.commodity;
+
+    const market = priceInfo.message.network.price.market;
+    const state = priceInfo.message.network.price.state;
+    priceRequest.districtName = (market != null) ? market : state;
     return priceRequest;
+
+    // const priceRequest = {};    
+    // priceRequest.context = priceInfo.context;
+    // priceRequest.message = priceInfo.message;    
+    // return priceRequest;
 }
 
 function preapreEnamPriceResponse(priceResult)
@@ -252,8 +261,7 @@ async function performPartnerMandiPriceSearch(priceInfo)
 {
     try
     {
-        let enamMandiURL = `${process.preferred_network.url}`;
-        enamMandiURL += `?format=json&api-key=${priceInfo.apiKey}`;
+        let enamMandiURL = `${priceInfo.preferred_network.url}`;        
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
@@ -265,7 +273,8 @@ async function performPartnerMandiPriceSearch(priceInfo)
         const requestBody = preparePartnerEnamPriceRequest(priceInfo);
         const priceResult = await Axios.post(`${enamMandiURL}`, requestBody, requestOptions);
         const priceResponse = preaprePartnerEnamPriceResponse(priceResult);        
-        await firePartnerCallbackEvent(priceResponse);
+        // await firePartnerCallbackEvent(priceResponse);
+        await fireCallbackEvent(priceResponse, priceInfo);
     }
     catch(exception)
     {

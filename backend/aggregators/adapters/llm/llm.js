@@ -32,7 +32,6 @@ let _allUrls = {};
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib"
-    // PlannerAdapterlib: "planner-adapterlib"
 }
 
 const KStatusACK = "ACK";
@@ -71,8 +70,7 @@ function prepareErrorMessage(exception)
 
 function prepareAllUrls()
 {
-    _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;
-    // _allUrls[KMicroServices.PlannerAdapterlib] = `${process.env.PLANNER_ADAPTER_URL}`;
+    _allUrls[KMicroServices.GenAITextlib] = `${process.env.GENAI_TEXTLIB_HOST}`;    
 }
 
 function prepareGenAIShortHeaders()
@@ -106,15 +104,6 @@ function prepareInstructionContentInfo(systemPrompt)
     instruction.parts.push(partInfo);
     return instruction;
 }
-
-// function preparePlannerRequest(llmInfo)
-// {
-//     const requestBody = {};
-//     requestBody.context = llmInfo.context;
-//     requestBody.message = llmInfo.message;
-//     requestBody.message.network.relevant_text = llmInfo.query;
-//     return requestBody;
-// }
 
 function prepareLLMChatInfo(request)
 {
@@ -196,13 +185,14 @@ function preapreLLMChatResponse(llmResult, llmInfo, followupResponse)
     userInfo.parts.push(userPart);
     histories.push(userInfo);
 
-    const modelInfo = {};
-    modelInfo.parts = [];
-    const modelPart = {};
-    modelInfo.role = "model";
-    modelPart.text = chat.text;
-    modelInfo.parts.push(modelPart);
-    histories.push(modelInfo);
+    // const modelInfo = {};
+    // modelInfo.parts = [];
+    // const modelPart = {};
+    // modelInfo.role = "model";
+    // modelPart.text = chat.text;
+    // modelInfo.parts.push(modelPart);
+    // histories.push(modelInfo);
+    
     chat.histories = histories;
     chat.follow_up = followupResponse;
     llmResponse.message.chat = chat;
@@ -319,26 +309,6 @@ async function generateLLMFollowup(llmInfo)
     }
 }
 
-// async function performPlannerSearch(llmInfo)
-// {
-//     try
-//     {        
-//         const requestOptions = {};
-//         requestOptions.httpsAgent = _axiosAgent;
-//         requestOptions.headers =
-//         {
-//             "content-type": "application/json"
-//         };
-        
-//         const requestBody = preparePlannerRequest(llmInfo);
-//         await Axios.post(`${_allUrls[KMicroServices.PlannerAdapterlib]}/search`, requestBody, requestOptions);                
-//     }
-//     catch(exception)
-//     {
-//         throw exception;
-//     }
-// }
-
 async function performLLMChat(llmInfo, followupResponse)
 {
     try
@@ -360,6 +330,7 @@ async function performLLMChat(llmInfo, followupResponse)
         
         const promptInfo = {};
         promptInfo.prompt = llmInfo.query;
+
         const contentsList = prepareLLMChatContentInfo(promptInfo);
         requestBody.contents = contentsList;
         requestBody.instruction = prepareInstructionContentInfo(llmInfo.prompt);
@@ -393,12 +364,6 @@ _express.post("/llm/chat", async (request, response) =>
         const ackResponse = prepareAckResponse(llmInfo);
         results.results = ackResponse;
         response.send(results);
-
-        // if (process.env.LLM_PLANNER_MODE == "true")
-        // {
-        //     await performPlannerSearch(llmInfo);
-        //     return;
-        // }
 
         const followupResponse = await generateLLMFollowup(llmInfo);
         await performLLMChat(llmInfo, followupResponse);
