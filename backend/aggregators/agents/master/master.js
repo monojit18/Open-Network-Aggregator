@@ -172,7 +172,11 @@ function prepareAgentMessage(nlpInfo, nlpResponse, domainName)
     agentMessage.context = context;
     
     const message = {};
-    message.network = nlpResponse.formatted_response.networks[0]; 
+    message.network = nlpResponse.formatted_response.networks[0];
+    
+    const chat  = {};
+    chat.histories = nlpInfo.histories;
+    message.network.chat = chat;
     agentMessage.message = message;
 
     agentMessage.preferred_network = nlpInfo.preferred_networks[domainName];

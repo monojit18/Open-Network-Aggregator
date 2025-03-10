@@ -1,0 +1,14 @@
+{{ if .Values.hpa }}
+{{ $hpa := .Values.hpa }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $hpa.name }}
+spec:
+  scaleTargetRef:
+  {{ toYaml $hpa.scaleTargetRef | nindent 4 }}
+  minReplicas: {{ $hpa.minReplicas }}
+  maxReplicas: {{ $hpa.maxReplicas }}
+  metrics:
+  {{ toYaml $hpa.metrics | nindent 2 }}
+{{ end }}
