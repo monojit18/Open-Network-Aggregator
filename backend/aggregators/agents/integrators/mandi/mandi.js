@@ -75,7 +75,7 @@ function prepareMandiMessage(request)
     const mandiMessage = {};
     mandiMessage.context = request.body.context;
     mandiMessage.message = request.body.message;
-    mandiMessage.preferred_network = request.body.preferred_network;  
+    mandiMessage.preferred_network = request.body.preferred_network;
     return mandiMessage;
 }
 
