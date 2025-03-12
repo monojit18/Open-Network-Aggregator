@@ -30,7 +30,8 @@ let _allUrls = {};
 
 const KMicroServices =
 {    
-    LLMAdapter: "llm-adapter"
+    LLMAdapter: "llm-adapter",
+    PlannerAgent: "planer-agent"
 }
 
 DotEnv.config();
@@ -66,14 +67,46 @@ function processGenericResponse(response)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.LLMAdapter] = `${process.env.LLM_ADAPTER_URL}`;
+    _allUrls[KMicroServices.PlannerAgent] = `${process.env.PLANNER_AGENT_URL}`;
 }
 
 function prepareLLMMessage(request)
 {
-    const llmMessage = {};    
+    const llmMessage = {};
     llmMessage.context = request.body.context;
-    llmMessage.message = request.body.message;      
+    llmMessage.message = request.body.message;
+    llmMessage.preferred_network = request.body.preferred_network;
+    llmMessage.preferred_networks = request.body.preferred_networks;
     return llmMessage;
+}
+
+function prepareLLMHeaders(request)
+{
+    const llmHeaders = {};
+    llmHeaders[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
+    llmHeaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY];
+    llmHeaders[process.env.MANDI_API_KEY] = request.headers[process.env.MANDI_API_KEY];
+    return llmHeaders;
+}
+
+async function callLLMPlanner(llmMessage, llmHeaders)
+{   
+    try
+    {
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers = llmHeaders;
+
+        const requestBody = llmMessage;
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/multi/search`,
+                                                    requestBody, requestOptions);
+        const planerResult = processGenericResponse(plannerResponse);
+        return planerResult;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
 }
 
 async function callLLMNetwork(llmMessage)
@@ -112,6 +145,31 @@ async function initializeAgent()
  * @description In turn calls Search API of the corresponding Adapter
  */
 _express.post("/search", async (request, response) =>
+{    
+    const llmMessage = prepareLLMMessage(request);
+    const llmHeaders = prepareLLMHeaders(request);
+    const results = {};
+    
+    try
+    {
+        let adapterResponse = await callLLMPlanner(llmMessage, llmHeaders);
+        results.results = adapterResponse;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }    
+});
+
+/**
+ * @fires /search/llm
+ * @method POST
+ * @description In turn calls Search API of the corresponding Adapter
+ */
+_express.post("/search/llm", async (request, response) =>
 {    
     const llmMessage = prepareLLMMessage(request);
     const results = {};
