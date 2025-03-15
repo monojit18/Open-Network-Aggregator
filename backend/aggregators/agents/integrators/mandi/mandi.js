@@ -82,7 +82,8 @@ function prepareMandiMessage(request)
 function prepareMandiHeaders(request)
 {
     const mandiHeaders = {};
-    mandiHeaders[process.env.MANDI_API_KEY] = request.headers[process.env.MANDI_API_KEY]; 
+    mandiHeaders[process.env.ENAM_MANDI_API_KEY] = request.headers[process.env.ENAM_MANDI_API_KEY]; 
+    mandiHeaders[process.env.PARTNER_MANDI_API_KEY] = request.headers[process.env.PARTNER_MANDI_API_KEY]; 
     return mandiHeaders;
 }
 
@@ -127,6 +128,7 @@ _express.post("/search", async (request, response) =>
 {    
     const mandiMessage = prepareMandiMessage(request);
     const mandiHeaders = prepareMandiHeaders(request);
+
     const results = {};
     let adapterResponse = null;
     
