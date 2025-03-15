@@ -84,8 +84,7 @@ function prepareLLMHeaders(request)
 {
     const llmHeaders = {};
     llmHeaders[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];
-    llmHeaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY];
-    llmHeaders[process.env.MANDI_API_KEY] = request.headers[process.env.MANDI_API_KEY];
+    llmHeaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY];    
     return llmHeaders;
 }
 
