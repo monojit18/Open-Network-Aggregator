@@ -27,8 +27,6 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 
-// const KEnamAPIKey = "579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b";
-const KEnamAPIKey = "x-api-mandi-key";
 const KStatusACK = "ACK";
 
 const KCallbackEvents =
@@ -119,18 +117,9 @@ function prepareAckResponse(priceInfo)
 function preparePartnerEnamPriceRequest(priceInfo)
 {
     const priceRequest = {};
-    priceRequest.key = "PKzaSyA3Lwgs2xyosQ9zzuWs5foCRIp0LSmTPwq";
-    priceRequest.commodityName = priceInfo.message.network.price.commodity;
-
-    const market = priceInfo.message.network.price.market;
-    const state = priceInfo.message.network.price.state;
-    priceRequest.districtName = (market != null) ? market : state;
+    priceRequest.context = JSON.stringify(priceInfo.context);
+    priceRequest.message = priceInfo.message;    
     return priceRequest;
-
-    // const priceRequest = {};    
-    // priceRequest.context = priceInfo.context;
-    // priceRequest.message = priceInfo.message;    
-    // return priceRequest;
 }
 
 function preapreEnamPriceResponse(priceResult)
@@ -156,17 +145,29 @@ function initializeAdapter()
     });
 }
 
-async function firePartnerCallbackEvent(priceResponse)
+async function firePartnerCallbackEvent(priceResponse, priceInfo)
 {
     try
     {
         const priceData = {};
-        priceData.room = priceResponse.context.transaction_id;
+        priceData.room = priceInfo.context.transaction_id;
         priceData.event =  KCallbackEvents.OnMandiAction;
         
         const payload = {};
-        payload.context = priceResponse.context;
-        payload.message = priceResponse.message;
+        payload.context = priceInfo.context;
+        payload.message = priceInfo.message;
+
+        const catalog = {};
+        const descriptor = priceInfo.preferred_network.descriptor;
+        catalog.descriptor = descriptor;
+
+        const provider = {};
+        provider.descriptor = catalog.descriptor;
+
+        const items = priceResponse.results.message.catalog.items;
+        provider.items = items;
+        catalog.provider = provider;
+        payload.message.catalog = catalog;
 
         priceData.payload = payload;
         await emitAdapterEvent(KCallbackEvents.OnCallbackAction, priceData);
@@ -195,6 +196,7 @@ async function fireCallbackEvent(priceResponse, priceInfo)
 
         const provider = {};
         provider.descriptor = catalog.descriptor;
+
         const items = priceResponse;
         provider.items = items;
         catalog.provider = provider;
@@ -227,7 +229,7 @@ async function fireErrorEvent(errorInfo, priceInfo)
         payload.error = errorResponse;
 
         priceData.payload = payload;
-        await emitAdapterEvent(KCallbackEvents.OnErrorAction, priceData);                    
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, priceData);                    
     }
     catch(exception)
     {        
@@ -267,14 +269,15 @@ async function performPartnerMandiPriceSearch(priceInfo)
         requestOptions.httpsAgent = _axiosAgent;
         requestOptions.headers =
         {
-            "content-type": "application/json"            
+            "content-type": "application/json"
         };
+        requestOptions.headers["pKey"] = priceInfo.apiKey;
 
         const requestBody = preparePartnerEnamPriceRequest(priceInfo);
         const priceResult = await Axios.post(`${enamMandiURL}`, requestBody, requestOptions);
         const priceResponse = preaprePartnerEnamPriceResponse(priceResult);        
-        // await firePartnerCallbackEvent(priceResponse);
-        await fireCallbackEvent(priceResponse, priceInfo);
+        await firePartnerCallbackEvent(priceResponse, priceInfo);
+        // await fireCallbackEvent(priceResponse, priceInfo);
     }
     catch(exception)
     {
@@ -323,7 +326,7 @@ async function performMandiPriceSearch(priceInfo)
         requestOptions.httpsAgent = _axiosAgent;
         requestOptions.headers =
         {
-            "content-type": "application/json"            
+            "content-type": "application/json"
         };
 
         const priceResult = await Axios.get(`${enamMandiURL}`, requestOptions);
@@ -345,6 +348,8 @@ async function performMandiPriceSearch(priceInfo)
 _express.post("/mandi/partner", async (request, response) =>
 {
     const priceInfo = prepareMandiPriceInfo(request);
+    priceInfo.apiKey = request.headers[process.env.PARTNER_MANDI_API_KEY];
+
     const results = {};
 
     try
@@ -370,7 +375,8 @@ _express.post("/mandi/partner", async (request, response) =>
 _express.post("/mandi/enam", async (request, response) =>
 {
     const priceInfo = prepareMandiPriceInfo(request);
-    priceInfo.apiKey = request.headers[KEnamAPIKey];
+    priceInfo.apiKey = request.headers[process.env.ENAM_MANDI_API_KEY];
+    
     const results = {};
 
     try
