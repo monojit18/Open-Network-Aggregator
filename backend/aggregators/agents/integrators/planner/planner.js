@@ -229,7 +229,7 @@ async function callVideoAgent(extractionInfo)
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     requestOptions.headers = {};
-    requestOptions.headers[process.env.VIDEO_API_KEY] = extractionInfo.headers[process.env.VIDEO_API_KEY];
+    requestOptions.headers[process.env.VIDEO_API_KEY] = extractionInfo.headers[process.env.VIDEO_API_KEY];    
 
     const requestBody = prepareVideoAgentRequest(extractionInfo);
     
