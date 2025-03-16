@@ -119,7 +119,7 @@ VIDEO_API_KEY = "x-api-video-key"
 YOUTUBE_NETWORK_KEY = "YOUTUBE"
 WEATHER_API_KEY = "x-api-weather-key"
 OPEN_WEATHER_NETWORK_KEY = "OPEN_WEATHER"
-MANDI_API_KEY = "x-api-mandi-key"
+ENAM_MANDI_API_KEY = "x-api-mandi-key"
 ENAM_NETWORK_KEY="ENAM"
 
 

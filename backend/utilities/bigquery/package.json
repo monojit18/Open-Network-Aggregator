@@ -1,0 +1,23 @@
+{
+    "name": "bigquery_app",
+    "description": "Wrapper around GCP Bigquery API",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors @google-cloud/bigquery",
+        "start": "node bigquery.js"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "devDependencies": {
+        "@google-cloud/bigquery": "^7.9.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "jshint": "^2.13.6"
+    }
+}

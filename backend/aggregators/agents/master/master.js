@@ -155,7 +155,8 @@ function prepareOpenNetworkHeaders(nlpInfo)
     const openNetworkHeaders = {};    
     openNetworkHeaders[process.env.WEATHER_API_KEY] = nlpInfo.headers[process.env.WEATHER_API_KEY];
     openNetworkHeaders[process.env.VIDEO_API_KEY] = nlpInfo.headers[process.env.VIDEO_API_KEY];
-    openNetworkHeaders[process.env.MANDI_API_KEY] = nlpInfo.headers[process.env.MANDI_API_KEY];
+    openNetworkHeaders[process.env.ENAM_MANDI_API_KEY] = nlpInfo.headers[process.env.ENAM_MANDI_API_KEY];
+    openNetworkHeaders[process.env.PARTNER_MANDI_API_KEY] = nlpInfo.headers[process.env.PARTNER_MANDI_API_KEY];
     return openNetworkHeaders;
 }
 
