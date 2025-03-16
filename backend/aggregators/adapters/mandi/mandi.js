@@ -36,6 +36,14 @@ const KCallbackEvents =
     OnErrorAction: "on_error"
 }
 
+const KMandiConstants =
+{
+    PKEY: "pKey",
+    EMBEDDING: "embedding",
+    DISTANCE: "distance",
+    MAX_RESULTS: "max_results"
+}
+
 DotEnv.config();
 
 _express.use(Express.json
@@ -59,6 +67,12 @@ function prepareErrorMessage(exception)
     exception.code = (exception.response.status == undefined) ? 500 : exception.response.status;
     exception.message = exception.response.statusText;
     return exception;
+}
+
+function processGenericResponse(response)
+{
+    const genericResponse = response.data.results;
+    return genericResponse;
 }
 
 function prepareMandiPriceInfo(request)
@@ -114,9 +128,23 @@ function prepareAckResponse(priceInfo)
     return ackResponse;
 }
 
+// function preparePartnerEnamPriceRequest(priceInfo)
+// {
+//     const priceRequest = {};
+//     priceRequest.context = JSON.stringify(priceInfo.context);
+//     priceRequest.message = priceInfo.message;    
+//     return priceRequest;
+// }
+
 function preparePartnerEnamPriceRequest(priceInfo)
 {
     const priceRequest = {};
+    priceRequest.key = priceInfo.apiKey;
+    priceRequest.commodityName = priceInfo.message.network.price.commodity;
+
+    const market = priceInfo.message.network.price.market;
+    const state = priceInfo.message.network.price.state;
+    priceRequest.districtName = (market != null) ? market : state;
     priceRequest.context = JSON.stringify(priceInfo.context);
     priceRequest.message = priceInfo.message;    
     return priceRequest;
@@ -259,10 +287,50 @@ async function emitAdapterEvent(eventName, eventData)
     }
 }
 
+async function performSemanticSearchForCommodity(priceInfo)
+{
+    try
+    {
+        let vectorSearchURL = process.env.MANDI_VECTOR_SEARCH_URL;
+
+        const datasetId = process.env.AGENTIC_BQ_DATASET;
+        const tableId = process.env.AGENTIC_BQ_TABLE;
+        const searchColumn = process.env.AGENTIC_BQ_SEARCH_COLUMN;
+        const queryColumn = process.env.AGENTIC_BQ_QUERY_COLUMN;
+        const maxResults = process.env.AGENTIC_BQ_MAX_RESULTS;
+        const searchQuery = priceInfo.commodity;
+
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
+        requestOptions.headers[KMandiConstants.EMBEDDING] = process.env.AGENTIC_TEXT_EMBEDDING;
+        requestOptions.headers[KMandiConstants.DISTANCE] = process.env.AGENTIC_TEXT_EMBEDDING_DISTANCE;
+        requestOptions.headers[KMandiConstants.MAX_RESULTS] = maxResults;
+
+        const requestBody = {};
+        requestBody.query = searchQuery;
+
+        const commodityResult = await Axios.post(`${vectorSearchURL}/datasets/${datasetId}/tables/${tableId}/search/query?scol=${searchColumn}&qcol=${queryColumn}`, requestBody, requestOptions);
+        const commodityResponseList = processGenericResponse(commodityResult);
+        const commodityResponse = commodityResponseList[0];
+        return commodityResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function performPartnerMandiPriceSearch(priceInfo)
 {
     try
     {
+        const commodityResponse = await performSemanticSearchForCommodity(priceInfo);
+        priceInfo.message.network.price.commodity = commodityResponse.base.commodity;
+
         let enamMandiURL = `${priceInfo.preferred_network.url}`;        
 
         const requestOptions = {};
@@ -271,13 +339,13 @@ async function performPartnerMandiPriceSearch(priceInfo)
         {
             "content-type": "application/json"
         };
-        requestOptions.headers["pKey"] = priceInfo.apiKey;
+        requestOptions.headers[KMandiConstants.PKEY] = priceInfo.apiKey;
 
         const requestBody = preparePartnerEnamPriceRequest(priceInfo);
         const priceResult = await Axios.post(`${enamMandiURL}`, requestBody, requestOptions);
         const priceResponse = preaprePartnerEnamPriceResponse(priceResult);        
-        await firePartnerCallbackEvent(priceResponse, priceInfo);
-        // await fireCallbackEvent(priceResponse, priceInfo);
+        // await firePartnerCallbackEvent(priceResponse, priceInfo);
+        await fireCallbackEvent(priceResponse, priceInfo);
     }
     catch(exception)
     {
