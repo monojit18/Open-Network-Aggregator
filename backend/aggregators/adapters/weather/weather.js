@@ -84,17 +84,20 @@ function prepareOpenWeatherInfo(request)
     return weatherInfo;
 }
 
+// function preparePartnerWeatherRequest(weatherInfo)
+// {   
+//     const weatherRequest = {};
+//     weatherRequest.context = weatherInfo.context;
+//     weatherRequest.message = weatherInfo.message;
+//     return weatherRequest;
+// }
+
 function preparePartnerWeatherRequest(weatherInfo)
 {
     const weatherRequest = {};
-    weatherRequest.key = "PKzaSyA3Lwgs2xyosQ9zzuWs5foCRIp0LSmTPwq";
+    weatherRequest.key = weatherInfo.apiKey;
     weatherRequest.districtName = weatherInfo.message.network.filters.address;
     return weatherRequest;
-    
-    // const weatherRequest = {};
-    // weatherRequest.context = weatherInfo.context;
-    // weatherRequest.message = weatherInfo.message;
-    // return weatherRequest;
 }
 
 function prepareAckResponse(weatherInfo)
@@ -341,6 +344,11 @@ async function performOpenWeatherSearch(weatherInfo)
 _express.post("/weather/partner", async (request, response) =>
 {
     const weatherInfo = preparePartnerWeatherInfo(request);
+    weatherInfo.apiKey = request.headers[process.env.PARTNER_WEATHER_API_KEY];
+
+    const now = new Date();
+
+    
     const results = {};
 
     try
