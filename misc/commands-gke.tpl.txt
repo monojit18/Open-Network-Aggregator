@@ -168,22 +168,28 @@ gcloud compute instances describe $JUMP_SERVER_NAME --format="get(networkInterfa
 
 Certificate
 ============
-gcloud compute ssl-certificates create glb-$CERTIFICATE_NAME --domains=$DOMAIN_LIST --global
+#DEV
+==========
+gcloud compute ssl-certificates create $CERTIFICATE_NAME_DEV --domains=$DOMAIN_LIST_DEV --global
 gcloud compute ssl-certificates list --global
-#gcloud compute ssl-certificates delete glb-$CERTIFICATE_NAME
+#gcloud compute ssl-certificates delete $CERTIFICATE_NAME_DEV
 
 IP Address
 ============
-gcloud compute addresses create $IP_ADDRESS_NAME --ip-version=IPV4 --global
-gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global
-#gcloud compute addresses delete $IP_ADDRESS_NAME --global
+#DEV
+==========
+gcloud compute addresses create $IP_ADDRESS_NAME_DEV --ip-version=IPV4 --global
+gcloud compute addresses describe $IP_ADDRESS_NAME_DEV --format="get(address)" --global
+#gcloud compute addresses delete $IP_ADDRESS_NAME_DEV --global
 
 #Add DNS Records
 ================
-GLB_IP=$(gcloud compute addresses describe $IP_ADDRESS_NAME --format="get(address)" --global)
-gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
+#DEV
+==========
+GLB_IP_DEV=$(gcloud compute addresses describe $IP_ADDRESS_NAME_DEV --format="get(address)" --global)
+gcloud dns record-sets create $DOMAIN_NAME_DEV --rrdatas=$GLB_IP_DEV \
 --type=A --ttl=60 --zone=$DNS_ZONE
-#gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
+#gcloud dns record-sets delete $DOMAIN_NAME_DEV --type=A --zone=$DNS_ZONE
 
 #Create GKE Private Cluster
 ====================================
@@ -527,6 +533,19 @@ gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
+Planner-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/planner
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=planner-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
 Video-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/video
@@ -704,6 +723,8 @@ gcloud config set project $PROJECT_ID
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
 ===================================================================================================
+ENV=dev
+
 #K8s gateway API
 ======================================================
 #gcloud container clusters describe $CLUSTER --region=$REGION --format json
@@ -712,14 +733,17 @@ gcloud container clusters get-credentials $CLUSTER --project=$PROJECT_ID --regio
 #External Gateway
 ==================
 k create ns gateway-ns
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
-#k delete -f $DISTRIBUTION_PATH//gke/k8s-gateway-api/gateway/gke-external-gateway.yaml -n gateway-ns
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/gateway/gke-external-gateway.yaml -n gateway-ns
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/gateway/gke-external-gateway.yaml -n gateway-ns
 k get Gateway -n gateway-ns
 
 #Smoke services
 ===============================================================================================
 k create ns smoke
+#k delete ns smoke
+
 k create serviceaccount smoke-sa -n smoke
+#k delete serviceaccount smoke-sa -n smoke
 
 #Deploy Smoke Microservices
 ============================
@@ -732,249 +756,251 @@ k get svc -n smoke
 
 #Add Routes
 ========================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/smoke-route.yaml -n smoke
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-smoke/routes/smoke-route.yaml -n smoke
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-smoke/routes/smoke-route.yaml -n smoke
 k get HttpRoute/smoke-route -n smoke
 ==================================================================================================================
-
 #Utilities services
 ===============================================================================================
-k create ns utilities
-k create serviceaccount utilities-sa -n utilities
+k create ns utilities-$ENV
+#k delete ns utilities-$ENV
 
-k create serviceaccount utilities-sa -n utilities
-#k delete serviceaccount utilities-sa -n utilities
+k create serviceaccount utilities-sa -n utilities-$ENV
+#k delete serviceaccount utilities-sa -n utilities-$ENV
 
 gcloud iam service-accounts add-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities/utilities-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities-$ENV/utilities-sa]"
 #gcloud iam service-accounts remove-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities/utilities-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[utilities-$ENV/utilities-sa]"
 
-k annotate serviceaccount utilities-sa -n utilities iam.gke.io/gcp-service-account=$GSA
-#k annotate serviceaccount utilities-sa -n utilities iam.gke.io/gcp-service-account-
+k annotate serviceaccount utilities-sa -n utilities-$ENV iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount utilities-sa -n utilities-$ENV iam.gke.io/gcp-service-account-
 
 #Deploy Utilities Microservices
 ==================================
 helm upgrade --install --create-namespace utilities-chart-streamer-server $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
--n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-streamer-server.yaml
-#helm uninstall utilities-chart-streamer-server -n utilities
+-n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-streamer-server.yaml
+#helm uninstall utilities-chart-streamer-server -n utilities-$ENV
 
 helm upgrade --install --create-namespace utilities-chart-event-server $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
--n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-event-server.yaml
-#helm uninstall utilities-chart-event-server -n utilities
+-n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-event-server.yaml
+#helm uninstall utilities-chart-event-server -n utilities-$ENV
 
 helm upgrade --install --create-namespace utilities-chart-event-receiver $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
--n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-event-receiver.yaml
-#helm uninstall utilities-chart-event-receiver -n utilities
+-n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-event-receiver.yaml
+#helm uninstall utilities-chart-event-receiver -n utilities-$ENV
 
 helm upgrade --install --create-namespace utilities-chart-storage $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
--n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-storage.yaml
-#helm uninstall utilities-chart-storage -n utilities
+-n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-storage.yaml
+#helm uninstall utilities-chart-storage -n utilities-$ENV
 
-k get po -n utilities
-k get svc -n utilities
+k get po -n utilities-$ENV
+k get svc -n utilities-$ENV
 
 #Add Routes
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/streamer-route.yaml -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/streamer-route.yaml -n utilities-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/streamer-route.yaml -n utilities-$ENV
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/event-route.yaml -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/event-route.yaml -n utilities-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/event-route.yaml -n utilities-$ENV
 
-k get HttpRoute/streamer-route -n utilities
-k get HttpRoute/event-route -n utilities
+k get HttpRoute/streamer-route -n utilities-$ENV
+k get HttpRoute/event-route -n utilities-$ENV
 
 #Add Healthcheck policy
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/streamer-health-check.yaml -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/streamer-health-check.yaml -n utilities-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/streamer-health-check.yaml -n utilities-$ENV
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/event-health-check.yaml -n utilities
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/event-health-check.yaml -n utilities-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/event-health-check.yaml -n utilities-$ENV
 
-k get HealthCheckPolicy/streamer-healthcheck -n utilities
-k describe HealthCheckPolicy/streamer-healthcheck -n utilities
+k get HealthCheckPolicy/streamer-healthcheck -n utilities-$ENV
+k describe HealthCheckPolicy/streamer-healthcheck -n utilities-$ENV
 
-k get HealthCheckPolicy/event-healthcheck -n utilities
-k describe HealthCheckPolicy/event-healthcheck -n utilities
+k get HealthCheckPolicy/event-healthcheck -n utilities-$ENV
+k describe HealthCheckPolicy/event-healthcheck -n utilities-$ENV
 ==================================================================================================================
-
 #VertexAI services
 ===============================================================================================
-k create ns vertexai
-#k delete ns vertexai
+k create ns vertexai-$ENV
+#k delete ns vertexai-$ENV
 
-k create serviceaccount vertexai-sa -n vertexai
-#k delete serviceaccount vertexai-sa -n vertexai
+k create serviceaccount vertexai-sa -n vertexai-$ENV
+#k delete serviceaccount vertexai-sa -n vertexai-$ENV
 
 gcloud iam service-accounts add-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai-$ENV/vertexai-sa]"
 #gcloud iam service-accounts remove-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai/vertexai-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[vertexai-$ENV/vertexai-sa]"
 
-k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account=$GSA
-#k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account-
+k annotate serviceaccount vertexai-sa -n vertexai-$ENV iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount vertexai-sa -n vertexai-$ENV iam.gke.io/gcp-service-account-
 
 #Deploy Microservicesservices
 ==========================================
 helm upgrade --install --create-namespace vertexai-charts-translate $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-translate.yaml
-#helm uninstall vertexai-charts-translate -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-translate.yaml
+#helm uninstall vertexai-charts-translate -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-vision $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-vision.yaml
-#helm uninstall vertexai-charts-vision -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-vision.yaml
+#helm uninstall vertexai-charts-vision -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-speech $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-speech.yaml
-#helm uninstall vertexai-charts-speech -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-speech.yaml
+#helm uninstall vertexai-charts-speech -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-genaitext $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaitext.yaml
-#helm uninstall vertexai-charts-genaitext -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-genaitext.yaml
+#helm uninstall vertexai-charts-genaitext -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-genaimultimodal $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaimultimodal.yaml
-#helm uninstall vertexai-charts-genaimultimodal -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-genaimultimodal.yaml
+#helm uninstall vertexai-charts-genaimultimodal -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-genaiimage $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-genaiimage.yaml
-#helm uninstall vertexai-charts-genaiimage -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-genaiimage.yaml
+#helm uninstall vertexai-charts-genaiimage -n vertexai-$ENV
 
 helm upgrade --install --create-namespace vertexai-charts-vectorsearch $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values/values-vectorsearch.yaml
-#helm uninstall vertexai-charts-vectorsearch -n vertexai
+-n vertexai-$ENV -f $DISTRIBUTION_PATH/gke/charts/vertexai/vertexai-charts/values-$ENV/values-vectorsearch.yaml
+#helm uninstall vertexai-charts-vectorsearch -n vertexai-$ENV
 
-k get po -n vertexai
-k get svc -n vertexai
+k get po -n vertexai-$ENV
+k get svc -n vertexai-$ENV
 
 #Add Routes
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/routes/vertexai-route.yaml -n vertexai
-k get HttpRoute/vertexai-route -n vertexai
-k describe HttpRoute/vertexai-route -n vertexai
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/vertexai-route.yaml -n vertexai-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/vertexai-route.yaml -n vertexai-$ENV
+k get HttpRoute/vertexai-route -n vertexai-$ENV
+k describe HttpRoute/vertexai-route -n vertexai-$ENV
 
 #Add Healthcheck policy
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
-#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
-k get HealthCheckPolicy/vertexai-healthcheck -n vertexai
-k describe HealthCheckPolicy/vertexai-healthcheck -n vertexai
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/translate-health-check.yaml -n vertexai-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/translate-health-check.yaml -n vertexai-$ENV
+k get HealthCheckPolicy/translate-healthcheck -n vertexai-$ENV
+k describe HealthCheckPolicy/translate-healthcheck -n vertexai-$ENV
 ==============================================================================================================================
-
 #Aggregator services
 ===============================================================================================
-k create ns aggregator-dev
-#k delete ns aggregator-dev
+k create ns aggregator-$ENV
+#k delete ns aggregator-$ENV
 
-k create serviceaccount aggregator-dev-sa -n aggregator-dev
-#k delete serviceaccount aggregator-dev-sa -n aggregator-dev
+k create serviceaccount aggregator-sa -n aggregator-$ENV
+#k delete serviceaccount aggregator-sa -n aggregator-$ENV
 
 gcloud iam service-accounts add-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-$ENV/aggregator-sa]"
 #gcloud iam service-accounts remove-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-$ENV/aggregator-sa]"
 
-k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account=$GSA
-#k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account-
+k annotate serviceaccount aggregator-sa -n aggregator-$ENV iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount aggregator-sa -n aggregator-$ENV iam.gke.io/gcp-service-account-
 
 #Deploy Micro-services
 ==========================================
 helm upgrade --install --create-namespace aggregator-chart-agri-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
-#helm uninstall aggregator-chart-agri-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-agri-adapter.yaml
+#helm uninstall aggregator-chart-agri-adapter -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-buyer-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
-#helm uninstall aggregator-chart-buyer-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-buyer-adapter.yaml
+#helm uninstall aggregator-chart-buyer-adapter -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-llm-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
-#helm uninstall aggregator-chart-llm-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-llm-adapter.yaml
+#helm uninstall aggregator-chart-llm-adapter -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-mandi-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
-#helm uninstall aggregator-chart-mandi-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-mandi-adapter.yaml
+#helm uninstall aggregator-chart-mandi-adapter -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-video-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
-#helm uninstall aggregator-chart-video-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-video-adapter.yaml
+#helm uninstall aggregator-chart-video-adapter -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-weather-adapter $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
-#helm uninstall aggregator-chart-weather-adapter -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-weather-adapter.yaml
+#helm uninstall aggregator-chart-weather-adapter -n aggregator-$ENV
 
+
+helm upgrade --install --create-namespace aggregator-chart-planner-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-planner-agent.yaml
+#helm uninstall aggregator-chart-planner-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-agri-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
-#helm uninstall aggregator-chart-agri-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-agri-agent.yaml
+#helm uninstall aggregator-chart-agri-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-ondc-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
-#helm uninstall aggregator-chart-ondc-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-ondc-agent.yaml
+#helm uninstall aggregator-chart-ondc-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-llm-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
-#helm uninstall aggregator-chart-llm-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-llm-agent.yaml
+#helm uninstall aggregator-chart-llm-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-mandi-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
-#helm uninstall aggregator-chart-mandi-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-mandi-agent.yaml
+#helm uninstall aggregator-chart-mandi-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-video-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
-#helm uninstall aggregator-chart-video-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-video-agent.yaml
+#helm uninstall aggregator-chart-video-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-weather-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
-#helm uninstall aggregator-chart-weather-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-weather-agent.yaml
+#helm uninstall aggregator-chart-weather-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-master-agri-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
-#helm uninstall aggregator-chart-master-agri-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-master-agri-agent.yaml
+#helm uninstall aggregator-chart-master-agri-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-master-retail-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
-#helm uninstall aggregator-chart-master-retail-agent -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-master-retail-agent.yaml
+#helm uninstall aggregator-chart-master-retail-agent -n aggregator-$ENV
 
 helm upgrade --install --create-namespace aggregator-chart-order-callback $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-order-callback.yaml
-#helm uninstall aggregator-chart-order-callback -n aggregator-dev
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-order-callback.yaml
+#helm uninstall aggregator-chart-order-callback -n aggregator-$ENV
 
-k get po -n aggregator-dev
-k get svc -n aggregator-dev
+k get po -n aggregator-$ENV
+k get svc -n aggregator-$ENV
+k get hpa -n aggregator-$ENV
 
 #Add Routes
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-k get HttpRoute -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/aggregator-route.yaml -n aggregator-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/aggregator-route.yaml -n aggregator-$ENV
+k get HttpRoute -n aggregator-$ENV
 
 #Add Healthcheck policy
 ============================
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-agri-health-check.yaml -n aggregator-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-agri-health-check.yaml -n aggregator-$ENV
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-retail-health-check.yaml -n aggregator-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-retail-health-check.yaml -n aggregator-$ENV
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-order-callback-health-check.yaml -n aggregator-$ENV
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-order-callback-health-check.yaml -n aggregator-$ENV
 
-k get HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/master-agri-healthcheck -n aggregator-$ENV
+k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator-$ENV
 
-k get HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/master-retail-healthcheck -n aggregator-$ENV
+k describe HealthCheckPolicy/master-retail-healthcheck -n aggregator-$ENV
 
-k get HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/order-callback-healthcheck -n aggregator-$ENV
+k describe HealthCheckPolicy/order-callback-healthcheck -n aggregator-$ENV
 ==================================================================================================================
