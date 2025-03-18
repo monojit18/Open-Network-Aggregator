@@ -255,7 +255,7 @@ async function performAgriSearch(agriInfo)
         const requestBody = prepareAgriRequest(agriInfo);        
         const agriResult = await Axios.post(`${agriURL}`, requestBody, requestOptions);
         const agriResponse = processGenericResponse(agriResult);
-        fireCallbackEvent(agriResponse.results, agriInfo);        
+        fireCallbackEvent(agriResponse.results, agriInfo);
     }
     catch(exception)
     {

@@ -38,6 +38,7 @@ let _predictionServiceClient = null;
 let _markDown = null;
 let _axiosAgent = null;
 let _socketIOClient = null;
+let _chatRef = null;
 
 const KSocketEvents =
 {
@@ -569,12 +570,14 @@ async function generateChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories,
+            // history: chatInfo.histories,
             systemInstruction: chatInfo.systemInstruction
         };
 
-        let chatRef = _generativeAIModel.startChat(chatRequest);
-        const chatResponse = await chatRef.sendMessage(chatInfo.contents);
+        if ((chatInfo.histories == null) || (chatInfo.histories.length == 0))
+            _chatRef = _generativeAIModel.startChat(chatRequest);
+        
+        const chatResponse = await _chatRef.sendMessage(chatInfo.contents);
         predictionContent = preaprePredictionResponse(chatResponse.response, false);
         return predictionContent;
     }
@@ -600,12 +603,13 @@ async function generateStreamChatContent(chatInfo)
         {
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
-            history: chatInfo.histories,
-            systemInstruction: chatInfo.systemInstruction
+            // history: chatInfo.histories
         };
 
-        let chatRef = _generativeAIModel.startChat(chatRequest);
-        const streamingResult = await chatRef.sendMessageStream(chatInfo.contents);
+        if ((chatInfo.histories == null) || (chatInfo.histories.length == 0))
+            _chatRef = _generativeAIModel.startChat(chatRequest);
+        
+        const streamingResult = await _chatRef.sendMessageStream(chatInfo.contents);
         await emitTextStream(streamingResult, chatInfo);
 
         const chatResponse = await streamingResult.response;

@@ -31,7 +31,16 @@ let _allUrls = {};
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
-    AgriAdapter: "agri-adapter"
+    AgriAdapter: "agri-adapter",
+    PlannerAgent: "planer-agent"
+}
+
+const KMessageTypes =
+{
+    Loan: "loan",
+    AgriCommerce: "agri-commerce",
+    RetailCommerce: "retail-commerce",
+    MarketLinkage: "market-linkage"
 }
 
 DotEnv.config();
@@ -67,30 +76,150 @@ function processGenericResponse(response)
 function prepareAllUrls()
 {
     _allUrls[KMicroServices.AgriAdapter] = `${process.env.AGRI_ADAPTER_URL}`;
+    _allUrls[KMicroServices.PlannerAgent] = `${process.env.PLANNER_AGENT_URL}`;
 }
 
-function prepareAgriMessage(request)
+function prepareAgriInfo(request)
 {
-    const agriMessage = {};    
-    agriMessage.context = request.body.context;
-    agriMessage.message = request.body.message;
-    agriMessage.preferred_network = request.body.preferred_network;
-    return agriMessage;
+    const agriInfo = {};    
+    agriInfo.context = request.body.context;
+    agriInfo.message = request.body.message;
+    agriInfo.preferred_network = request.body.preferred_network;
+    agriInfo.preferred_networks = request.body.preferred_networks;
+    return agriInfo;
 }
 
-async function callAgriAdapter(agriMessage)
+function preparePlannerRequest(plannerInfo)
+{
+    const requestBody = {};
+    requestBody.context = plannerInfo.context;
+    requestBody.message = plannerInfo.message;
+    requestBody.preferred_networks = plannerInfo.preferred_networks;
+    requestBody.message.network.relevant_text = plannerInfo.message.network.relevant_text;
+    return requestBody;
+}
+
+async function callAgriAdapter(agriInfo)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
 
-    const requestBody = agriMessage;
+    const requestBody = agriInfo;
     
     try
     {
         const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}/search`,
                                                     requestBody, requestOptions);
         const adapterResult = processGenericResponse(adapterResponse);
-        return adapterResult;        
+        return adapterResult;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performByMessageType(request)
+{
+    try
+    {
+        const messageType = request.body.message.network.filters[0].type;
+        let searchResponse = {};
+
+        switch (messageType)
+        {
+            case KMessageTypes.Loan:
+                {
+                    searchResponse = await performLoanSearch(request);
+                }
+                break;
+            case KMessageTypes.AgriCommerce:
+                {
+                    searchResponse = await performAgriCommerceSearch(request);
+                }
+                break;
+            case KMessageTypes.RetailCommerce:
+                {
+                    searchResponse = await performRetailCommerceSearch(request);
+                }
+                break;            
+        }
+        return searchResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performAgriCommerceSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+
+    try
+    {
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
+        
+        const requestBody = preparePlannerRequest(agriInfo);
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/agri/search`,
+                                                    requestBody, requestOptions);
+        const planerResult = processGenericResponse(plannerResponse);
+        return planerResult;                                            
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performRetailCommerceSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+
+    try
+    {
+        const requestOptions = {};
+        requestOptions.httpsAgent = _axiosAgent;
+        requestOptions.headers =
+        {
+            "content-type": "application/json"
+        };
+        
+        const requestBody = preparePlannerRequest(agriInfo);
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/retail/search`,
+                                                    requestBody, requestOptions);
+        const planerResult = processGenericResponse(plannerResponse);
+        return planerResult;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performLoanSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+    let adapterResponse = {};
+    
+    try
+    {
+        const preferredNetworksList = agriInfo.preferred_network;
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
+            {
+                const copiedAgriMessage = JSON.parse(JSON.stringify(agriInfo));
+                copiedAgriMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callAgriAdapter(copiedAgriMessage);
+            }));
+        }
+        return adapterResponse;
     }
     catch(exception)
     {
@@ -115,21 +244,11 @@ async function initializeAgent()
  */
 _express.post("/search", async (request, response) =>
 {
-    const agriMessage = prepareAgriMessage(request);
     const results = {};
     
     try
     {
-        const preferredNetworksList = agriMessage.preferred_network;
-        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
-        {
-            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
-            {
-                const copiedAgriMessage = JSON.parse(JSON.stringify(agriMessage));
-                copiedAgriMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callAgriAdapter(copiedAgriMessage);
-            }));
-        }
+        const adapterResponse = await performByMessageType(request);
         results.results = adapterResponse;
         response.send(results);
     }

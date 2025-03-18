@@ -33,6 +33,12 @@ const KMicroServices =
     WeatherAdapter: "weather-adapter"
 }
 
+const KWeatherConstants =
+{
+    OPENWEATHER: "openweather",
+    PARTNER: "partner",
+}
+
 DotEnv.config();
 
 _express.use(Express.json
@@ -80,7 +86,8 @@ function prepareWeatherMessage(request)
 function prepareWeatherHeders(request)
 {
     const weatherheaders = {};
-    weatherheaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY]; 
+    weatherheaders[process.env.WEATHER_API_KEY] = request.headers[process.env.WEATHER_API_KEY];
+    weatherheaders[process.env.PARTNER_WEATHER_API_KEY] = request.headers[process.env.PARTNER_WEATHER_API_KEY];
     return weatherheaders;
 }
 
@@ -136,7 +143,7 @@ _express.post("/search", async (request, response) =>
             const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
             copiedWeatherMessage.preferred_network = opendWeatherNetwork;
             adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
-                                                        "openweather");            
+                                                        KWeatherConstants.OPENWEATHER);            
         }
 
         const preferredNetworksList = weatherMessage.preferred_network.partners;
@@ -147,7 +154,7 @@ _express.post("/search", async (request, response) =>
                 const copiedWeatherMessage = JSON.parse(JSON.stringify(weatherMessage));
                 copiedWeatherMessage.preferred_network = preferredNetwork;                
                 adapterResponse = await callWeatherAdapter(copiedWeatherMessage, weatherHeaders,
-                                                            "partner");
+                                                            KWeatherConstants.PARTNER);
             }));
         }
         results.results = adapterResponse;

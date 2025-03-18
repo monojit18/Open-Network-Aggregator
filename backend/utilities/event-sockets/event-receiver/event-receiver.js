@@ -27,13 +27,11 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 let _socketIOClient = null;
-// let _socketIOStreamClient = null;
 
 const KSocketEvents =
 {
     ConnectionEvent: "connect",
-    ConnectedEvent: "connected",
-    // StreamEvent: "stream",
+    ConnectedEvent: "connected",    
     EndConnectionEvent: "end",
     DisconnectEvent: "disconnect"
 }
@@ -87,41 +85,6 @@ function prepareEventSocketClient()
     });
 }
 
-// function prepareStreamSocketClient()
-// {
-//     _socketIOStreamClient.on(KSocketEvents.ConnectionEvent, () =>
-//     {
-//         console.log(_socketIOClient.id);
-//     });
-
-//     _socketIOStreamClient.on(KSocketEvents.ConnectedEvent, (message) =>
-//     {
-//         console.log(message);
-//     });
-
-//     _socketIOStreamClient.on(KSocketEvents.StreamEvent, (stream) =>
-//     {
-//         try
-//         {
-//             console.log(stream.candidates[0]?.content?.parts[0].text);            
-//         }
-//         catch(exception)
-//         {
-//             console.log("done");
-//         }            
-//     });
-
-//     _socketIOStreamClient.on(KSocketEvents.EndConnectionEvent, (message) =>
-//     {
-//         console.log(message);
-//     });
-
-//     _socketIOStreamClient.on(KSocketEvents.DisconnectEvent, () =>
-//     {
-//         console.log(_socketIOClient.connected);
-//     });
-// }
-
 async function initSocketClient()
 {
     _axiosAgent = new Https.Agent
@@ -136,13 +99,7 @@ async function initSocketClient()
         query: socketQuery
     });
 
-    _socketIOStreamClient = io(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}`,
-    {
-        query: socketQuery
-    });
-
     await initEventServerConnection();
-    // await initStreamServerConnection();
 }
 
 async function initEventServerConnection()
@@ -164,26 +121,6 @@ async function initEventServerConnection()
         throw exception;
     }
 }
-
-// async function initStreamServerConnection()
-// {
-//     const requestOptions= {};
-//     requestOptions.httpsAgent = _axiosAgent;
-//     const requestBody = {};
-
-//     try
-//     {
-//         const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/stream/init`,
-//                                                 requestBody, requestOptions);
-//         console.log(socketResponse);
-//         return socketResponse;
-//     }
-//     catch(exception)
-//     {
-//         console.log(exception.message);
-//         throw exception;
-//     }
-// }
 
 /* API DEFINITIONS - START */
 /**
@@ -232,6 +169,5 @@ _server.listen(port);
 
 initSocketClient();
 prepareEventSocketClient();
-// prepareStreamSocketClient();
 
 console.log("Server running at http://localhost:%d", port);

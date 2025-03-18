@@ -84,11 +84,19 @@ function prepareOpenWeatherInfo(request)
     return weatherInfo;
 }
 
+// function preparePartnerWeatherRequest(weatherInfo)
+// {   
+//     const weatherRequest = {};
+//     weatherRequest.context = weatherInfo.context;
+//     weatherRequest.message = weatherInfo.message;
+//     return weatherRequest;
+// }
+
 function preparePartnerWeatherRequest(weatherInfo)
 {
     const weatherRequest = {};
-    weatherRequest.context = weatherInfo.context;
-    weatherRequest.message = weatherInfo.message;      
+    weatherRequest.key = weatherInfo.apiKey;
+    weatherRequest.districtName = weatherInfo.message.network.filters.address;
     return weatherRequest;
 }
 
@@ -292,7 +300,8 @@ async function performPartnerWeatherSearch(weatherInfo)
         const requestBody = preparePartnerWeatherRequest(weatherInfo);
         const weatherResult = await Axios.post(`${weatherURL}`, requestBody, requestOptions);
         const weatherResponse = preaprePartnerWeatherResponse(weatherResult);        
-        await firePartnerCallbackEvent(weatherResponse);
+        // await firePartnerCallbackEvent(weatherResponse);
+        await fireCallbackEvent(weatherResponse, weatherInfo);
     }
     catch(exception)
     {
@@ -335,6 +344,11 @@ async function performOpenWeatherSearch(weatherInfo)
 _express.post("/weather/partner", async (request, response) =>
 {
     const weatherInfo = preparePartnerWeatherInfo(request);
+    weatherInfo.apiKey = request.headers[process.env.PARTNER_WEATHER_API_KEY];
+
+    const now = new Date();
+
+    
     const results = {};
 
     try

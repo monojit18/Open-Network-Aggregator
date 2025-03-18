@@ -33,6 +33,12 @@ const KMicroServices =
     MandiAdapter: "mandi-adapter"
 }
 
+const KMandiConstants =
+{
+    ENAM: "enam",
+    PARTNER: "partner",
+}
+
 const KEnamKey = "ENAM";
 
 DotEnv.config();
@@ -75,14 +81,15 @@ function prepareMandiMessage(request)
     const mandiMessage = {};
     mandiMessage.context = request.body.context;
     mandiMessage.message = request.body.message;
-    mandiMessage.preferred_network = request.body.preferred_network;  
+    mandiMessage.preferred_network = request.body.preferred_network;
     return mandiMessage;
 }
 
 function prepareMandiHeaders(request)
 {
     const mandiHeaders = {};
-    mandiHeaders[process.env.MANDI_API_KEY] = request.headers[process.env.MANDI_API_KEY]; 
+    mandiHeaders[process.env.ENAM_MANDI_API_KEY] = request.headers[process.env.ENAM_MANDI_API_KEY]; 
+    mandiHeaders[process.env.PARTNER_MANDI_API_KEY] = request.headers[process.env.PARTNER_MANDI_API_KEY];
     return mandiHeaders;
 }
 
@@ -127,6 +134,7 @@ _express.post("/search", async (request, response) =>
 {    
     const mandiMessage = prepareMandiMessage(request);
     const mandiHeaders = prepareMandiHeaders(request);
+
     const results = {};
     let adapterResponse = null;
     
@@ -137,7 +145,8 @@ _express.post("/search", async (request, response) =>
         {
             const copiedMandiMessage = JSON.parse(JSON.stringify(mandiMessage));
             copiedMandiMessage.preferred_network = enamMandiNetwork;            
-            adapterResponse = await callMandiAdapters(copiedMandiMessage, mandiHeaders, "enam");
+            adapterResponse = await callMandiAdapters(copiedMandiMessage, mandiHeaders,
+                                                        KMandiConstants.ENAM);
         }
 
         const preferredNetworksList = mandiMessage.preferred_network.partners;
@@ -148,7 +157,7 @@ _express.post("/search", async (request, response) =>
                 const copiedMandiMessage = JSON.parse(JSON.stringify(mandiMessage));
                 copiedMandiMessage.preferred_network = preferredNetwork;                
                 adapterResponse = await callMandiAdapters(copiedMandiMessage, mandiHeaders,
-                                                            "partner");
+                                                            KMandiConstants.PARTNER);
             }));
         }        
         results.results = adapterResponse;

@@ -341,7 +341,7 @@ async function performYoutubeSearch(videoInfo)
     try
     {
         let videoURL = `${process.env.YOUTUBE_DATA_V3_SEARCH_URL}/search`;
-        videoURL += `?part=${videoInfo.part}&maxResults=${videoInfo.maxResults}&q=${videoInfo.query}&key=${videoInfo.apiKey}`;
+        videoURL += `?part=${videoInfo.part}&maxResults=${videoInfo.maxResults}&q=${videoInfo.query}&key=${videoInfo.apiKey}`;        
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
