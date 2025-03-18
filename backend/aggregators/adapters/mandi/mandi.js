@@ -319,7 +319,7 @@ async function performSemanticSearchForCommodity(priceInfo)
         return commodityResponse;
     }
     catch(exception)
-    {
+    {        
         throw exception;
     }
 }
