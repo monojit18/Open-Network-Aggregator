@@ -27,13 +27,11 @@ let _express = Express();
 let _server = Http.createServer(_express);
 let _axiosAgent = null;
 let _socketIOClient = null;
-// let _socketIOStreamClient = null;
 
 const KSocketEvents =
 {
     ConnectionEvent: "connect",
-    ConnectedEvent: "connected",
-    // StreamEvent: "stream",
+    ConnectedEvent: "connected",    
     EndConnectionEvent: "end",
     DisconnectEvent: "disconnect"
 }
@@ -97,11 +95,6 @@ async function initSocketClient()
     const socketQuery = {};
     socketQuery[KSocketRooms.RoomKey] = KSocketRooms.EventReceiverRoom;
     _socketIOClient = io(`${process.env.EVENT_SERVER_HTTP_HOST}`,
-    {
-        query: socketQuery
-    });
-
-    _socketIOStreamClient = io(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}`,
     {
         query: socketQuery
     });
