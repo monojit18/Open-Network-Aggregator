@@ -408,7 +408,7 @@ _express.post("/retail/search", async (request, response) =>
     }
 });
 /* API DEFINITIONS - END */
-
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 
 initializePlanner();
