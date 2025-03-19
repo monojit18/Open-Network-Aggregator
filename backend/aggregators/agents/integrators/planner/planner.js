@@ -275,7 +275,7 @@ async function callLLMAgent(llmInfo)
     
     try
     {
-        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search/llm`,
+        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
                                                     requestBody, requestOptions);
         const agentResult = processGenericResponse(agentResponse);
         return agentResult;
@@ -381,7 +381,7 @@ _express.post("/agri/search", async (request, response) =>
     }
     catch(exception)
     {        
-        console.log(JSON.stringify(exception));
+        // console.log(JSON.stringify(exception));
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);;
@@ -408,7 +408,6 @@ _express.post("/retail/search", async (request, response) =>
     }
 });
 /* API DEFINITIONS - END */
-
 var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 

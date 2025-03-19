@@ -146,12 +146,11 @@ async function initializeAgent()
 _express.post("/search", async (request, response) =>
 {    
     const llmMessage = prepareLLMMessage(request);
-    const llmHeaders = prepareLLMHeaders(request);
     const results = {};
     
     try
     {
-        let adapterResponse = await callLLMPlanner(llmMessage, llmHeaders);
+        let adapterResponse = await callLLMNetwork(llmMessage);
         results.results = adapterResponse;
         response.send(results);
     }
@@ -164,18 +163,19 @@ _express.post("/search", async (request, response) =>
 });
 
 /**
- * @fires /search/llm
+ * @fires /planner/search
  * @method POST
  * @description In turn calls Search API of the corresponding Adapter
  */
-_express.post("/search/llm", async (request, response) =>
-{    
+_express.post("/planner/search", async (request, response) =>
+{
     const llmMessage = prepareLLMMessage(request);
+    const llmHeaders = prepareLLMHeaders(request);
     const results = {};
     
     try
     {
-        let adapterResponse = await callLLMNetwork(llmMessage);
+        let adapterResponse = await callLLMPlanner(llmMessage, llmHeaders);
         results.results = adapterResponse;
         response.send(results);
     }
