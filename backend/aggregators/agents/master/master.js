@@ -322,7 +322,9 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
         case KNetworkNames.LLM:
             {
                 domainName = KNetworkNames.LLM;
-                url = `${_allUrls[KMicroServices.LLMAgent]}`;
+                const plannerSearch = process.env.PLANNER_LLM_SEARCH;
+                url = (plannerSearch == "true") ? `${_allUrls[KMicroServices.LLMAgent]}/planner`
+                                                : `${_allUrls[KMicroServices.LLMAgent]}`;
             }
             // networkResponse = await searchLLMAgent(nlpResponse, nlpInfo);
             break;

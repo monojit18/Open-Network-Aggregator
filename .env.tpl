@@ -62,7 +62,7 @@ AGENTIC_NLP_PROMPT="Convert the following sentence into a JSON object and return
 
 PLANNER_EXTRACT_NLP_PROMPT="Divide the following query into multiple relevant segments - 'ONDC', 'VIDEO' and 'LLM' and respond with a list of useful alternate suggestions.\nDo not use the name of any particular outlet or brand; each suggestion should be generic.\nAvoid using any special characters in the response.\nEach query should be an alternate suggestion to the original query.\nInclude exactly one query of type 'ONDC' which should  include options which are somehow related to the original query or product e.g. ingredients, raw materials, close by locations etc.\nInclude exactly one suggestion of type 'LLM' which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.\nTreat all query to have a domain 'VIDEO' and return exactly one video suggestions.\nExample:\nQuery: It's again time for a marriage in the family. My niece is going to get married to a Punjabi guy. I would like to buy some really cool Kurtas with Brown colour and White border. Please suggest.\nResponse:\n[{\"domain\": \"ONDC\", \"relevant_text\": \"show me some nice fabric options for Kurtas with Brown colour\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"suggest some different design options for Kurtas with White border\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"show me some options for the raw materials for Kurtas\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Give me some suggestions of Marriage halls for Punjabi wedding\"},\n{\"domain\": \"LLM\", \"relevant_text\": \"Give me some suggestions of Honeymoon destinations in India\"}]"
 
-# AGRI
+# RETAIL & AGRI
 # AGRI_ATTRIBUTES_PROMPT="Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExamples:\n\nQuery: Show me videos for rice farming\nResponse: {\"attributes\":[\"rice farming\"]}\n\nQuery: Show me videos for mango farming and C++ programming\nResponse: {\"attributes\":[\"mango farming\"]}\n\nQuery: Show me videos on Mango and Rice\nResponse: {\"attributes\":[\"mango\", \"rice\"]}"
 
 # RETAIL & AGRI
@@ -76,6 +76,9 @@ AGENTIC_MODEL_ENDPOINT_ID="<AGENTIC_MODEL_ENDPOINT_ID>"
 
 # AGRI
 # AGENTIC_MODEL_ENDPOINT_ID="<AGENTIC_MODEL_ENDPOINT_ID>"
+
+# RETAIL
+PLANNER_LLM_SEARCH="true"
 
 WEBSOCK_STREAMER_HTTP_HOST="<WEBSOCK_STREAMER_HTTP_HOST>"
 # WEBSOCK_STREAMER_HTTP_HOST="http://localhost:8082"
