@@ -194,8 +194,6 @@ function prepareLLMAgentRequest(plannerInfo)
     const filters = requestBody.message.network.filters;
     if (Array.isArray(filters) == true)
         filters[0].type = KConstantValues.ADVISORY;
-    else
-        filters.type = KConstantValues.ADVISORY;
 
     requestBody.message.network.relevant_text = KConstantValues.EMPTY;
     return requestBody;
@@ -222,6 +220,32 @@ function initializePlanner()
     });
 
     prepareAllUrls();
+}
+
+async function fireErrorEvent(errorInfo, plannerInfo)
+{
+    try
+    {
+        const plannerData = {};
+        plannerData.room = plannerInfo.context.transaction_id;
+        plannerData.event = KCallbackEvents.OnErrorAction;
+        
+        const payload = {};
+        payload.context = plannerInfo.context;
+        payload.message = plannerInfo.message;
+
+        const errorResponse = {};
+        errorResponse.code = errorInfo.code;
+        errorResponse.message = errorInfo.message;
+        payload.error = errorResponse;
+
+        plannerData.payload = payload;
+        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, plannerData);
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
 }
 
 async function callVideoAgent(extractionInfo)
@@ -310,7 +334,7 @@ async function performExtractedSearch(extractedList, extractionInfo)
     
                 case KDomainNames.LLM:
                 {
-                    extractionInfo.message.network.relevant_text = item.relevant_text;
+                    extractionInfo.message.network.filters.query = item.relevant_text;
                     await callLLMAgent(extractionInfo);
                 }
                 break;
@@ -363,7 +387,7 @@ _express.post("/multi/search", async (request, response) =>
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);;
+        await fireErrorEvent(errorInfo, extractionInfo);
     }
 });
 
@@ -380,11 +404,10 @@ _express.post("/agri/search", async (request, response) =>
         await callONDCAgent(agriInfo);        
     }
     catch(exception)
-    {        
-        // console.log(JSON.stringify(exception));
+    {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);;
+        await fireErrorEvent(errorInfo, agriInfo);
     }
 });
 
@@ -404,7 +427,7 @@ _express.post("/retail/search", async (request, response) =>
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        response.status(errorInfo.code).send(results);;
+        await fireErrorEvent(errorInfo, agriInfo);
     }
 });
 /* API DEFINITIONS - END */
