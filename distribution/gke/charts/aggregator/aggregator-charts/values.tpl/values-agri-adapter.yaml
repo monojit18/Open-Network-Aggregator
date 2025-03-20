@@ -24,7 +24,7 @@ deployment:
     containerPorts: [10001]
     envVars:    
     - name: EVENT_RECEIVER_HTTP_HOST
-      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+      value: http://event-receiverapp-svc.utilities-dev.svc
     - name: PROJECT_ID
       value: <project-id>
 service:
@@ -36,4 +36,19 @@ service:
   - protocol: TCP
     name: http
     port: 80
-    targetPort: 10001  
+    targetPort: 10001
+hpa:
+  name: agriadapter-hpa
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agriadapter-deploy
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -28,21 +28,21 @@ deployment:
     - name: AGENTIC_DOMAIN_PREFIX
       value: "domain:"
     - name: AGENTIC_NLP_PROMPT
-      value: Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"
+      value: "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\""
     - name: AGENTIC_MODEL_ENDPOINT_ID
-      value: "4193564836128358400"
+      value: ""
     - name: STORAGELIB_HOST
-      value: http://storageapp-svc.vertexai.svc
+      value: http://storageapp-svc.utilities-dev.svc
     - name: TRANSLATELIB_HOST
-      value: http://translateapp-svc.vertexai.svc
+      value: http://translateapp-svc.vertexai-dev.svc
     - name: GENAI_IMAGELIB_HOST
-      value: http://genaiimageapp-svc.vertexai.svc
+      value: http://genaiimageapp-svc.vertexai-dev.svc
     - name: GENAI_VECTORSEARCHLIB_HOST
-      value: http://vectorsearchapp-svc.vertexai.svc
+      value: http://vectorsearchapp-svc.vertexai-dev.svc
     - name: GENAI_TEXTLIB_HOST
-      value: http://genaitextapp-svc.vertexai.svc
+      value: http://genaitextapp-svc.vertexai-dev.svc
     - name: GENAI_MULTILIB_HOST
-      value: http://genaimultimodalapp-svc.vertexai.svc
+      value: http://genaimultimodalapp-svc.vertexai-dev.svc
     - name: ONDC_AGENT_URL
       value: http://ondcagent-svc.aggregator-dev.svc
     - name: VIDEO_AGENT_URL
@@ -53,6 +53,16 @@ deployment:
       value: http://mandiagent-svc.aggregator-dev.svc
     - name: LLM_AGENT_URL
       value: http://llmagent-svc.aggregator-dev.svc
+    - name: WEATHER_API_KEY
+      value: x-api-weather-key
+    - name: PARTNER_WEATHER_API_KEY
+      value: x-partner-api-weather-key    
+    - name: ENAM_MANDI_API_KEY
+      value: x-api-mandi-key
+    - name: PARTNER_MANDI_API_KEY
+      value: x-partner-api-mandi-key
+    - name: VIDEO_API_KEY
+      value: x-api-video-key
     - name: PROJECT_ID
       value: <project-id>
 service:

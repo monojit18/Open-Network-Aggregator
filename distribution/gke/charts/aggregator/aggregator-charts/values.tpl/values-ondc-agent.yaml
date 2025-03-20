@@ -23,10 +23,8 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10002]
     envVars:
-    - name: service
-      value: ondc-agent:v1.0
     - name: GENAI_TEXTLIB_HOST
-      value: http://genaitextapp-svc.vertexai.svc
+      value: http://genaitextapp-svc.vertexai-dev.svc
     - name: BUYER_ADAPTER_URL
       value: http://buyeradapter-svc.aggregator-dev.svc
     - name: PROJECT_ID

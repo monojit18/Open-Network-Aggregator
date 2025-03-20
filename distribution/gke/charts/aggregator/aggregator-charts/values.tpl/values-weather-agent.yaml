@@ -23,10 +23,14 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10002]
     envVars:
-    - name: service
-      value: weather-agent:v1.0    
     - name: WEATHER_ADAPTER_URL
       value: http://weatheradapter-svc.aggregator-dev.svc
+    - name: WEATHER_API_KEY
+      value: x-api-weather-key
+    - name: PARTNER_WEATHER_API_KEY
+      value: x-partner-api-weather-key
+    - name: OPEN_WEATHER_NETWORK_KEY
+      value: OPEN_WEATHER
     - name: PROJECT_ID
       value: <project-id>
 service:

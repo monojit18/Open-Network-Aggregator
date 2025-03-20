@@ -23,10 +23,14 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10002]
     envVars:
-    - name: service
-      value: mandi-agent:v1.0    
     - name: MANDI_ADAPTER_URL
       value: http://mandiadapter-svc.aggregator-dev.svc
+    - name: ENAM_NETWORK_KEY
+      value: ENAM
+    - name: ENAM_MANDI_API_KEY
+      value: x-api-mandi-key
+    - name: PARTNER_MANDI_API_KEY
+      value: x-partner-api-mandi-key
     - name: PROJECT_ID
       value: <project-id>
 service:

@@ -25,6 +25,12 @@ deployment:
     envVars:    
     - name: LLM_ADAPTER_URL
       value: http://llmadapter-svc.aggregator-dev.svc
+    - name: PLANNER_AGENT_URL
+      value: http://planneragent-svc.aggregator-dev.svc
+    - name: WEATHER_API_KEY
+      value: x-api-weather-key
+    - name: VIDEO_API_KEY
+      value: x-api-video-key
     - name: PROJECT_ID
       value: <project-id>
 service:

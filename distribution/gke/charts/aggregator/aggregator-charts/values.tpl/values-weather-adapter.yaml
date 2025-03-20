@@ -23,14 +23,16 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10001]
     envVars:
-    - name: service
-      value: weather-adapter:v1.0
     - name: EVENT_RECEIVER_HTTP_HOST
-      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+      value: http://event-receiverapp-svc.utilities-dev.svc
     - name: WEATHER_SEARCH_URL
       value: https://api.openweathermap.org/data/2.5/weather
     - name: WEATHER_ICON_URL
       value: https://openweathermap.org/img/wn"
+    - name: WEATHER_API_KEY
+      value: x-api-weather-key
+    - name: PARTNER_WEATHER_API_KEY
+      value: x-partner-api-weather-key
     - name: PROJECT_ID
       value: <project-id>
       

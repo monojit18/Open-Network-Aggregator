@@ -23,12 +23,30 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10001]
     envVars:
-    - name: service
-      value: mandi-adapter:v1.0
+    - name: AGENTIC_BQ_DATASET
+      value: onix_agentic_ds
+    - name: AGENTIC_BQ_TABLE
+      value: agri_bazar_commodity_embd_tbl
+    - name: AGENTIC_BQ_SEARCH_COLUMN
+      value: embedding
+    - name: AGENTIC_BQ_QUERY_COLUMN
+      value: ml_generate_embedding_result
+    - name: AGENTIC_BQ_MAX_RESULTS
+      value: "1"
+    - name: AGENTIC_TEXT_EMBEDDING
+      value: onix_agentic_text_embedding_model
+    - name: AGENTIC_TEXT_EMBEDDING_DISTANCE
+      value: COSINE
+    - name: ENAM_MANDI_API_KEY
+      value: x-api-mandi-key
+    - name: PARTNER_MANDI_API_KEY
+      value: x-partner-api-mandi-key
     - name: EVENT_RECEIVER_HTTP_HOST
-      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+      value: http://event-receiverapp-svc.utilities-dev.svc
     - name: ENAM_MANDI_SEARCH_URL
       value: https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070
+    - name: MANDI_VECTOR_SEARCH_URL
+      value: http://bigqueryapp-svc.utilities-dev.svc/bigquery
     - name: PROJECT_ID
       value: <project-id>
 service:
