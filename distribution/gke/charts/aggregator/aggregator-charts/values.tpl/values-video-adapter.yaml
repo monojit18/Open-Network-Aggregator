@@ -23,12 +23,12 @@ deployment:
     cpuLimit: "1"
     containerPorts: [10001]
     envVars:
-    - name: service
-      value: video-adapter:v1.0
     - name: EVENT_RECEIVER_HTTP_HOST
-      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+      value: http://event-receiverapp-svc.utilities-dev.svc
+    - name: VIDEO_API_KEY
+      value: x-api-video-key
     - name: YOUTUBE_DATA_V3_SEARCH_URL
-      value: https://youtube.googleapis.com/youtube/v3
+      value: https://youtube.googleapis.com/youtube/v3   
     - name: PROJECT_ID
       value: onix-agentic-151120240130
 service:

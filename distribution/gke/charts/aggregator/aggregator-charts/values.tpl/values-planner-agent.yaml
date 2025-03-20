@@ -1,0 +1,68 @@
+deployment:
+  name: planneragent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: planneragent-deploy 
+    version: v1
+  selectorLabels:
+    app: planneragent-pod
+    version: v1
+  replicas: 2
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: planneragent-app
+    image: "<repo-name>/planner-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:
+    - name: AGENTIC_DOMAIN_PREFIX
+      value: "domain:"
+    - name: AGENTIC_MODEL_ENDPOINT_ID
+      value: ""
+    - name: GENAI_TEXTLIB_HOST
+      value: http://genaitextapp-svc.vertexai-dev.svc
+    - name: ONDC_AGENT_URL
+      value: http://ondcagent-svc.aggregator-dev.svc
+    - name: LLM_AGENT_URL
+      value: http://llmagent-svc.aggregator-dev.svc    
+    - name: VIDEO_AGENT_URL
+      value: http://videoagent-svc.aggregator-dev.svc
+    - name: PLANNER_EXTRACT_NLP_PROMPT
+      value: "Divide the following query into multiple relevant segments - \"ONDC\", \"VIDEO\" and \"LLM\" and respond with a list of useful alternate suggestions.\nDo not use the name of any particular outlet or brand; each suggestion should be generic.\nAvoid using any special characters in the response.\nEach query should be an alternate suggestion to the original query.\nInclude exactly one query of type \"ONDC\" which should  include options which are somehow related to the original query or product e.g. ingredients, raw materials, close by locations etc.\nInclude exactly one suggestion of type \"LLM\" which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.\nTreat all query to have a domain \"VIDEO\" and return exactly one video suggestions.\nExample:\nQuery: It's again time for a marriage in the family. My niece is going to get married to a Punjabi guy. I would like to buy some really cool Kurtas with Brown colour and White border. Please suggest.\nResponse:\n[{\"domain\": \"ONDC\", \"relevant_text\": \"show me some nice fabric options for Kurtas with Brown colour\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"suggest some different design options for Kurtas with White border\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"show me some options for the raw materials for Kurtas\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Give me some suggestions of Marriage halls for Punjabi wedding\"},\n{\"domain\": \"LLM\", \"relevant_text\": \"Give me some suggestions of Honeymoon destinations in India\"}]"    
+    - name: VIDEO_API_KEY
+      value: x-api-video-key
+    - name: PROJECT_ID
+      value: onix-agentic-151120240130
+service:
+  name: planneragent-svc
+  selector:
+    app: planneragent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002
+hpa:
+  name: planneragent-hpa
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: planneragent-deploy
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

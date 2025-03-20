@@ -25,6 +25,8 @@ deployment:
     envVars:    
     - name: AGRI_ADAPTER_URL
       value: http://agriadapter-svc.aggregator-dev.svc
+    - name: PLANNER_AGENT_URL
+      value: http://planneragent-svc.aggregator-dev.svc
     - name: PROJECT_ID
       value: <project-id>
 service:
