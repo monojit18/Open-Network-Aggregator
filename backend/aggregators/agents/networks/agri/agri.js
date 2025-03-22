@@ -191,7 +191,7 @@ async function performRetailCommerceSearch(request)
         };
         
         const requestBody = preparePlannerRequest(agriInfo);
-        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/retail/search`,
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/agri/ondc/search`,
                                                     requestBody, requestOptions);
         const planerResult = processGenericResponse(plannerResponse);
         return planerResult;

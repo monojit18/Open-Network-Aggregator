@@ -295,8 +295,12 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
             // networkResponse = await searchONDCAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.ONEST:
-            networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
-            httpStatusCode = 501;
+            {
+                domainName = KNetworkNames.ONEST;
+                url = `${_allUrls[KMicroServices.ONESTAgent]}`;
+            }
+            // networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
+            
             break;
         case KNetworkNames.AGRI:
             {

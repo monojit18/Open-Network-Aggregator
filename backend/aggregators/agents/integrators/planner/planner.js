@@ -30,6 +30,12 @@ let _allUrls = {};
 
 const KStatusACK = "ACK";
 
+const KCallbackEvents =
+{    
+    OnCallbackAction: "callback",
+    OnErrorAction: "on_error"
+}
+
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
@@ -89,7 +95,7 @@ function prepareAllUrls()
     _allUrls[KMicroServices.VideoAgent] = `${process.env.VIDEO_AGENT_URL}`;
 }
 
-function prepareMultiSearchInfo(request)
+function prepareMultiSearchInfo(request, plannerPrompt)
 {
     const extractionInfo = {};
     extractionInfo.context = request.body.context;
@@ -97,7 +103,7 @@ function prepareMultiSearchInfo(request)
     extractionInfo.headers = request.headers;
     extractionInfo.preferred_network = request.body.preferred_network;
     extractionInfo.preferred_networks = request.body.preferred_networks;    
-    extractionInfo.prompt = process.env.PLANNER_EXTRACT_NLP_PROMPT;
+    extractionInfo.prompt = plannerPrompt;
     extractionInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;    
     return extractionInfo;
 }
@@ -204,9 +210,15 @@ function prepareExtractRequest(plannerInfo)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = plannerInfo.message?.network?.filters.query;
-    const contentsList = prepareExtractContentInfo(promptInfo);
+    const filters = plannerInfo.message.network.filters;
+    const relevantText = plannerInfo.message.network.relevant_text;
 
+    if (Array.isArray(filters) == true)
+        promptInfo.prompt = relevantText;
+    else
+        promptInfo.prompt = filters.query;
+
+    const contentsList = prepareExtractContentInfo(promptInfo);
     requestBody.contents = contentsList;
     requestBody.instruction = prepareInstructionContentInfo(plannerInfo);
     return requestBody;
@@ -371,9 +383,29 @@ async function performMultiSearch(extractionInfo)
 }
 
 /* API DEFINITIONS - START */
-_express.post("/multi/search", async (request, response) =>
+_express.post("/multi/ondc/search", async (request, response) =>
 {
-    const extractionInfo = prepareMultiSearchInfo(request);
+    const extractionInfo = prepareMultiSearchInfo(request, process.env.PLANNER_EXTRACT_ONDC_PROMPT);
+    const results = {};
+
+    try
+    {
+        const ackResponse = prepareAckResponse(extractionInfo);
+        results.results = ackResponse;
+        response.send(results);
+        await performMultiSearch(extractionInfo);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        await fireErrorEvent(errorInfo, extractionInfo);
+    }
+});
+
+_express.post("/multi/onest/search", async (request, response) =>
+{
+    const extractionInfo = prepareMultiSearchInfo(request, process.env.PLANNER_EXTRACT_ONEST_PROMPT);
     const results = {};
 
     try
@@ -411,7 +443,7 @@ _express.post("/agri/search", async (request, response) =>
     }
 });
 
-_express.post("/retail/search", async (request, response) =>
+_express.post("/agri/ondc/search", async (request, response) =>
 {
     const agriInfo = prepareAgriInfo(request);
     const results = {};

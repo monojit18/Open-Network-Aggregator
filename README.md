@@ -170,3 +170,4 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
+- [How to Deploy?](./Deployment.md)
