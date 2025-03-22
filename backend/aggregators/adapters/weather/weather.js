@@ -96,7 +96,9 @@ function preparePartnerWeatherRequest(weatherInfo)
 {
     const weatherRequest = {};
     weatherRequest.key = weatherInfo.apiKey;
-    weatherRequest.districtName = weatherInfo.message.network.filters.address;
+    weatherRequest.districtName = (!weatherInfo.message.network.filters.address)
+                                    ? weatherInfo.context.location.city
+                                    : weatherInfo.message.network.filters.address;
     return weatherRequest;
 }
 
@@ -313,10 +315,11 @@ async function performOpenWeatherSearch(weatherInfo)
 {
     try
     {
-        let weatherURL = `${process.env.WEATHER_SEARCH_URL}`;
-        weatherURL += `?units=${weatherInfo.units}&q=${weatherInfo.address}&appId=${weatherInfo.apiKey}`;
+        if (weatherInfo.address == null)
+            weatherInfo.address = weatherInfo.context.location.city;
 
-        console.log(`URL: ${weatherURL}`);
+        let weatherURL = `${process.env.WEATHER_SEARCH_URL}`;
+        weatherURL += `?units=${weatherInfo.units}&q=${weatherInfo.address}&appId=${weatherInfo.apiKey}`;        
 
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
