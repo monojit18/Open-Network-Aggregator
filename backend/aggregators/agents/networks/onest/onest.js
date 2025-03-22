@@ -74,8 +74,7 @@ function processGenericResponse(response)
 }
 
 function prepareAllUrls()
-{
-    _allUrls[KMicroServices.AgriAdapter] = `${process.env.AGRI_ADAPTER_URL}`;
+{    
     _allUrls[KMicroServices.PlannerAgent] = `${process.env.PLANNER_AGENT_URL}`;   
 }
 
@@ -89,6 +88,13 @@ function prepareOnestInfo(request)
     return onestInfo;
 }
 
+function preparePlannerHeaders(request)
+{
+    const plannerHeaders = {};
+    plannerHeaders[process.env.VIDEO_API_KEY] = request.headers[process.env.VIDEO_API_KEY];      
+    return plannerHeaders;
+}
+
 function preparePlannerRequest(plannerInfo)
 {
     const requestBody = {};
@@ -96,7 +102,10 @@ function preparePlannerRequest(plannerInfo)
     requestBody.message = plannerInfo.message;
     requestBody.preferred_networks = plannerInfo.preferred_networks;
     requestBody.message.network.relevant_text = plannerInfo.message.network.relevant_text;
-    requestBody.message.network.filters = plannerInfo.message.network.filters;
+
+    const filters = {};
+    filters.query = plannerInfo.message.network.relevant_text;
+    requestBody.message.network.filters = filters;    
     return requestBody;
 }
 
@@ -108,10 +117,7 @@ async function performOnestPlannerSearch(request)
     {
         const requestOptions = {};
         requestOptions.httpsAgent = _axiosAgent;
-        requestOptions.headers =
-        {
-            "content-type": "application/json"
-        };
+        requestOptions.headers = preparePlannerHeaders(request);
         
         const requestBody = preparePlannerRequest(onestInfo);
         const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/multi/onest/search`,
