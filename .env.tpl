@@ -54,36 +54,40 @@ AGENTIC_BQ_SEARCH_COLUMN="embedding"
 AGENTIC_BQ_QUERY_COLUMN="ml_generate_embedding_result"
 AGENTIC_BQ_MAX_RESULTS="1"
 
-# RETAIL
+# ONDC
 AGENTIC_NLP_PROMPT="Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\""
 
 # AGRI
 # AGENTIC_NLP_PROMPT="Convert the following sentence into a JSON object and return as a proper JSON.\nDo not add any new items into the response.\nConditions:\nDomain for any query on Agricultural Loan for Farmers will be \"AGRI\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on Agriculture asking for suggestions, guidance, help or queries on Farming Advisory etc. will be \"LLM\"\nDomain for any transactional query on Agriculture asking for Buying, Viewing of agricultural products will be \"AGRI\" with \"type\" as \"agri-commerce\"\nDomain for any transactional query on Retail Commerce asking for Buying, Viewing, Selling of non-agricultural products etc. will be \"AGRI\" with \"type\" as \"retail-commerce\"\nDomain for any transactional query on Agriculture asking for Selling of agricultural products or queries on Market Linkage will be \"AGRI\" with \"type\" as \"market-linkage\""
 
-PLANNER_EXTRACT_NLP_PROMPT="Divide the following query into multiple relevant segments - 'ONDC', 'VIDEO' and 'LLM' and respond with a list of useful alternate suggestions.\nDo not use the name of any particular outlet or brand; each suggestion should be generic.\nAvoid using any special characters in the response.\nEach query should be an alternate suggestion to the original query.\nInclude exactly one query of type 'ONDC' which should  include options which are somehow related to the original query or product e.g. ingredients, raw materials, close by locations etc.\nInclude exactly one suggestion of type 'LLM' which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.\nTreat all query to have a domain 'VIDEO' and return exactly one video suggestions.\nExample:\nQuery: It's again time for a marriage in the family. My niece is going to get married to a Punjabi guy. I would like to buy some really cool Kurtas with Brown colour and White border. Please suggest.\nResponse:\n[{\"domain\": \"ONDC\", \"relevant_text\": \"show me some nice fabric options for Kurtas with Brown colour\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"suggest some different design options for Kurtas with White border\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"show me some options for the raw materials for Kurtas\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Give me some suggestions of Marriage halls for Punjabi wedding\"},\n{\"domain\": \"LLM\", \"relevant_text\": \"Give me some suggestions of Honeymoon destinations in India\"}]"
+# ONDC
+PLANNER_EXTRACT_ONDC_PROMPT="Divide the following query into multiple relevant segments - 'ONDC', 'VIDEO' and 'LLM' and respond with a list of useful alternate suggestions.\nDo not use the name of any particular outlet or brand; each suggestion should be generic.\nAvoid using any special characters in the response.\nEach query should be an alternate suggestion to the original query.\nInclude exactly one query of type 'ONDC' which should  include options which are somehow related to the original query or product e.g. ingredients, raw materials, close by locations etc.\nInclude exactly one suggestion of type 'LLM' which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.\nTreat all query to have a domain 'VIDEO' and return exactly one video suggestions.\nExample:\nQuery: It's again time for a marriage in the family. My niece is going to get married to a Punjabi guy. I would like to buy some really cool Kurtas with Brown colour and White border. Please suggest.\nResponse:\n[{\"domain\": \"ONDC\", \"relevant_text\": \"show me some nice fabric options for Kurtas with Brown colour\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"suggest some different design options for Kurtas with White border\"},\n{\"domain\": \"ONDC\", \"relevant_text\": \"show me some options for the raw materials for Kurtas\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Give me some suggestions of Marriage halls for Punjabi wedding\"},\n{\"domain\": \"LLM\", \"relevant_text\": \"Give me some suggestions of Honeymoon destinations in India\"}]"
 
-# RETAIL & AGRI
-# AGRI_ATTRIBUTES_PROMPT="Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExamples:\n\nQuery: Show me videos for rice farming\nResponse: {\"attributes\":[\"rice farming\"]}\n\nQuery: Show me videos for mango farming and C++ programming\nResponse: {\"attributes\":[\"mango farming\"]}\n\nQuery: Show me videos on Mango and Rice\nResponse: {\"attributes\":[\"mango\", \"rice\"]}"
+# ONEST
+PLANNER_EXTRACT_ONEST_PROMPT="Divide the following query into multiple relevant segments - 'VIDEO' and 'LLM' and respond with a list of useful alternate suggestions.\nDo not use the name of any particular outlet or brand; each suggestion should be generic.\nAvoid using any special characters in the response.\nEach query should be an alternate suggestion to the original query.\nInclude exactly one suggestion of type 'LLM' which should be query to ask for suggestions or guidance on some advanced or enhanced action of the original product or query.\nTreat all query to have a domain 'VIDEO' and return exactly one video suggestions.\nMake sure the responses are of Indian context.\nExample:\nQuery: I've just passed out of 12th standard in school. I love Physics and especially Electrical circuits. Please suggest some good vocational courses for me that might help me in my career growth.\nResponse:\n[{\"domain\": \"LLM\", \"relevant_text\": \"show good vocational training courses in Physics and Electeical circuits\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Videos on vocational training courses in Physics and Electeical circuits\"}]\n\nQuery: I have just completed my B.Tech course. I love to work in the field of Databases. Please suggest some good Beginner or Mid-level courses in Databases to help in my job search.\nResponse:\n[{\"domain\": \"LLM\", \"relevant_text\": \"show Beginner or Mid-level courses in Databases\"},\n{\"domain\": \"VIDEO\", \"relevant_text\": \"Videos on Beginner or Mid-level courses in Databases\"}]"
 
-# RETAIL & AGRI
+# ONDC & AGRI
+AGRI_ATTRIBUTES_PROMPT="Extract keywords related to Agriculture from the following sentence and return as a JSON response.Exclude all other types of keywords:\nExamples:\n\nQuery: Show me videos for rice farming\nResponse: {\"attributes\":[\"rice farming\"]}\n\nQuery: Show me videos for mango farming and C++ programming\nResponse: {\"attributes\":[\"mango farming\"]}\n\nQuery: Show me videos on Mango and Rice\nResponse: {\"attributes\":[\"mango\", \"rice\"]}\n\nQuery: Show me videos for Python programming\nResponse: {\"attributes\":[\"\"]}"
+
+# ONDC & AGRI
 LLM_CHAT_PROMPT = "Generate a detailed response to the following chat query.\nTry to provide a complete solution to the query which should provide a defnite answer without asking too many questions back to the user.\nThe response should strictly within 300 words.\nThe response should be in the form of a nicely formatetd paragraph with proper line breaks and spacing.\nThe query needs to be from any one of the following domains:\n\"Agriculture\", \"Agri Advisory\" or \"Agri Market Linkage\", \"Retail\", \"Education\", \"Skilling\", \"Jobs\", \"Travel\", \"Hospitality\", \"Health\"\n. If the query is outisde any one of the above mentioned domains or if the query is negative, irrleveant or abusive, then generate a polite, generous response informing your inability to respond to this query.\nIf the query contains a greeting gesture like \"Hi\", \"Hello\" etc. then reciprocate back with a very polite and helpful response to make the user more comfortable with the system."
 
-# RETAIL & AGRI
+# ONDC & AGRI
 LLM_FOLLOW_UP_PROMPT = "Generate a set of 3 alternate questions for the following.\nThe original query is asked by end user to a conversational bot; the follow up questions should follow the same context and should be asked as if user is asking to the bot.\nOne of the alternate question should be related to Video relevant to the original question.\nEach Question should be short and concise.\nReturn the response as a JSON in the following format:\n{\"follow_up\": {\"original_query\": \"I want to plan the marriage of my daughter.\", \"follow_ups\": [{\"follow_up\": \"I am looking for wedding planning advice and guidance for the upcoming marriage of my daughter.\"}, {\"follow_up\": \"What are the steps and resources needed to organize wedding?\"}, {\"follow_up\": \"Show me some videos giving ideas of marriage planning\"}]}}"
 
-# RETAIL
-AGENTIC_MODEL_ENDPOINT_ID="<AGENTIC_MODEL_ENDPOINT_ID>"
+# ONDC
+AGENTIC_MODEL_ENDPOINT_ID="2479997954472017920"
 
 # AGRI
-# AGENTIC_MODEL_ENDPOINT_ID="<AGENTIC_MODEL_ENDPOINT_ID>"
+# AGENTIC_MODEL_ENDPOINT_ID="2960066721391575040"
 
-# RETAIL
+# ONDC
 PLANNER_LLM_SEARCH="true"
 
-WEBSOCK_STREAMER_HTTP_HOST="<WEBSOCK_STREAMER_HTTP_HOST>"
+WEBSOCK_STREAMER_HTTP_HOST="https://streamer-server.gcpwkshpdev.com"
 # WEBSOCK_STREAMER_HTTP_HOST="http://localhost:8082"
 
-EVENT_SERVER_HTTP_HOST="<EVENT_SERVER_HTTP_HOST>"
+EVENT_SERVER_HTTP_HOST="https://event-server.gcpwkshpdev.com"
 # EVENT_SERVER_HTTP_HOST="http://localhost:8081"
 
 EVENT_RECEIVER_HTTP_HOST="http://localhost:8084"
@@ -96,6 +100,9 @@ BUYER_ADAPTER_URL="http://localhost:10001"
 
 # ONDC_AGENT_URL=""
 ONDC_AGENT_URL="http://localhost:10002"
+
+# ONEST_AGENT_URL=""
+ONEST_AGENT_URL="http://localhost:10002"
 
 # AGRI_ADAPTER_URL=""
 AGRI_ADAPTER_URL="http://localhost:10001"
