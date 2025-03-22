@@ -97,7 +97,7 @@ async function callLLMPlanner(llmMessage, llmHeaders)
         requestOptions.headers = llmHeaders;
 
         const requestBody = llmMessage;
-        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/multi/search`,
+        const plannerResponse = await Axios.post(`${_allUrls[KMicroServices.PlannerAgent]}/multi/ondc/search`,
                                                     requestBody, requestOptions);
         const planerResult = processGenericResponse(plannerResponse);
         return planerResult;
