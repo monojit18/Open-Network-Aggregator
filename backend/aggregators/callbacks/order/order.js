@@ -73,7 +73,7 @@ async function emitAdapterEvent(eventName, eventData)
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/stream`,
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;

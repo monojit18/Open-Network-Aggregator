@@ -295,8 +295,12 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
             // networkResponse = await searchONDCAgent(nlpResponse, nlpInfo);
             break;
         case KNetworkNames.ONEST:
-            networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
-            httpStatusCode = 501;
+            {
+                domainName = KNetworkNames.ONEST;
+                url = `${_allUrls[KMicroServices.ONESTAgent]}`;
+            }
+            // networkResponse = await searchONESTAgent(nlpResponse, nlpInfo);
+            
             break;
         case KNetworkNames.AGRI:
             {
@@ -322,7 +326,9 @@ async function routeSearchToNetwork(nlpResponse, nlpInfo)
         case KNetworkNames.LLM:
             {
                 domainName = KNetworkNames.LLM;
-                url = `${_allUrls[KMicroServices.LLMAgent]}`;
+                const plannerSearch = process.env.PLANNER_LLM_SEARCH;
+                url = (plannerSearch == "true") ? `${_allUrls[KMicroServices.LLMAgent]}/planner`
+                                                : `${_allUrls[KMicroServices.LLMAgent]}`;
             }
             // networkResponse = await searchLLMAgent(nlpResponse, nlpInfo);
             break;

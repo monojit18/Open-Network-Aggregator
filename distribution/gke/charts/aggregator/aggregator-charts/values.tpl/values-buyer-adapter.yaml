@@ -24,7 +24,7 @@ deployment:
     containerPorts: [10001]
     envVars:    
     - name: EVENT_RECEIVER_HTTP_HOST
-      value: https://event-receiverlib-83053558111.asia-southeast1.run.app
+      value: http://event-receiverapp-svc.utilities-dev.svc
     - name: PROJECT_ID
       value: <project-id>
 service:

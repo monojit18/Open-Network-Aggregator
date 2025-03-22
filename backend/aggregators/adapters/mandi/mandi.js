@@ -128,7 +128,7 @@ function prepareAckResponse(priceInfo)
     return ackResponse;
 }
 
-// function preparePartnerEnamPriceRequest(priceInfo)
+// function  preparePartnerMandiPriceRequest(priceInfo)
 // {
 //     const priceRequest = {};
 //     priceRequest.context = JSON.stringify(priceInfo.context);
@@ -136,15 +136,17 @@ function prepareAckResponse(priceInfo)
 //     return priceRequest;
 // }
 
-function preparePartnerEnamPriceRequest(priceInfo)
+function  preparePartnerMandiPriceRequest(priceInfo)
 {
     const priceRequest = {};
     priceRequest.key = priceInfo.apiKey;
     priceRequest.commodityName = priceInfo.message.network.price.commodity;
 
-    const market = priceInfo.message.network.price.market;
-    const state = priceInfo.message.network.price.state;
-    priceRequest.districtName = (market != null) ? market : state;
+    let market = priceInfo.message.network.price.market;
+    if (market == null)
+        market = priceInfo.context.location.city;
+
+    priceRequest.districtName = market;
     priceRequest.context = JSON.stringify(priceInfo.context);
     priceRequest.message = priceInfo.message;    
     return priceRequest;
@@ -159,7 +161,7 @@ function preapreEnamPriceResponse(priceResult)
     return priceResponse;
 }
 
-function preaprePartnerEnamPriceResponse(priceResult)
+function  preaprePartnerMandiPriceResponse(priceResult)
 {    
     const priceResponse = priceResult.data;    
     return priceResponse;
@@ -341,9 +343,9 @@ async function performPartnerMandiPriceSearch(priceInfo)
         };
         requestOptions.headers[KMandiConstants.PKEY] = priceInfo.apiKey;
 
-        const requestBody = preparePartnerEnamPriceRequest(priceInfo);
+        const requestBody =  preparePartnerMandiPriceRequest(priceInfo);
         const priceResult = await Axios.post(`${enamMandiURL}`, requestBody, requestOptions);
-        const priceResponse = preaprePartnerEnamPriceResponse(priceResult);        
+        const priceResponse =  preaprePartnerMandiPriceResponse(priceResult);        
         // await firePartnerCallbackEvent(priceResponse, priceInfo);
         await fireCallbackEvent(priceResponse, priceInfo);
     }
