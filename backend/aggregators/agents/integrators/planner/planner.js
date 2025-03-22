@@ -30,6 +30,12 @@ let _allUrls = {};
 
 const KStatusACK = "ACK";
 
+const KCallbackEvents =
+{    
+    OnCallbackAction: "callback",
+    OnErrorAction: "on_error"
+}
+
 const KMicroServices =
 {
     GenAITextlib: "genai-textlib",
