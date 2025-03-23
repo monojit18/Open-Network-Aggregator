@@ -299,7 +299,40 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 
 
-## References
+## How to Distribute this solution?
+
+### Software-as-a-service Model (*Self-hosted*)
+
+![self-hosted-graphics](./assets/self-hosted-graphics.png)
+
+- Demand-side Affiliate decide to host and manage the suction on their own
+- The deployment will be running on the GCP tenant of the Demand-side Affiliate
+- GCP Partners can help deploy the solution with a One-time Consultation fee
+  - Optionally, an Annual maintenance for a cost can be planned with the GCP partner
+- Demand-side Affiliate get access to the source code in the Github repository
+  - The code is distributed with [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Demand-side Affiliate can decide to clone or fork the repository for further customisation
+- Demand-side Affiliate choose the Supply-side affiliates of their own choice
+  - Configure parameters accordingly
+  - Integrate their own App(s) with the framework
+- The Consumption cost of the solution running on GCP tenant of the Demand-side Affiliate will be borne by them
+
+
+
+### Managed Service Model
+
+![self-hosted-graphics](./assets/managed-hosted-graphical.png)
+
+- Demand-side Affiliate do not want to manage it end to end; but would like to integrate and leverage he service
+- GCP Partner hosts the solution on their GCP tenant as a *multi-tenant* offering
+- Choose Supply-side Affiliates and share the API Specifications with them 
+- Configure mandatory settings
+- Connect with the Affiliate API and complete integration
+- Expose API for Demand-side Affiliates; manage each Demand-side Affiliate as one tenant
+  - Track usage and Calculate cost for each tenant (*Demand-side Affiliate*)
+  - Charge back to the Demand-side Affiliate based on a metric; e.g. Usage, No. of Requests or any other custom metric decided between the Demand-side Affiliate and the GCP Partner
+
+# References
 
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
