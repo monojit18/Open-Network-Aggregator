@@ -10,6 +10,38 @@ Google Agentic framework will build a bridge between the Demand and Supply sides
 
 This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
 
+
+
+### Abbreviations
+
+| Terms                                             | Description                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| Beckn protocol                                    | An open protocol for commerce to help diverse businesses to come together<br />and re-imagine their business |
+| Buyer App                                         | An Application platform or App for the Buyers.<br />In the context of Open Networks or Beckn protocol this is termed as **BAP** |
+| Seller App                                        | An Application platform or App for the Sellers.<br />In the context of Open Networks or Beckn protocol this is termed as **BPP** |
+| [Demand-side Affiliates](#Demand-side Affiliates) | Businesses, Organisations who are not part of Open Network(s)<br />but want their end users to leverage contents or services from multiple Open networks |
+| [Supply-side Affiliates](#Supply-side Affiliates) | These are primarily Buyer Apps or BAPs who can fetch contents or services<br />from various Seller Apps. But please note, that the Agentic framework is open<br />for other types of content providers as well.<br />e.g. Seller Apps or BPPs in any Open Network can become a Supply-side Affiliate |
+| [Integrator App](#Integrator App)                 | This is the Mobile and Web App that integrates with<br />the **Google Agentic framework**. This App is managed by partners of GCP and<br />provided as a SaaS solution or a Managed Service to end *Demand-side Affiliates* |
+
+
+
+# Why do we need this?
+
+Despite the immense potential of ONDC and other Open Networks, joining and leveraging the network presents several challenges for buyer apps:
+
+- **Onboarding Complexity:** Navigating the technical complexities and establishing connections with multiple seller apps can be a resource-intensive process
+- **Consumer Accountability:** Buyer apps are responsible for ensuring a positive user experience (from purchase to receipt/return), even though they have limited control over the sellers and their fulfilment processes
+
+Google is committed to supporting the growth of Open Networks and building a Gemini-powered agentic framework to solve these challenges.
+
+![user-interface-1](./assets/user-interface-1.png)
+
+It comprises of 3 key components:
+
+1. **Customisable Conversational Commerce:** An end-user facing conversational interface powered by a main Gemini Agent (viz. *Master Agent*) would interact with end users. This conversational approach creates a more engaging and personalised shopping experience for end users, mirroring the natural flow of human interaction
+2. **Domain-Specific Sub-Agents:** Upon detecting purchase intent, the main agent activates specific Gemini Sub-Agents. These sub-agents provide access to open networks across various domains, such as fashion, groceries, etc.
+3. **Buyer App Integration:** Each Gemini Sub-Agent is integrated with leading buyer apps linked to specific Open Network domains. 
+
 # High-Level View
 
 ![high-level-view](./assets/high-level-view.png)
@@ -22,13 +54,25 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 
 
-## Scenario 1
+## Who are Demand-side Affiliates
+
+- An *Enterprise* who wants their end users to browse Jobs & Skilling
+- A *Travel Agency* wants their end users across the globe to browse holiday destinations across India
+- A *Bank* or *Financial institution* has many Farmers registered with them. They want these users to get quick and easy loan through various Agri Loan providers
+- An *FPO* allowing their registered farmers to Buy or Sell Agricultural products from various agro-tech farms or platforms
+- And many more.....
+
+
+
+## Scenarios
+
+Following diagrams are self explanatory depicting two different scenarios
+
+### Scenario 1
 
 ![business-scenario-1](./assets/business-scenario-1.png)
 
-
-
-## Scenario 2
+### Scenario 2
 
 ![business-scenario-2](./assets/business-scenario-2.png)
 
@@ -76,24 +120,39 @@ This Document contains the specifications for the APIs exposed by **Google Agent
   - Visibility of their data depends on getting more Buyers registering onto their system
   - Separate Buyer Apps needed for separate Networks like *Retail, Agri* etc.
   - Building an aggregator platform themselves need more effort and visibility would still be an issue; to bring more Buyers across segments onto their platform
+  - Examples
+    - Retail Buyer Apps or Seller Apps
+    - Various Service providers
+    - Loan or Credit providers
 
 - **Google Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
-
-  - Example - Banks, Jobs' Sites, Media platforms etc.
 
   - These Demand side affiliates can simply integrate with Agentic framework (*along with a conversational UI*) and launch from their existing apps or websites
 
   - This way the users of these Demand side affiliates can reach to multiple Supply side affiliates 
 
-  - At the same time, each Supply side affiliate is exposed to multiple Demand side affiliates and their end users immediately 
+  - At the same time, each Supply side affiliate is exposed to multiple Demand side affiliates and their end users immediately
 
+  - Example
+
+    - Banks, Insurance agencies
+    - Travel & Tourism agencies 
+    - Jobs' and Skilling sites
+    - Media platforms
+  
     
 
 ## Integrator Networks (*Outside Open Network*)
 
 ![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
 
-- These are Partners or Integrators
+- These are Partners or Integrators who has publicly exposed APIs to share their contents
+- **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
+- Examples
+  - YouTube and other Video content providers
+  - Weather data providers
+  - Mandi price providers
+
 
 # Integrator App
 
@@ -101,13 +160,13 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ## What it is?
 
-Agentic framework is headless service to connect to various types of backends with intelligence to understand the users' requirement and their outing requests accordingly. The framework can be realised by being integrated to a UI framework which shows up contents from various Open Networks and Providers with ease. **Integrator App** serves that purpose.
+Agentic framework is headless service to connect to various types of backends with intelligence to understand the users' requirement and their outing requests accordingly. The framework can be realised by being integrated to a UI framework which shows up contents from various Open Networks and Providers with ease. ***Integrator App*** serves that purpose.
 
 - Integrates with **Google Agentic framework**
 
 - Maintains the state of entire application
 
-- Manages end user preferences viz. Preferred Networks, Intended Verticals of Open Networketc.
+- Manages end user preferences viz. Preferred Networks, Intended Verticals of Open Network etc.
 
 - Logs all transactions in an Audit Database asynchronously
 
@@ -130,11 +189,85 @@ Agentic framework is headless service to connect to various types of backends wi
 How can Agentic framework complete a transaction for the selected content(s)? A Transaction flow consists of Order placement and the subsequent payment process.
 
 - This is primarily done by Integrator or hosting app with Agentic facilitating the integration
-- Integrator app Searches for an item
+- *Integrator App* Searches for an item
 - Each search result contains an **embedded url** for that particular product
-- Integrator app launches an **embedded Webview** to show the product details within Webview or IFrame
+- *Integrator App* launches an **embedded Web-view to show the product details within Web-view or IFrame
 - Add-to-Cart and Check-out happens through the embedded webview
-- Once Order is placed, Integrator app receives Order confirmation response along with details Order Info as JSON object
+- Once Order is placed, *Integrator App* receives Order confirmation response along with details Order Info as JSON object
+
+# How do Affiliates integrate?
+
+## Demand-side Affiliates
+
+![demand-affilate-int](./assets/demand-affilate-int.png)
+
+- Affiliate requests API Access to the hosting partner of the *Integrator App*
+- A Google Form link is sent to the Affiliate by GCP partner hosting the *Integrator App*
+- Affiliate fills up the form with details of *User Profile* information to be sent to Agentic framework
+  - Fields to be sent to Agentic - **City, Mobile No., Email, Latitude, Longitude** are mandatory fields
+  - Any other fields that Affiliate wants to send to the Agentic framework
+
+- The fields are kept as a configuration parameters by *Integrator App*, mangled by GCP partner hosting the *Integrator App*
+- An API Key is generated for the Affiliate and sent back to them
+- API spec is shared with the Affiliate
+
+### What happens next?
+
+- Affiliate adds an UI Element in their existing Mobile or Web App
+
+- The UI Element should have an action to call the **Search** API exposed by the *Integrator App*
+
+  > **Note**
+  >
+  > - There is one and only one API to be consumed - a **Search** API call to the *Integrator App*
+  > - This API flows through the layers of Agentic framework and performs the desired action(s)
+  > - All User Profile information as decided with Demand Affiliate are sent with the API call
+
+- *Integrator App* is launched with its default UI and Agentic framework integrated
+- From now on, all user intents (*Text or Voice commands*) are sent to the *Integrator App* which in turn calls the Agentic framework.
+- The information reaches the Supply-side affiliates; which then returns appropriate content back to the Affiliate's app
+
+> ### What is so special about the returned Content?
+>
+> - Content is not *User Action* driven but **User Intent** driven
+> - *User Actions* are characterised traditionally by actions on various UI elements like Menu items, Buttons etc.; whereas **User Intents** are initiated by Natural Language Processing (*NLP*) i.e. inferencing from *Text* or *Voice* commands
+>   - Inference can relate to a direct action like fetching content from a specific provider
+>     - *I want to buy a sunglasses of XXX brand*
+>   - Inference can relate to a set of indirect actions
+>     - *Please plan my holiday this summer  to XXX location*
+>     - *I would like to celebrate my 20th b'day with a small group of friends. Please suggest!*
+>       - Fetching contents from multiple providers
+>       - Suggesting Alternative actions Or Follow up questions
+>       - Generating contents matching the user's intents
+>       - And a combination of all above; which translates into an end to end *action planner*
+
+
+
+## Supply-side Affiliates
+
+![supply-affilate-int](./assets/supply-affilate-int.png)
+
+- Affiliate requests API Access to the hosting partner of the *Integrator App*
+
+- Affiliate is sent the API Spec to be hosted by Affiliate
+
+  > **Note**
+  >
+  > - Only one API - **Search**
+  > - Affiliate can decide to host it as Synchronous or Asynchronous mode
+  > - Agentic framework will call this API based on User's intent (*Text* or *Voice* commands)
+
+- A Google Form link is sent to the Affiliate by GCP partner hosting the *Integrator App*
+
+- Affiliate fills up the form with the API details 
+
+  - API Url
+  - Response body
+    - This should match the API Spec shared by the hosting partner of the *Integrator App*
+
+- An API Key is generated for the Affiliate and sent back to them
+
+- An optional  *Callback URL* is sent to the Affiliate for calling this to complete any transaction - payment or form submission etc.
 
 # Points to Note
 
@@ -142,7 +275,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 >   - Understands user’s intent from Text or Voice
 >   - Break that into Actionable insights
 >   - Route requests to appropriate BAPs and/or Content Providers(*Outside Network*)
-> - **Integrator App** will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
+> - ***Integrator App*** will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
 >   - **Demand side**
 >     - The configuration options for Buyers and Seekers would be managed by Interator App in its own database
 >     - Preferred Networks - Preferred target networks to connect from **Google Agentic framework**
@@ -166,7 +299,40 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 
 
-## References
+## How to Distribute this solution?
+
+### Software-as-a-service Model (*Self-hosted*)
+
+![self-hosted-graphics](./assets/self-hosted-graphics.png)
+
+- Demand-side Affiliate decide to host and manage the suction on their own
+- The deployment will be running on the GCP tenant of the Demand-side Affiliate
+- GCP Partners can help deploy the solution with a One-time Consultation fee
+  - Optionally, an Annual maintenance for a cost can be planned with the GCP partner
+- Demand-side Affiliate get access to the source code in the Github repository
+  - The code is distributed with [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Demand-side Affiliate can decide to clone or fork the repository for further customisation
+- Demand-side Affiliate choose the Supply-side affiliates of their own choice
+  - Configure parameters accordingly
+  - Integrate their own App(s) with the framework
+- The Consumption cost of the solution running on GCP tenant of the Demand-side Affiliate will be borne by them
+
+
+
+### Managed Service Model
+
+![self-hosted-graphics](./assets/managed-hosted-graphical.png)
+
+- Demand-side Affiliate do not want to manage it end to end; but would like to integrate and leverage he service
+- GCP Partner hosts the solution on their GCP tenant as a *multi-tenant* offering
+- Choose Supply-side Affiliates and share the API Specifications with them 
+- Configure mandatory settings
+- Connect with the Affiliate API and complete integration
+- Expose API for Demand-side Affiliates; manage each Demand-side Affiliate as one tenant
+  - Track usage and Calculate cost for each tenant (*Demand-side Affiliate*)
+  - Charge back to the Demand-side Affiliate based on a metric; e.g. Usage, No. of Requests or any other custom metric decided between the Demand-side Affiliate and the GCP Partner
+
+# References
 
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
