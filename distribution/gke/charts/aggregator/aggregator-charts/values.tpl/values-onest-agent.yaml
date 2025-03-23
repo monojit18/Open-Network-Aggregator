@@ -1,0 +1,41 @@
+deployment:
+  name: onestagent-deploy
+  serviceAccount: aggregator-dev-sa
+  labels:
+    app: onestagent-deploy 
+    version: v1
+  selectorLabels:
+    app: onestagent-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: onestagent-app
+    image: "<repo-name>/onest-agent:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "500Mi"
+    cpuRequest: "500m"
+    memoryLimit: "1Gi"
+    cpuLimit: "1"
+    containerPorts: [10002]
+    envVars:        
+    - name: PLANNER_AGENT_URL
+      value: http://planneragent-svc.aggregator-dev.svc
+    - name: VIDEO_API_KEY
+      value: x-api-video-key
+    - name: PROJECT_ID
+      value: <project-id>
+service:
+  name: onestagent-svc
+  selector:
+    app: onestagent-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 10002  
