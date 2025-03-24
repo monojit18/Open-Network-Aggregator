@@ -2,17 +2,7 @@
 
 ## High Level Overview
 
-# Introduction
-
-**Google Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
-
-Google Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
-
-This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
-
-
-
-### Abbreviations
+### Nomenclatures
 
 | Terms                                             | Description                                                  |
 | ------------------------------------------------- | ------------------------------------------------------------ |
@@ -23,7 +13,13 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 | [Supply-side Affiliates](#Supply-side Affiliates) | These are primarily Buyer Apps or BAPs who can fetch contents or services<br />from various Seller Apps. But please note, that the Agentic framework is open<br />for other types of content providers as well.<br />e.g. Seller Apps or BPPs in any Open Network can become a Supply-side Affiliate |
 | [Integrator App](#Integrator App)                 | This is the Mobile and Web App that integrates with<br />the **Google Agentic framework**. This App is managed by partners of GCP and<br />provided as a SaaS solution or a Managed Service to end *Demand-side Affiliates* |
 
+# Introduction
 
+**Google Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
+
+Google Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
+
+This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
 
 # Why do we need this?
 
@@ -217,7 +213,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 - The UI Element should have an action to call the **Search** API exposed by the *Integrator App*
 
-  > **Note**
+  > [!NOTE]
   >
   > - There is one and only one API to be consumed - a **Search** API call to the *Integrator App*
   > - This API flows through the layers of Agentic framework and performs the desired action(s)
@@ -227,6 +223,8 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 - From now on, all user intents (*Text or Voice commands*) are sent to the *Integrator App* which in turn calls the Agentic framework.
 - The information reaches the Supply-side affiliates; which then returns appropriate content back to the Affiliate's app
 
+> [!NOTE]
+>
 > ### What is so special about the returned Content?
 >
 > - Content is not *User Action* driven but **User Intent** driven
@@ -251,7 +249,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 - Affiliate is sent the API Spec to be hosted by Affiliate
 
-  > **Note**
+  > [!Note]
   >
   > - Only one API - **Search**
   > - Affiliate can decide to host it as Synchronous or Asynchronous mode
@@ -271,6 +269,8 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 # Points to Note
 
+> [!Note]
+>
 > - **Google Agentic framework**
 >   - Understands user’s intent from Text or Voice
 >   - Break that into Actionable insights
@@ -305,6 +305,9 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 ![self-hosted-graphics](./assets/self-hosted-graphics.png)
 
+- Single Tenant deployment; separate instance for each customer(s) and their environment(s)
+- Fully pluggable with the customer's existing workloads over a secure Private Service Connect endpoint
+- Seamless integration with various Open networks (viz. *ONDC, ONEST* etc.) and 3rd party integrators (viz. *Youtube, Ninjacart* etc.)
 - Demand-side Affiliate decide to host and manage the suction on their own
 - The deployment will be running on the GCP tenant of the Demand-side Affiliate
 - GCP Partners can help deploy the solution with a One-time Consultation fee
@@ -317,12 +320,20 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
   - Integrate their own App(s) with the framework
 - The Consumption cost of the solution running on GCP tenant of the Demand-side Affiliate will be borne by them
 
+> [!TIP]
+>
+> Demand-side Affiliate can do either clone or fork of the repository. Forking is recommended as future changes in the main repository can be easily puled-in.
+>
+> Similarly contributing back to the mail repository would lao be easier with forking approach.
+
 
 
 ### Managed Service Model
 
 ![self-hosted-graphics](./assets/managed-hosted-graphical.png)
 
+- Multi-tenant deployment; single instance for each customer(s) and their environment(s)
+- Seamless integration with various Open networks (viz. *ONDC, ONEST* etc.) and 3rd party integrators (viz. *Youtube, Ninjacart* etc.)
 - Demand-side Affiliate do not want to manage it end to end; but would like to integrate and leverage he service
 - GCP Partner hosts the solution on their GCP tenant as a *multi-tenant* offering
 - Choose Supply-side Affiliates and share the API Specifications with them 
