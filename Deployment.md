@@ -1852,7 +1852,7 @@ e.g. https://event-server.<domain_name>
 
 - Launch test-client application using any preferred editor; recommended [VSCode](https://code.visualstudio.com/)
 
-  ![test-client-launch1](./assets/test-client-launch1.png)
+  ![test-client-launch2](./assets/test-client-launch1.png)
 
   ```bash
   #Run the following command to create a GUID

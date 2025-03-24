@@ -1,0 +1,39 @@
+deployment:
+  name: bigqueryapp-deploy
+  serviceAccount: utilities-sa
+  labels:
+    app: bigqueryapp-deploy 
+    version: v1
+  selectorLabels:
+    app: bigqueryapp-pod
+    version: v1
+  replicas: 1
+  strategyType: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+  nodeSelector:
+    cloud.google.com/gke-nodepool: worker-pool
+  containers:
+  - name: bigquery-app
+    image: "<repo-name>/bigquerylib:v1.0"
+    imagePullPolicy: Always
+    memoryRequest: "250Mi"
+    cpuRequest: "100m"
+    memoryLimit: "500Mi"
+    cpuLimit: "200m"
+    containerPorts: [6076]
+    envVars:
+    - name: BIG_QUERY_LOCATION
+      value: asia-southeast1
+    - name: PROJECT_ID
+      value: <PROJECT_ID>
+service:
+  name: bigqueryapp-svc
+  selector:
+    app: bigqueryapp-pod
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 6076  
