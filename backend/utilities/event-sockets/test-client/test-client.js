@@ -46,7 +46,8 @@ const KCallbackActions =
 {
     OnBuyerAction: "on_buyer",
     OnOrderAction: "on_order",
-    OnAgriAction: "on_agri",
+    OnAgriLoanAction: "on_agri_loan",
+    OnAgriMarketLinkageAction: "on_agri_market_linkage",
     OnWeatherAction: "on_weather",
     OnVideoAction: "on_video",
     OnLLMAction: "on_llm",
@@ -97,10 +98,15 @@ function prepareSocketClient()
     });
 
     /*Callback functions from Adapter - START*/
-    _socketIOClient.on(KCallbackActions.OnAgriAction, (message) =>
+    _socketIOClient.on(KCallbackActions.OnAgriLoanAction, (message) =>
     {
         console.log(message);
     });
+
+    _socketIOClient.on(KCallbackActions.OnAgriMarketLinkageAction, (message) =>
+        {
+            console.log(message);
+        });
 
     _socketIOClient.on(KCallbackActions.OnBuyerAction, (message) =>
     {

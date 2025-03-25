@@ -43,6 +43,11 @@ const KMessageTypes =
     MarketLinkage: "market-linkage"
 }
 
+const KMessageType =
+{
+    MarketLinkage: "MARKET_LINKAGE"
+}
+
 DotEnv.config();
 
 _express.use(Express.json
@@ -99,7 +104,7 @@ function preparePlannerRequest(plannerInfo)
     return requestBody;
 }
 
-async function callAgriAdapter(agriInfo)
+async function callAgriAdapter(agriInfo, urlPart)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
@@ -108,7 +113,7 @@ async function callAgriAdapter(agriInfo)
     
     try
     {
-        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}/search`,
+        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}${urlPart}`,
                                                     requestBody, requestOptions);
         const adapterResult = processGenericResponse(adapterResponse);
         return adapterResult;
@@ -139,10 +144,16 @@ async function performByMessageType(request)
                 }
                 break;
             case KMessageTypes.RetailCommerce:
+            default:
                 {
                     searchResponse = await performRetailCommerceSearch(request);
                 }
-                break;            
+                break;
+            case KMessageTypes.MarketLinkage:
+                {
+                    searchResponse = await performMarketLinkageSearch(request);
+                }
+                break;
         }
         return searchResponse;
     }
@@ -216,7 +227,32 @@ async function performLoanSearch(request)
             {
                 const copiedAgriMessage = JSON.parse(JSON.stringify(agriInfo));
                 copiedAgriMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callAgriAdapter(copiedAgriMessage);
+                adapterResponse = await callAgriAdapter(copiedAgriMessage, "/loan/search");
+            }));
+        }
+        return adapterResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performMarketLinkageSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+    let adapterResponse = {};
+    
+    try
+    {
+        const preferredNetworksList = agriInfo.preferred_networks[KMessageType.MarketLinkage];
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
+            {
+                const copiedAgriMessage = JSON.parse(JSON.stringify(agriInfo));
+                copiedAgriMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callAgriAdapter(copiedAgriMessage, "/market-linkage/search");
             }));
         }
         return adapterResponse;
