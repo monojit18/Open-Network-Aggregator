@@ -31,7 +31,8 @@ const KStatusACK = "ACK";
 
 const KCallbackEvents =
 {
-    OnAgriAction: "on_agri",
+    OnAgriLoanAction: "on_agri_loan",
+    OnAgriMarketLinkageAction: "on_agri_market_linkage",
     OnCallbackAction: "callback",
     OnErrorAction: "on_error"
 }
@@ -113,7 +114,7 @@ async function fireAdvriskCallbackEvent(agriResponse, agriInfo)
     {
         const agriData = {};
         agriData.room = agriInfo.context.transaction_id;
-        agriData.event = KCallbackEvents.OnAgriAction;
+        agriData.event = KCallbackEvents.OnAgriLoanAction;
 
         const payload = {};
         payload.context = agriInfo.context;
@@ -142,7 +143,7 @@ async function fireCallbackEvent(agriResponse, agriInfo)
     {
         const agriData = {};
         agriData.room = agriInfo.context.transaction_id;
-        agriData.event = KCallbackEvents.OnAgriAction;
+        agriData.event = agriInfo.callbackEvent;
 
         const payload = {};
         payload.context = agriResponse.context;
@@ -153,7 +154,7 @@ async function fireCallbackEvent(agriResponse, agriInfo)
         const catalog = {};
         catalog.descriptor = agriResponse.message.catalog.descriptor;
         catalog.provider = agriResponse.message.catalog.provider;
-        catalog.provider.items = agriResponse.message.catalog.items;
+        // catalog.provider.items = agriResponse.message.catalog.items;
         catalog.provider.items.forEach((item) =>
         {
             item.embedding_url = agriResponse.message.catalog.provider.embedding_url;
@@ -269,13 +270,40 @@ async function performAgriSearch(agriInfo)
  * @method POST
  * @description In turn calls Search API of each Affiliate
  */
-_express.post("/search", async (request, response) =>
+_express.post("/loan/search", async (request, response) =>
 {
     const agriInfo = prepareAgriInfo(request);
+    agriInfo.callbackEvent = KCallbackEvents.OnAgriLoanAction;
     const results = {};
 
     try
     {        
+        const ackResponse = prepareAckResponse(agriInfo);
+        results.results = ackResponse;
+        response.send(results);                
+        await performAgriSearch(agriInfo);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        await fireErrorEvent(errorInfo, agriInfo);
+    }
+});
+
+/**
+ * @fires /market-linkage/search
+ * @method POST
+ * @description In turn calls Search API of each Affiliate
+ */
+_express.post("/market-linkage/search", async (request, response) =>
+{
+    const agriInfo = prepareAgriInfo(request);
+    agriInfo.callbackEvent = KCallbackEvents.OnAgriMarketLinkageAction;
+    const results = {};
+
+    try
+    {
         const ackResponse = prepareAckResponse(agriInfo);
         results.results = ackResponse;
         response.send(results);                
