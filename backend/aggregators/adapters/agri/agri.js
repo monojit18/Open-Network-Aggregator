@@ -153,7 +153,7 @@ async function fireCallbackEvent(agriResponse, agriInfo)
         const catalog = {};
         catalog.descriptor = agriResponse.message.catalog.descriptor;
         catalog.provider = agriResponse.message.catalog.provider;
-        catalog.provider.items = agriResponse.message.catalog.items;
+        // catalog.provider.items = agriResponse.message.catalog.items;
         catalog.provider.items.forEach((item) =>
         {
             item.embedding_url = agriResponse.message.catalog.provider.embedding_url;
