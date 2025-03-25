@@ -2,6 +2,19 @@
 
 ## Deployment Approach
 
+
+
+### Nomenclatures
+
+| Terms                                             | Description                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| Beckn protocol                                    | An open protocol for commerce to help diverse businesses to come together<br />and re-imagine their business |
+| Buyer App                                         | An Application platform or App for the Buyers.<br />In the context of Open Networks or Beckn protocol this is termed as **BAP** |
+| Seller App                                        | An Application platform or App for the Sellers.<br />In the context of Open Networks or Beckn protocol this is termed as **BPP** |
+| [Demand-side Affiliates](#Demand-side Affiliates) | Businesses, Organisations who are not part of Open Network(s)<br />but want their end users to leverage contents or services from multiple Open networks |
+| [Supply-side Affiliates](#Supply-side Affiliates) | These are primarily Buyer Apps or BAPs who can fetch contents or services<br />from various Seller Apps. But please note, that the Agentic framework is open<br />for other types of content providers as well.<br />e.g. Seller Apps or BPPs in any Open Network can become a Supply-side Affiliate |
+| [Integrator App](#Integrator App)                 | This is the Mobile and Web App that integrates with<br />the **Google Agentic framework**. This App is managed by partners of GCP and<br />provided as a SaaS solution or a Managed Service to end *Demand-side Affiliates* |
+
 # Introduction
 
 **Google Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
@@ -27,7 +40,7 @@ This Document contains the specifications for the APIs exposed by **Google Agent
   - **Master Agent** connects to Gemini 
   - Responses from Model will return a specific formatted JSON with **Specific Intents** (*which network to go to?*); **Action items** (*Search*) and **Messages** *(corresponding data points to send to the Open Network*)
   - Passes the JSON to Platform specific Sub-Agents
-- Responses from each Network is sent back to the front end over a **Websocket connection**
+- Responses from each Network is sent back to the front end over a Web-socket connection**
 - Each **Sub-agent** act like an independent unit capable to communicate with a specific Open Networks and for a specific domain
   - JSON data from **Master-agent** is processed to convert it into a request for a specific Open Network
   - **Sub-agents** can send the request to Open Networks e.g. ONEST (for *Education, Jobs, Skilling*) or ONDC (for *Retail*) based on the instruction from **Master Agent**
@@ -46,33 +59,96 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 # Sequential Flow
 
-## All Open Networks
+## Affiliate Networks
 
-![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
+![seqence-all-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-all-open-nw.png)
 
+- These are Supply side **Partners** or **Affiliates**
 
+- They have their own Buyer Apps to fetch data from various Open Networks like ONDC
+
+  - They need to follow the API specs provided by **Google Agentic framework** to integrate into the system. Agentic framework will call the APIs exposed by Affiliates to fetch their contents
+  - Visibility of their data depends on getting more Buyers registering onto their system
+  - Separate Buyer Apps needed for separate Networks like *Retail, Agri* etc.
+  - Building an aggregator platform themselves need more effort and visibility would still be an issue; to bring more Buyers across segments onto their platform
+  - Examples
+    - Retail Buyer Apps or Seller Apps
+    - Various Service providers
+    - Loan or Credit providers
+
+- **Google Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
+
+  - These Demand side affiliates can simply integrate with Agentic framework (*along with a conversational UI*) and launch from their existing apps or websites
+
+  - This way the users of these Demand side affiliates can reach to multiple Supply side affiliates 
+
+  - At the same time, each Supply side affiliate is exposed to multiple Demand side affiliates and their end users immediately
+
+  - Example
+
+    - Banks, Insurance agencies
+    - Travel & Tourism agencies 
+    - Jobs' and Skilling sites
+    - Media platforms
+
+    
 
 ## Integrator Networks (*Outside Open Network*)
 
-![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
+![seqence-non-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-non-open-nw.png)
 
+- These are Partners or Integrators who has publicly exposed APIs to share their contents
+- **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
+- Examples
+  - YouTube and other Video content providers
+  - Weather data providers
+  - Mandi price providers
 
 
 # Integrator App
 
-![integrator-app](./assets/integrator-app.png)
+![integrator-app](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/integrator-app.png)
+
+## What it is?
+
+Agentic framework is headless service to connect to various types of backends with intelligence to understand the users' requirement and their outing requests accordingly. The framework can be realised by being integrated to a UI framework which shows up contents from various Open Networks and Providers with ease. ***Integrator App*** serves that purpose.
 
 - Integrates with **Google Agentic framework**
+
 - Maintains the state of entire application
-- Manages end user preferences viz. Preferred Networks, Intended Verticals of Open Network etc..
+
+- Manages end user preferences viz. Preferred Networks, Intended Verticals of Open Network etc.
+
 - Logs all transactions in an Audit Database asynchronously
+
 - Basic Analytics
-- Future Plans
-  - Advanced Analytics
+
+- **Future Plans**
+
+  - Advanced Analytics and Visualisation
+
+  - Contextual or Profile based Search
+
+  - More seamless integration with Supply side affiliates
+
+    
+
+## Transactional flow
+
+![order-flow](./assets/order-flow.png)
+
+How can Agentic framework complete a transaction for the selected content(s)? A Transaction flow consists of Order placement and the subsequent payment process.
+
+- This is primarily done by Integrator or hosting app with Agentic facilitating the integration
+- *Integrator App* Searches for an item
+- Each search result contains an **embedded url** for that particular product
+- *Integrator App* launches an **embedded Web-view to show the product details within Web-view or IFrame
+- Add-to-Cart and Check-out happens through the embedded web-view
+- Once Order is placed, *Integrator App* receives Order confirmation response along with details Order Info as JSON object
 
 # Deployment Approach
 
-## Self Hosted
+## Software-as-a-service Model (*Self-hosted*)
 
 ### Functional
 
@@ -87,6 +163,17 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 - Single Tenant deployment; separate instance for each customer(s) and their environment(s)
 - Fully pluggable with the customer's existing workloads over a secure Private Service Connect endpoint
 - Seamless integration with various Open networks (viz. *ONDC, ONEST* etc.) and 3rd party integrators (viz. *Youtube, Ninjacart* etc.)
+- Demand-side Affiliate decide to host and manage the suction on their own
+- The deployment will be running on the GCP tenant of the Demand-side Affiliate
+- GCP Partners can help deploy the solution with a One-time Consultation fee
+  - Optionally, an Annual maintenance for a cost can be planned with the GCP partner
+- Demand-side Affiliate get access to the source code in the Github repository
+  - The code is distributed with [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Demand-side Affiliate can decide to clone or fork the repository for further customisation
+- Demand-side Affiliate choose the Supply-side affiliates of their own choice
+  - Configure parameters accordingly
+  - Integrate their own App(s) with the framework
+- The Consumption cost of the solution running on GCP tenant of the Demand-side Affiliate will be borne by them
 
 
 
@@ -108,7 +195,27 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ![managed-hosted](./assets/managed-hosted.png)
 
+- Multi-tenant deployment; single instance for each customer(s) and their environment(s)
 
+- Seamless integration with various Open networks (viz. *ONDC, ONEST* etc.) and 3rd party integrators (viz. *Youtube, Ninjacart* etc.)
+
+- Demand-side Affiliate do not want to manage it end to end; but would like to integrate and leverage he service
+
+- GCP Partner hosts the solution on their GCP tenant as a *multi-tenant* offering
+
+- Choose Supply-side Affiliates and share the API Specifications with them 
+
+- Configure mandatory settings
+
+- Connect with the Affiliate API and complete integration
+
+- Expose API for Demand-side Affiliates; manage each Demand-side Affiliate as one tenant
+
+  - Track usage and Calculate cost for each tenant (*Demand-side Affiliate*)
+
+  - Charge back to the Demand-side Affiliate based on a metric; e.g. Usage, No. of Requests or any other custom metric decided between the Demand-side Affiliate and the GCP Partner
+
+    
 
 ### Deployment Architecture
 
@@ -182,7 +289,7 @@ The entire Terraform deployment is divided into 3 stages -
     gcloud builds submit . --config=cloudbuild.yaml
     ```
     
-    > **Note**:
+    > [!Note]
     >
     > This is optional. Any other build tool can be used instead of Cloud Build; but this deployment uses Cloud Build heavily.
     >
@@ -197,16 +304,20 @@ The entire Terraform deployment is divided into 3 stages -
     - images
     - architecture diagrams
     - ...(more)
+    
   - **backend**
     - **aggregator** - Containers Master Agent and Domain specific Sub-agents to connect to various Content providers
     - **genai** - Wrapper plugin for GCP Generative AI services
     - **utilities** - Contains helper services used across the solution
       - **storage** - A Wrapper around GCS APIs; supports various cloud storage operations viz.  *download a file*, *upload a file* etc.
+      - **bigquery** - A Wrapper around Bigquery APIs; supports major Bigquery operations viz. *CRUD, Vector Search, Create Embeddings* etc.
       - **event-sockets** - Contains [Socket.IO Server](https://socket.io/docs/v4/server-api/) and [Socket.IO Client](https://socket.io/docs/v4/client-api/) for accepting asynchronous callbacks from various Open Networks or Content Providers
       - **websock-streamer** -  Contains [Socket.IO Server](https://socket.io/docs/v4/server-api/) and [Socket.IO Client](https://socket.io/docs/v4/client-api/) for accepting streaming content generated by various generative AI services. In this solution - *Text generation* and **Multi-modal Content generation** - are two services which use this service
     - **vertexai** - Wrapper plugin for GCP VertexAI services
+    
   - **data** - Contains YAML specification of the APIs shared with Content provider partners 
     - This is for internal references only
+    
   - **distribution**
     - **builds**
       - **apps** - Scripts for Deploying/Removing **Application** services
@@ -218,19 +329,28 @@ The entire Terraform deployment is divided into 3 stages -
     - **gke** - Scripts for Deploying/Removing/Configuring **GKE** cluster
       - This also contains helm charts for deploying micro-services within the GKE cluster
       - Deploying K8s gateway as Ingress
-  - **frontend**
-    - **mobile** - Source code for Mobile frontend
-    - **web** - Source code for Web frontend
+    
+  - frontend
+    
+    - mobile - Source code for Mobile frontend
+    - web - Source code for Web frontend
       - Also contains server code for hosting the frontend
+    
   - **misc**
     - Miscellaneous files which are only locally maintained; should not be part of any source code commit or checkin
     - Contains a Text file with step by step command line guidance of the end to end solution build and deployment
+    
+    > [!Note]
+    >
+    > **fronend** code is implemented, hosted and managed by GCP Partners who are hosting the [Integrator App](#Integrator App). Currently this is hosted through [Firebase App Hosting](https://firebase.google.com/docs/app-hosting).
+    >
+    > This will not be part of this repository by default. But interested parties (primarily *Demand-side Affiliates*) who want to use this source code for hosting themselves ([Self-hosted Model](#Software-as-a-service Model (*Self-hosted*))), can bring their own UI code into this folder. Or they can get into an agreement with GCP partner and get the default code as part of this repository also.
 
 
 
 ## Step-by-Step guide
 
-- Here is a step by step guide on how to deploy this entire infrastructure end to end
+Here is a step by step guide on how to deploy this entire infrastructure end to end
 
 ### Deploy Fine-tuned model
 
@@ -279,11 +399,11 @@ ZONE=<GCP Zone of the PROJECT>
 IP_ADDRESS_NAME=dev-glb-lb-ip (Optional name; change accordingly)
 CERTIFICATE_NAME=<Certificate to be used by GCP LB>
 
-(Optional: No. of environments to be included in the same Certificate)
-// DEV
+(Optional: Environments to be included in the same Certificate)
+// DEV (Optional)
 DOMAIN1_NAME=<dev environment to be exposed through GCP LB>
 
-// STAGING
+// STAGING (Optional)
 DOMAIN2_NAME=<staging environment to be exposed through GCP LB>
 
 // PROD
@@ -304,7 +424,7 @@ AR_REPO=<Artifact Registry Repository>
 JUMP_SERVER_NAME=<Name of the Jump Server or Bastion Host>
 ```
 
-> **Note**:
+> [!Note]
 >
 > **PROJECT_NAME** - This ideally should be same as *PROJECT_ID*; or any preferred name to identify the project.
 >
@@ -388,7 +508,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$GSA 
 gcloud storage buckets create gs://open-network-aggr-stg-<some-random-no> --location=us-central1
 ```
 
-> **Note**
+> [!Note]
 >
 > Important point to note about sharing secured information through deployment files.
 >
@@ -658,9 +778,19 @@ gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
 #gcloud dns record-sets delete $DOMAIN1_NAME --type=A --zone=$DNS_ZONE
 ```
 
+> [!Note]
+>
+> The current implementation is fully stateless with no state management by any of the components.
+>
+> Some of the Agri partner(s) has the requirement to include semantic search for their products; especially while fetching the Mandi prices for various commodities.
+>
+> A BigQuery dataset is used by this framework to create and store the embeddings in a BigQuery table. [Mandi Adapter](#Mandi Adapter) will use this table to perform a semantic search before calling the actual Mandi price API from the Affiliate
 
 
-### Let us Build the Micro-services
+
+
+
+## Let us Build the Micro-services
 
 - Following micro-services are coming out-of-the-box with this deployment
 
@@ -668,7 +798,9 @@ gcloud dns record-sets create $DOMAIN1_NAME --rrdatas=$GLB_IP \
 
   
   
-  > **Important Note**
+  > [!Note]
+  >
+  > **Important**
   >
   > Please Refer to the section [Setup CLI environment variables](#Setup CLI environment variables).
   >
@@ -709,7 +841,7 @@ cd $BASEFOLDERPATH/backend/utilities/websock-streamer/server
 PROJECT_NAME=<PROJECT_NAME>
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=streamer-serverlib
-PACKAGE_VERSION="v1.0"
+PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
@@ -763,7 +895,24 @@ cd $BASEFOLDERPATH/backend/vertexai/storage
 PROJECT_NAME=<PROJECT_NAME>
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=storagelib
-PACKAGE_VERSION="v1.0"
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
+
+#### Bigquery
+
+- Wrapper around **GCS** services
+
+```bash
+cd $BASEFOLDERPATH/backend/utilities/bigquery
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=bigquerylib
+PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
@@ -839,7 +988,7 @@ cd $BASEFOLDERPATH/backend/genai/image
 PROJECT_NAME=<PROJECT_NAME>
 REPO_NAME=$AR_REPO
 PACKAGE_NAME="genai-imagelib"
-PACKAGE_VERSION="v1.0"
+PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
@@ -1042,6 +1191,36 @@ _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_V
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 ```
 
+#### ONEST Agent
+
+```bash
+cd $BASEFOLDERPATH/backend/aggregators/agents/networks/onest
+PROJECT_NAME=<PROJECT_NAME>
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=onest-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
+
+#### Planner Agent
+
+```bash
+cd $BASEFOLDERPATH/backend/aggregators/agents/networks/planner
+PROJECT_NAME=<PROJECT_NAME>
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=planner-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
+
 #### Video Agent
 
 ```bash
@@ -1094,6 +1273,30 @@ cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/llm
 PROJECT_NAME=<PROJECT_NAME>
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=llm-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+```
+
+
+
+### Callbacks
+
+#### Order Callback
+
+- Supply-side affiliates would use this callback to send the transaction confirmation.
+- Examples
+  - Checkout operation while buying online
+  - Submitting online Loan Application form
+
+```bash
+cd $BASEFOLDERPATH/backend/aggregators/agents/callbacks/order
+PROJECT_NAME=<PROJECT_NAME>
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=order-callback
 PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$BASEFOLDERPATH/distribution/builds/app/app-deployment.yaml" \
@@ -1208,6 +1411,10 @@ helm upgrade --install --create-namespace utilities-chart-storage $DISTRIBUTION_
 -n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-storage.yaml
 #helm uninstall utilities-chart-storage -n utilities
 
+helm upgrade --install --create-namespace utilities-chart-bigquery $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values/values-bigquery.yaml
+#helm uninstall utilities-chart-bigquery -n utilities
+
 #Quick Check of the deployment
 k get po -n utilities
 k get svc -n utilities
@@ -1272,8 +1479,6 @@ k annotate serviceaccount vertexai-sa -n vertexai iam.gke.io/gcp-service-account
 ```
 
 ```bash
-#Deploy Storage service
-=============================
 #Deploy Transnlation service
 ================================
 helm upgrade --install --create-namespace vertexai-charts-translate $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
@@ -1339,8 +1544,8 @@ k describe HttpRoute/vertexai-route -n vertexai
 - [HealthCheckPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/configure-gateway-resources#configure_health_check) to control the load balancer health check settings
 
 ```bash
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
-#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/policy/vertexai-health-check.yaml -n vertexai
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policy/translate-health-check.yaml -n vertexai
+#k delete -f $DISTRIBUTION_PATH/gke//k8s-gateway-api/policy/translate-health-check.yaml -n vertexai
 
 #Quick Check of the deployment
 k get HealthCheckPolicy/vertexai-healthcheck -n vertexai
@@ -1354,125 +1559,141 @@ k describe HealthCheckPolicy/vertexai-healthcheck -n vertexai
 #### Adapter Services
 
 ```bash
-k create ns aggregator-dev
-#k delete ns aggregator-dev
+k create ns aggregator
+#k delete ns aggregator
 
-k create serviceaccount aggregator-dev-sa -n aggregator-dev
-#k delete serviceaccount aggregator-dev-sa -n aggregator-dev
+k create serviceaccount aggregator-sa -n aggregator
+#k delete serviceaccount aggregator-sa -n aggregator
 
 gcloud iam service-accounts add-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator/aggregator-sa]"
 #gcloud iam service-accounts remove-iam-policy-binding $GSA \
     --role=roles/iam.workloadIdentityUser \
-    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator-dev/aggregator-dev-sa]"
+    --member="serviceAccount:$PROJECT_ID.svc.id.goog[aggregator/aggregator-sa]"
 
-k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account=$GSA
-#k annotate serviceaccount aggregator-dev-sa -n aggregator-dev iam.gke.io/gcp-service-account-
+k annotate serviceaccount aggregator-sa -n aggregator iam.gke.io/gcp-service-account=$GSA
+#k annotate serviceaccount aggregator-sa -n aggregator iam.gke.io/gcp-service-account-
 ```
 
 ```bash
 #Deploy Agri Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-agri-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
-#helm uninstall aggregator-charts-agri-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-adapter.yaml
+#helm uninstall aggregator-charts-agri-adapter -n aggregator
 
 #Deploy Buyer Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-buyer-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
-#helm uninstall aggregator-charts-buyer-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-buyer-adapter.yaml
+#helm uninstall aggregator-charts-buyer-adapter -n aggregator
 
-#Deploy Buyer LLM service
+#Deploy LLM Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-llm-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
-#helm uninstall aggregator-charts-llm-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-adapter.yaml
+#helm uninstall aggregator-charts-llm-adapter -n aggregator
 
 #Deploy Mandi Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-mandi-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
-#helm uninstall aggregator-charts-mandi-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-adapter.yaml
+#helm uninstall aggregator-charts-mandi-adapter -n aggregator
 
 #Deploy Video Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-video-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
-#helm uninstall aggregator-charts-video-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-adapter.yaml
+#helm uninstall aggregator-charts-video-adapter -n aggregator
 
 #Deploy Weather Adapter service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-weather-adapter $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
-#helm uninstall aggregator-charts-weather-adapter -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-adapter.yaml
+#helm uninstall aggregator-charts-weather-adapter -n aggregator
 ```
 
 #### Agent Services
 
 ```bash
+#Deploy Planner Agent service
+================================
+helm upgrade --install --create-namespace aggregator-chart-planner-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-planner-agent.yaml
+#helm uninstall aggregator-chart-planner-agent -n aggregator
+
 #Deploy Agri Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
-#helm uninstall aggregator-charts-agri-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-agri-agent.yaml
+#helm uninstall aggregator-charts-agri-agent -n aggregator
 
 #Deploy Buyer Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-ondc-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
-#helm uninstall aggregator-charts-ondc-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-ondc-agent.yaml
+#helm uninstall aggregator-charts-ondc-agent -n aggregator
 
 #Deploy LLM Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-llm-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
-#helm uninstall aggregator-charts-llm-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-llm-agent.yaml
+#helm uninstall aggregator-charts-llm-agent -n aggregator
 
 #Deploy MANDI Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-mandi-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
-#helm uninstall aggregator-charts-mandi-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-mandi-agent.yaml
+#helm uninstall aggregator-charts-mandi-agent -n aggregator
 
 #Deploy Video Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-video-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
-#helm uninstall aggregator-charts-video-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-video-agent.yaml
+#helm uninstall aggregator-charts-video-agent -n aggregator
 
 #Deploy Weather Agent service
 ================================
 helm upgrade --install --create-namespace aggregator-charts-weather-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
-#helm uninstall aggregator-charts-weather-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-weather-agent.yaml
+#helm uninstall aggregator-charts-weather-agent -n aggregator
 
 #Deploy Master Agri Agent service
 =========================================
 helm upgrade --install --create-namespace aggregator-charts-master-agri-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
-#helm uninstall aggregator-charts-master-agri-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-agri-agent.yaml
+#helm uninstall aggregator-charts-master-agri-agent -n aggregator
 
 #Deploy Master Retail Agent service
 =========================================
 helm upgrade --install --create-namespace aggregator-charts-master-retail-agent $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/ \
--n aggregator-dev -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
-#helm uninstall aggregator-charts-master-retail-agent -n aggregator-dev
+-n aggregator -f $BASEFOLDERPATH/distribution/gke/charts/aggregator/aggregator-charts/values/values-master-retail-agent.yaml
+#helm uninstall aggregator-charts-master-retail-agent -n aggregator
 
-#List all pods in the aggregator-dev namespace
-k get po -n aggregator-dev
+#List all pods in the aggregator namespace
+k get po -n aggregator
 ```
+
+#### Callback Services
+
+```bash
+helm upgrade --install --create-namespace aggregator-chart-order-callback $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values/values-order-callback.yaml
+#helm uninstall aggregator-chart-order-callback -n aggregator
+```
+
+
 
 #### Add Routes
 
 ```bash
-k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
-#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator-dev
+k apply -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator
+#k delete -f $BASEFOLDERPATH/k8s-gateway-api/routes/aggregator-route.yaml -n aggregator
 
 #Quick Check of the deployment
-k get HttpRoute/aggregator-route -n aggregator-dev
-k describe HttpRoute/aggregator-route -n aggregator-dev
+k get HttpRoute/aggregator-route -n aggregator
+k describe HttpRoute/aggregator-route -n aggregator
 ```
 
 #### Add Healthcheck policy
@@ -1480,24 +1701,24 @@ k describe HttpRoute/aggregator-route -n aggregator-dev
 - [HealthCheckPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/configure-gateway-resources#configure_health_check) to control the load balancer health check settings
 
 ```bash
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-agri-health-check.yaml -n aggregator
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-retail-health-check.yaml -n aggregator
 
-k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
-#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator-dev
+k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator
+#k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api/policies/master-order-callback-health-check.yaml -n aggregator
 
 #Quick Check of the deployment
-k get HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/master-agri-healthcheck -n aggregator
+k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator
 
-k get HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/master-retail-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/master-retail-healthcheck -n aggregator
+k describe HealthCheckPolicy/master-retail-healthcheck -n aggregator
 
-k get HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
-k describe HealthCheckPolicy/order-callback-healthcheck -n aggregator-dev
+k get HealthCheckPolicy/order-callback-healthcheck -n aggregator
+k describe HealthCheckPolicy/order-callback-healthcheck -n aggregator
 ```
 
 
@@ -1631,7 +1852,7 @@ e.g. https://event-server.<domain_name>
 
 - Launch test-client application using any preferred editor; recommended [VSCode](https://code.visualstudio.com/)
 
-  ![test-client-launch1](./assets/test-client-launch1.png)
+  ![test-client-launch2](./assets/test-client-launch1.png)
 
   ```bash
   #Run the following command to create a GUID
@@ -1692,7 +1913,7 @@ curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
 }'
 ```
 
-> **Note**:
+> [!Note]
 >
 > **transaction_id** need to be same as the room Id created in earlier step
 >
@@ -1767,7 +1988,7 @@ curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
 }'
 ```
 
-> **Note**:
+> [!Note]
 >
 > **transaction_id** need to be same as the room Id created in earlier step
 >

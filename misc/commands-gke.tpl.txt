@@ -267,7 +267,7 @@ cd $BASEFOLDERPATH/backend/utilities/websock-streamer/server
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=streamer-serverlib
-PACKAGE_VERSION="v1.0"
+PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
@@ -300,15 +300,26 @@ gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
-curl -X POST http://localhost:10010/init/110600C6-2A13-4BCC-AE8E-36EF992DFCD7
-
 Storage
 ==========================================================================================
 cd $BASEFOLDERPATH/backend/utilities/storage
 PROJECT_NAME=onix-agentic
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=storagelib
-PACKAGE_VERSION="v1.0"
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
+Bigquery
+============================================================================================
+cd $BASEFOLDERPATH/backend/utilities/bigquery
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=bigquerylib
+PACKAGE_VERSION=v1.0
 
 gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
@@ -406,22 +417,6 @@ gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml
 --project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
-
-/*
-Chatgenie (not needed)
-==========================================================================================
-Cloud build
-===========
-cd $BASEFOLDERPATH/backend/genai/chatgenie
-PROJECT_NAME=onix-agentic
-REPO_NAME=$AR_REPO
-PACKAGE_NAME=chatgenie
-PACKAGE_VERSION=v1.0
-
-gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
---project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
-_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,_LOG_BUCKET_=$PROJECT_ID-terra-stg
-*/
 
 Adapters
 =======================
@@ -533,6 +528,19 @@ gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml
 _REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
 _LOG_BUCKET_=$PROJECT_ID-terra-stg
 
+ONEST-Agent
+=============================================================================================
+cd $BASEFOLDERPATH/backend/aggregators/agents/networks/onest
+PROJECT_NAME=onix-agentic
+REPO_NAME=$AR_REPO
+PACKAGE_NAME=onest-agent
+PACKAGE_VERSION=v1.0
+
+gcloud builds submit --config="$DISTRIBUTION_PATH/builds/app/app-deployment.yaml" \
+--project=$PROJECT_ID --substitutions=_PROJECT_ID_=$PROJECT_ID,_PROJECT_NAME_=$PROJECT_NAME,_REGION_=$REGION,\
+_REPO_NAME_=$REPO_NAME,_PACKAGE_NAME_=$PACKAGE_NAME,_PACKAGE_VERSION_=$PACKAGE_VERSION,\
+_LOG_BUCKET_=$PROJECT_ID-terra-stg
+
 Planner-Agent
 =============================================================================================
 cd $BASEFOLDERPATH/backend/aggregators/agents/integrators/planner
@@ -628,12 +636,12 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 #Connect to the Jumper VM
 ===========================================================================
 gcloud compute ssh $JUMP_SERVER_NAME --project=$PROJECT_ID --tunnel-through-iap
-#mkdir csm
+#mkdir open-network-aggregator
 #exit
 
 #Copy necessary files to Jumper VM
 =====================================
-gcloud compute scp --recurse ./distribution sa_116380239112518528212@jumper-server:~/csm
+gcloud compute scp --recurse ./distribution sa_116380239112518528212@jumper-server:~/open-network-aggregator
 
 #Connect to the Jumper VM (again)
 =====================================
@@ -686,14 +694,15 @@ sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
 #Create and Operate the Cluster
 ================================
-#Set Local Varaibles (inside Jumper VM)
+#Set Local Variables (inside Jumper VM)
 ================================================
-BASEFOLDERPATH="./csm"
+BASEFOLDERPATH="./open-network-aggregator"
 DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
 HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
 OWNER=admin@monojitdatta.altostrat.com
-PROJECT_ID=onix-agentic-151120240130
-GSA_DISPLAY_NAME=onix-agentic-sa
+PROJECT_ID=<PROJECT_ID>
+PROJECT_NAME=onix-agentic
+GSA_DISPLAY_NAME=$PROJECT_NAME-sa
 GSA=$GSA_DISPLAY_NAME@$PROJECT_ID.iam.gserviceaccount.com
 VPC_NAME=onix-agentic-dev-vpc
 CLUSTER_SUBNET_NAME=gke-subnet
@@ -795,6 +804,10 @@ helm upgrade --install --create-namespace utilities-chart-event-receiver $DISTRI
 helm upgrade --install --create-namespace utilities-chart-storage $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
 -n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-storage.yaml
 #helm uninstall utilities-chart-storage -n utilities-$ENV
+
+helm upgrade --install --create-namespace utilities-chart-bigquery $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/ \
+-n utilities-$ENV -f $DISTRIBUTION_PATH/gke/charts/utilities/utilities-charts/values-$ENV/values-bigquery.yaml
+#helm uninstall utilities-chart-bigquery -n utilities-$ENV
 
 k get po -n utilities-$ENV
 k get svc -n utilities-$ENV
@@ -946,6 +959,10 @@ helm upgrade --install --create-namespace aggregator-chart-ondc-agent $DISTRIBUT
 -n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-ondc-agent.yaml
 #helm uninstall aggregator-chart-ondc-agent -n aggregator-$ENV
 
+helm upgrade --install --create-namespace aggregator-chart-onest-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
+-n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-onest-agent.yaml
+#helm uninstall aggregator-chart-onest-agent -n aggregator-$ENV
+
 helm upgrade --install --create-namespace aggregator-chart-llm-agent $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/ \
 -n aggregator-$ENV -f $DISTRIBUTION_PATH/gke/charts/aggregator/aggregator-charts/values-$ENV/values-llm-agent.yaml
 #helm uninstall aggregator-chart-llm-agent -n aggregator-$ENV
@@ -982,7 +999,9 @@ k get hpa -n aggregator-$ENV
 ============================
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/aggregator-route.yaml -n aggregator-$ENV
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/routes/aggregator-route.yaml -n aggregator-$ENV
+
 k get HttpRoute -n aggregator-$ENV
+k describe HttpRoute -n aggregator-$ENV
 
 #Add Healthcheck policy
 ============================
@@ -994,6 +1013,8 @@ k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-retail-he
 
 k apply -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-order-callback-health-check.yaml -n aggregator-$ENV
 #k delete -f $DISTRIBUTION_PATH/gke/k8s-gateway-api-$ENV/policies/master-order-callback-health-check.yaml -n aggregator-$ENV
+
+k get HealthCheckPolicies -n aggregator-$ENV
 
 k get HealthCheckPolicy/master-agri-healthcheck -n aggregator-$ENV
 k describe HealthCheckPolicy/master-agri-healthcheck -n aggregator-$ENV
