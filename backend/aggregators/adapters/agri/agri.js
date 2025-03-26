@@ -100,7 +100,7 @@ function prepareAckResponse(agriInfo)
     return ackResponse;
 }
 
-function initializeAgriagri()
+function initializeAgri()
 {
     _axiosAgent = new Https.Agent
     ({
@@ -266,9 +266,9 @@ async function performAgriSearch(agriInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /loan/search
  * @method POST
- * @description In turn calls Search API of each Affiliate
+ * @description In turn calls Search API of each Loan Provider Affiliate
  */
 _express.post("/loan/search", async (request, response) =>
 {
@@ -294,7 +294,7 @@ _express.post("/loan/search", async (request, response) =>
 /**
  * @fires /market-linkage/search
  * @method POST
- * @description In turn calls Search API of each Affiliate
+ * @description In turn calls Search API of each Market-linkage Affiliate
  */
 _express.post("/market-linkage/search", async (request, response) =>
 {
@@ -321,6 +321,6 @@ _express.post("/market-linkage/search", async (request, response) =>
 var port = process.env.port || process.env.PORT || 10001;
 _server.listen(port);
 
-initializeAgriagri();
+initializeAgri();
 
 console.log("Server running at http://localhost:%d", port);
