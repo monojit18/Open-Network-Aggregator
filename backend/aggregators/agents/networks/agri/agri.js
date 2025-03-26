@@ -34,6 +34,17 @@ const KMicroServices =
     AgriAdapter: "agri-adapter"
 }
 
+const KMessageTypes =
+{
+    Loan: "loan",    
+    MarketLinkage: "market-linkage"
+}
+
+const KNetworkType =
+{
+    MarketLinkage: "MARKET_LINKAGE"
+}
+
 DotEnv.config();
 
 _express.use(Express.json
@@ -69,31 +80,111 @@ function prepareAllUrls()
     _allUrls[KMicroServices.AgriAdapter] = `${process.env.AGRI_ADAPTER_URL}`;
 }
 
-function prepareAgriMessage(request)
+function prepareAgriInfo(request)
 {
-    const agriMessage = {};    
-    agriMessage.context = request.body.context;
-    agriMessage.message = request.body.message;
-    agriMessage.preferred_network = request.body.preferred_network;
-    return agriMessage;
+    const agriInfo = {};    
+    agriInfo.context = request.body.context;
+    agriInfo.message = request.body.message;
+    agriInfo.preferred_network = request.body.preferred_network;
+    agriInfo.preferred_networks = request.body.preferred_networks;
+    return agriInfo;
 }
 
-async function callAgriAdapter(agriMessage)
+async function callAgriAdapter(agriInfo, urlPart)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
 
-    const requestBody = agriMessage;
+    const requestBody = agriInfo;    
     
     try
     {
-        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}/search`,
+        const adapterResponse = await Axios.post(`${_allUrls[KMicroServices.AgriAdapter]}${urlPart}`,
                                                     requestBody, requestOptions);
         const adapterResult = processGenericResponse(adapterResponse);
-        return adapterResult;        
+        return adapterResult;
     }
     catch(exception)
     {
+        throw exception;
+    }
+}
+
+async function performLoanSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+    let adapterResponse = {};
+    
+    try
+    {
+        const preferredNetworksList = agriInfo.preferred_network;
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
+            {
+                const copiedAgriMessage = JSON.parse(JSON.stringify(agriInfo));
+                copiedAgriMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callAgriAdapter(copiedAgriMessage, "/loan/search");
+            }));
+        }
+        return adapterResponse;
+    }
+    catch(exception)
+    {        
+        throw exception;
+    }
+}
+
+async function performMarketLinkageSearch(request)
+{
+    const agriInfo = prepareAgriInfo(request);
+    let adapterResponse = {};
+    
+    try
+    {
+        const preferredNetworksList = agriInfo.preferred_networks[KNetworkType.MarketLinkage];
+        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
+        {
+            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
+            {
+                const copiedAgriMessage = JSON.parse(JSON.stringify(agriInfo));
+                copiedAgriMessage.preferred_network = preferredNetwork;                
+                adapterResponse = await callAgriAdapter(copiedAgriMessage, "/market-linkage/search");
+            }));
+        }
+        return adapterResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function performByMessageType(request)
+{
+    try
+    {
+        const messageType = request.body.message.network.filters[0].type;
+        console.log(`messageType: ${messageType}`);
+        let searchResponse = {};
+
+        switch (messageType)
+        {
+            case KMessageTypes.Loan:
+                {
+                    searchResponse = await performLoanSearch(request);
+                }
+                break;           
+            case KMessageTypes.MarketLinkage:
+                {
+                    searchResponse = await performMarketLinkageSearch(request);
+                }
+                break;
+        }
+        return searchResponse;
+    }
+    catch(exception)
+    {        
         throw exception;
     }
 }
@@ -115,21 +206,11 @@ async function initializeAgent()
  */
 _express.post("/search", async (request, response) =>
 {
-    const agriMessage = prepareAgriMessage(request);
     const results = {};
     
     try
     {
-        const preferredNetworksList = agriMessage.preferred_network;
-        if ((preferredNetworksList != null) && (preferredNetworksList.length > 0))
-        {
-            await Promise.all(preferredNetworksList.map(async(preferredNetwork) =>
-            {
-                const copiedAgriMessage = JSON.parse(JSON.stringify(agriMessage));
-                copiedAgriMessage.preferred_network = preferredNetwork;                
-                adapterResponse = await callAgriAdapter(copiedAgriMessage);
-            }));
-        }
+        const adapterResponse = await performByMessageType(request);
         results.results = adapterResponse;
         response.send(results);
     }
