@@ -269,7 +269,7 @@ async function emitAdapterEvent(eventName, eventData)
         return socketResponse;
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }
 }
