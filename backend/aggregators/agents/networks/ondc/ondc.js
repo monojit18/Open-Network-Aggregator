@@ -136,7 +136,7 @@ _express.post("/search", async (request, response) =>
                 copiedONDCMessage.preferred_network = preferredNetwork;                
                 const adapterResponse = await callBuyerAdapter(copiedONDCMessage);
                 adapterResponseList.push(adapterResponse);
-            }));                        
+            }));
         }
 
         results.results = adapterResponseList;

@@ -108,6 +108,18 @@ function prepareAllUrls()
     _allUrls[KMicroServices.LLMAgent] = `${process.env.LLM_AGENT_URL}`;
 }
 
+function prepareInstructionContentInfo(systemPrompt)
+{
+    const instruction = {};
+
+    const partInfo = {};
+    partInfo.text = systemPrompt;
+
+    instruction.parts = [];
+    instruction.parts.push(partInfo);
+    return instruction;
+}
+
 function prepareNLPInfo(request)
 {
     const nlpInfo = {};
@@ -353,9 +365,10 @@ async function processNLPInfo(nlpInfo)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = `${nlpInfo.prompt}\n\n${nlpInfo.query}`;
+    promptInfo.prompt = nlpInfo.query;
     const contentsList = prepareNLPContentInfo(promptInfo);
     requestBody.contents = contentsList;
+    requestBody.instruction = prepareInstructionContentInfo(nlpInfo.prompt);
 
     const genAIHeaders = prepareShortHeaders(nlpInfo.endpointId);
     requestOptions.headers = genAIHeaders;
