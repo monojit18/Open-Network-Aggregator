@@ -95,17 +95,17 @@ function prepareAllUrls()
     _allUrls[KMicroServices.VideoAgent] = `${process.env.VIDEO_AGENT_URL}`;
 }
 
-function prepareMultiSearchInfo(request, plannerPrompt)
+function preparePlannerSearchInfo(request, plannerPrompt)
 {
-    const extractionInfo = {};
-    extractionInfo.context = request.body.context;
-    extractionInfo.message = request.body.message;
-    extractionInfo.headers = request.headers;
-    extractionInfo.preferred_network = request.body.preferred_network;
-    extractionInfo.preferred_networks = request.body.preferred_networks;    
-    extractionInfo.prompt = plannerPrompt;
-    extractionInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;    
-    return extractionInfo;
+    const plannerInfo = {};
+    plannerInfo.context = request.body.context;
+    plannerInfo.message = request.body.message;
+    plannerInfo.headers = request.headers;
+    plannerInfo.preferred_network = request.body.preferred_network;
+    plannerInfo.preferred_networks = request.body.preferred_networks;    
+    plannerInfo.prompt = plannerPrompt;
+    plannerInfo.endpointId = process.env.AGENTIC_MODEL_ENDPOINT_ID;    
+    return plannerInfo;
 }
 
 function prepareAgriInfo(request)
@@ -117,7 +117,7 @@ function prepareAgriInfo(request)
     return transactionInfo;
 }
 
-function prepareExtractContentInfo(promptInfo)
+function preparePlannerContentInfo(promptInfo)
 {
     const contentInfo = {};
     const partInfo = {};
@@ -129,12 +129,12 @@ function prepareExtractContentInfo(promptInfo)
     return [contentInfo];
 }
 
-function prepareInstructionContentInfo(plannerInfo)
+function prepareInstructionContentInfo(prompt)
 {
     const instruction = {};
 
     const partInfo = {};
-    partInfo.text = plannerInfo.prompt;
+    partInfo.text = prompt;
 
     instruction.parts = [];
     instruction.parts.push(partInfo);
@@ -205,10 +205,9 @@ function prepareLLMAgentRequest(plannerInfo)
     return requestBody;
 }
 
-function prepareExtractRequest(plannerInfo)
+function preparePlannerRequest(plannerInfo)
 {
     const requestBody = {};
-
     const promptInfo = {};
     const filters = plannerInfo.message.network.filters;
     const relevantText = plannerInfo.message.network.relevant_text;
@@ -218,9 +217,27 @@ function prepareExtractRequest(plannerInfo)
     else
         promptInfo.prompt = filters.query;
 
-    const contentsList = prepareExtractContentInfo(promptInfo);
+    const contentsList = preparePlannerContentInfo(promptInfo);
     requestBody.contents = contentsList;
-    requestBody.instruction = prepareInstructionContentInfo(plannerInfo);
+    requestBody.instruction = prepareInstructionContentInfo(plannerInfo.prompt);
+    return requestBody;
+}
+
+function prepareAbusiveRequest(plannerInfo)
+{
+    const requestBody = {};
+    const promptInfo = {};
+    const filters = plannerInfo.message.network.filters;
+    const relevantText = plannerInfo.message.network.relevant_text;
+
+    if (Array.isArray(filters) == true)
+        promptInfo.prompt = relevantText;
+    else
+        promptInfo.prompt = filters.query;
+
+    const contentsList = preparePlannerContentInfo(promptInfo);
+    requestBody.contents = contentsList;
+    requestBody.instruction = prepareInstructionContentInfo(process.env.PLANNER_ABUSIVE_NLP_PROMPT);
     return requestBody;
 }
 
@@ -260,14 +277,37 @@ async function fireErrorEvent(errorInfo, plannerInfo)
     }
 }
 
-async function callVideoAgent(extractionInfo)
+async function checkForAbusiveRequest(plannerInfo)
+{
+    const requestOptions = {};
+    requestOptions.httpsAgent = _axiosAgent;
+
+    const requestBody = prepareAbusiveRequest(plannerInfo);    
+    const genAIHeaders = prepareShortHeaders(plannerInfo.endpointId);
+    requestOptions.headers = genAIHeaders;
+
+    try
+    {
+        let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
+                                                requestBody, requestOptions);
+        const abusiveResult = processGenericResponse(response);
+        const abusiveResponse  = abusiveResult.results[0].formatted_response;
+        return abusiveResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function callVideoAgent(plannerInfo)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
     requestOptions.headers = {};
-    requestOptions.headers[process.env.VIDEO_API_KEY] = extractionInfo.headers[process.env.VIDEO_API_KEY];    
+    requestOptions.headers[process.env.VIDEO_API_KEY] = plannerInfo.headers[process.env.VIDEO_API_KEY];    
 
-    const requestBody = prepareVideoAgentRequest(extractionInfo);
+    const requestBody = prepareVideoAgentRequest(plannerInfo);
     
     try
     {
@@ -322,32 +362,40 @@ async function callLLMAgent(llmInfo)
     }
 }
 
-async function performExtractedSearch(extractedList, extractionInfo)
+async function performExtractedSearch(extractedList, plannerInfo, abusiveResponse)
 {
     try
-    {
+    {         
         await Promise.all(extractedList.map(async (item) =>
         {
             switch(item.domain)
             {
                 case KDomainNames.ONDC:
                 {
-                    extractionInfo.message.network.relevant_text = item.relevant_text;
-                    await callONDCAgent(extractionInfo);
+                    if ((abusiveResponse.isAbusive == false)
+                        && (abusiveResponse.isIndividual) == false)
+                    {
+                        plannerInfo.message.network.relevant_text = item.relevant_text;
+                        await callONDCAgent(plannerInfo);
+                    }                    
                 }
                 break;
     
                 case KDomainNames.VIDEO:
                 {
-                    extractionInfo.message.network.filters.query = item.relevant_text;
-                    await callVideoAgent(extractionInfo);
+                    if ((abusiveResponse.isAbusive == false)
+                        && (abusiveResponse.isIndividual) == false)
+                    {
+                        plannerInfo.message.network.filters.query = item.relevant_text;
+                        await callVideoAgent(plannerInfo);
+                    }                    
                 }
                 break;
     
                 case KDomainNames.LLM:
                 {
-                    extractionInfo.message.network.filters.query = item.relevant_text;
-                    await callLLMAgent(extractionInfo);
+                    plannerInfo.message.network.filters.query = item.relevant_text;
+                    await callLLMAgent(plannerInfo);
                 }
                 break;
             }
@@ -359,13 +407,13 @@ async function performExtractedSearch(extractedList, extractionInfo)
     }
 }
 
-async function performMultiSearch(extractionInfo)
+async function performPlannerSearch(plannerInfo)
 {
     const requestOptions = {};
     requestOptions.httpsAgent = _axiosAgent;
 
-    const requestBody = prepareExtractRequest(extractionInfo);    
-    const genAIHeaders = prepareShortHeaders(extractionInfo.endpointId);
+    const requestBody = preparePlannerRequest(plannerInfo);    
+    const genAIHeaders = prepareShortHeaders(plannerInfo.endpointId);
     requestOptions.headers = genAIHeaders;
 
     try
@@ -374,7 +422,8 @@ async function performMultiSearch(extractionInfo)
                                                 requestBody, requestOptions);
         const extractedResponse = processGenericResponse(response);
         const extractedList = extractedResponse.results[0].formatted_response;
-        await performExtractedSearch(extractedList, extractionInfo);
+        const abusiveResponse = await checkForAbusiveRequest(plannerInfo);
+        await performExtractedSearch(extractedList, plannerInfo, abusiveResponse);
     }
     catch(exception)
     {
@@ -383,47 +432,62 @@ async function performMultiSearch(extractionInfo)
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /multi/ondc/search
+ * @method POST
+ * @description In turn calls the Planner Search to create a planner
+ */
 _express.post("/multi/ondc/search", async (request, response) =>
 {
-    const extractionInfo = prepareMultiSearchInfo(request, process.env.PLANNER_EXTRACT_ONDC_PROMPT);
+    const plannerInfo = preparePlannerSearchInfo(request, process.env.PLANNER_EXTRACT_ONDC_PROMPT);
     const results = {};
 
     try
     {
-        const ackResponse = prepareAckResponse(extractionInfo);
+        const ackResponse = prepareAckResponse(plannerInfo);
         results.results = ackResponse;
-        response.send(results);
-        await performMultiSearch(extractionInfo);
+        response.send(results);        
+        await performPlannerSearch(plannerInfo);
     }
     catch(exception)
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        await fireErrorEvent(errorInfo, extractionInfo);
+        await fireErrorEvent(errorInfo, plannerInfo);
     }
 });
 
+/**
+ * @fires /multi/onest/search
+ * @method POST
+ * @description In turn calls the Planner Search to create a planner
+ */
 _express.post("/multi/onest/search", async (request, response) =>
 {
-    const extractionInfo = prepareMultiSearchInfo(request, process.env.PLANNER_EXTRACT_ONEST_PROMPT);
+    const plannerInfo = preparePlannerSearchInfo(request, process.env.PLANNER_EXTRACT_ONEST_PROMPT);
     const results = {};
 
     try
     {
-        const ackResponse = prepareAckResponse(extractionInfo);
+        const ackResponse = prepareAckResponse(plannerInfo);
         results.results = ackResponse;
         response.send(results);
-        await performMultiSearch(extractionInfo);
+        await performPlannerSearch(plannerInfo);
     }
     catch(exception)
     {
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
-        await fireErrorEvent(errorInfo, extractionInfo);
+        await fireErrorEvent(errorInfo, plannerInfo);
     }
 });
 
-_express.post("/agri/search", async (request, response) =>
+/**
+ * @fires /agri/ondc/search
+ * @method POST
+ * @description In turn calls the ONDC Agent to support any Agri-commerce query
+ */
+_express.post("/agri/ondc/search", async (request, response) =>
 {
     const agriInfo = prepareAgriInfo(request);
     const results = {};
@@ -443,7 +507,12 @@ _express.post("/agri/search", async (request, response) =>
     }
 });
 
-_express.post("/agri/ondc/search", async (request, response) =>
+/**
+ * @fires /agri/search
+ * @method POST
+ * @description In turn calls the LLM Agent to support any Agri-retail query
+ */
+_express.post("/agri/search", async (request, response) =>
 {
     const agriInfo = prepareAgriInfo(request);
     const results = {};
