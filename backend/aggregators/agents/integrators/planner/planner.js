@@ -251,6 +251,28 @@ function initializePlanner()
     prepareAllUrls();
 }
 
+async function emitPlannerEvent(eventName, eventData)
+{
+    const requestOptions= {};
+    requestOptions.httpsAgent = _axiosAgent;
+    
+    const requestBody = {};
+    requestBody.eventName = eventName;
+    requestBody.eventData = eventData;
+
+    try
+    {
+        const socketResponse = await Axios.post(`${process.env.EVENT_RECEIVER_HTTP_HOST}/message`,
+                                                requestBody, requestOptions);
+        console.log(socketResponse);
+        return socketResponse;
+    }
+    catch(exception)
+    {        
+        throw exception;
+    }
+}
+
 async function fireErrorEvent(errorInfo, plannerInfo)
 {
     try
@@ -269,7 +291,7 @@ async function fireErrorEvent(errorInfo, plannerInfo)
         payload.error = errorResponse;
 
         plannerData.payload = payload;
-        await emitAdapterEvent(KCallbackEvents.OnCallbackAction, plannerData);
+        await emitPlannerEvent(KCallbackEvents.OnCallbackAction, plannerData);
     }
     catch(exception)
     {
