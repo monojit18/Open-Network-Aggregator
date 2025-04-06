@@ -604,6 +604,7 @@ async function generateStreamChatContent(chatInfo)
             candidateCount: chatInfo.resultCount,
             generationConfig: chatInfo.parameters,
             // history: chatInfo.histories
+            systemInstruction: chatInfo.systemInstruction
         };
 
         if ((chatInfo.histories == null) || (chatInfo.histories.length == 0))
