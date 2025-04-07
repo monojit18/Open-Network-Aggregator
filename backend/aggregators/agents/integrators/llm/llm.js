@@ -77,6 +77,7 @@ function prepareLLMMessage(request)
     llmMessage.message = request.body.message;
     llmMessage.preferred_network = request.body.preferred_network;
     llmMessage.preferred_networks = request.body.preferred_networks;
+    llmMessage.isAbusive = (request.params.isAbusive == "true") ? true : false;
     return llmMessage;
 }
 
@@ -139,11 +140,12 @@ async function initializeAgent()
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /search/:isAbusive?
  * @method POST
  * @description In turn calls Search API of the corresponding Adapter
+ * Request Param: isAbusive = true, false
  */
-_express.post("/search", async (request, response) =>
+_express.post("/search/:isAbusive?", async (request, response) =>
 {    
     const llmMessage = prepareLLMMessage(request);
     const results = {};
