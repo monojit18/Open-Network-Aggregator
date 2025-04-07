@@ -558,7 +558,7 @@ _express.post("/agri/search", async (request, response) =>
     }
 });
 /* API DEFINITIONS - END */
-var port = process.env.port || process.env.PORT || 11002;
+var port = process.env.port || process.env.PORT || 10002;
 _server.listen(port);
 
 initializePlanner();
