@@ -697,35 +697,33 @@ sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 #Set Local Variables (inside Jumper VM)
 ================================================
 BASEFOLDERPATH="./open-network-aggregator"
-DISTRIBUTION_PATH="$BASEFOLDERPATH/distribution"
-HELPERSPATH="/Users/monojitd/Workloads/Development/Projects/GithubProjects/Workshops/Helpers"
-OWNER=admin@monojitdatta.altostrat.com
-PROJECT_ID=<PROJECT_ID>
-PROJECT_NAME=onix-agentic
-GSA_DISPLAY_NAME=$PROJECT_NAME-sa
+BASEFOLDERPATH=""
+DISTRIBUTION_PATH=""
+HELPERSPATH=""
+OWNER=
+PROJECT_ID=
+GSA_DISPLAY_NAME=
 GSA=$GSA_DISPLAY_NAME@$PROJECT_ID.iam.gserviceaccount.com
-VPC_NAME=onix-agentic-dev-vpc
+VPC_NAME=
 CLUSTER_SUBNET_NAME=gke-subnet
 PROXY_SUBNET_NAME=proxy-subnet
 PSC_SUBNET_NAME=psc-subnet
+MAINTENANCE_SUBNET_NAME=management_subnet
 CLUSTER=gke-dev-cluster
 NODEPOOL=gkeappspool
-REGION=asia-southeast1
-ZONE=asia-southeast1-a
+REGION=
+ZONE=
 IP_ADDRESS_NAME=dev-glb-lb-ip
-CERTIFICATE_NAME=glb-cloud-lb-cert-071220242130
-DOMAIN1_NAME=onix-dev.gcpwkshpdev.com
-DOMAIN2_NAME=onix-staging.gcpwkshpdev.com
-DOMAIN3_NAME=onix-prod.gcpwkshpdev.com
+CERTIFICATE_NAME=
+DOMAIN1_NAME=
+DOMAIN2_NAME=
+DOMAIN3_NAME=
 DOMAIN_LIST=$DOMAIN1_NAME,$DOMAIN2_NAME,$DOMAIN3_NAME
-DNS_ZONE=cloud-google-dzone
-AR_REPO=onix-agentic-dev-repo
-JUMP_SERVER_NAME=onix-agentic-mgmt-vm
-MAINTENANCE_SUBNET_NAME=management-subnet
-JUMPSERVER_IP=$(gcloud compute addresses describe jump-server-ip --format="get(address)")
-JUMPSERVER_PRIVATE_IP=$(gcloud compute addresses describe jump-server-private-ip --format="get(address)")
+DNS_ZONE=
+AR_REPO=
+JUMP_SERVER_NAME=
 
-#gcloud auth login
+gcloud auth login
 gcloud auth list
 
 gcloud config set project $PROJECT_ID
