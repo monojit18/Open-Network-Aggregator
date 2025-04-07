@@ -24,7 +24,7 @@ deployment:
     containerPorts: [6065]
     envVars:
     - name: WEBSOCK_STREAMER_HTTP_HOST      
-      value: https://streamer-serverlib-
+      value: http://streamer-serverapp-svc.utilities-dev.svc
     - name: GENAI_LOCATION
       value: us-central1
     - name: GENAI_PUBLISHER

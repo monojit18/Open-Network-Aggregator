@@ -24,11 +24,11 @@ deployment:
     containerPorts: [6067]
     envVars:
     - name: WEBSOCK_STREAMER_HTTP_HOST      
-      value: https://streamer-serverlib-
+      value: http://streamer-serverapp-svc.utilities-dev.svc
     - name: GENAI_LOCATION
       value: us-central1
     - name: GENAI_GEMINI_VISION_MODEL
-      value: gemini-1.5-pro
+      value: emini-1.5-flash-002
     - name: PROJECT_ID
       value: 
 service:

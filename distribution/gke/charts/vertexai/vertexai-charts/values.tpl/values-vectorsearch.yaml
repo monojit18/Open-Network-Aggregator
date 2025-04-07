@@ -24,7 +24,13 @@ deployment:
     containerPorts: [6064]
     envVars:
     - name: VECTOR_SEARCH_LOCATION
-      value: us-central1    
+      value: us-central1
+    - name: VECTOR_SEARCH_TEXT_EMBEDDING_MODEL
+      value: text-embedding-005
+    - name: VECTOR_SEARCH_IMAGE_EMBEDDING_MODEL
+      value: multimodalembedding@001
+    - name: VECTOR_SEARCH_MULTILINGUAL_EMBEDDING_MODEL
+      value: text-multilingual-embedding-002
     - name: PROJECT_ID
       value: 
 service:

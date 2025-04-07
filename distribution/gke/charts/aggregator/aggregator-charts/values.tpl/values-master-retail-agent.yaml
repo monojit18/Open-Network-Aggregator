@@ -28,7 +28,7 @@ deployment:
     - name: AGENTIC_DOMAIN_PREFIX
       value: "domain:"
     - name: AGENTIC_NLP_PROMPT
-      value: "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\""
+      value: "Convert the following sentence into a JSON object and return as a proper JSON. Do not add any new items into the response.\nConditions:\nDomain for any Search or Transactional query on Learning, Courses, Skills, Jobs, Scholarships and Work Experiences will be \"ONEST\"\nDomain for any Search or Transactional query on Retail, Online Shopping and Booking will be \"ONDC\"\nDomain for search query on Weather Forecast will be \"WEATHER\"\nDomain for search query on Videos and Webinars will be \"VIDEO\"\nDomain for search query on the price of any Agriculture Products or Commodities in a Mandi or Market will be \"ENAM\"\nDomain for any Generic query on any topic asking for suggestions, guidance and help will be \"LLM\"\nDomain for any negative, irrelevant, abusive query which is out of any of the above contexts will be \"LLM\""
     - name: AGENTIC_MODEL_ENDPOINT_ID
       value: ""
     - name: STORAGELIB_HOST
@@ -45,6 +45,8 @@ deployment:
       value: http://genaimultimodalapp-svc.vertexai-dev.svc
     - name: ONDC_AGENT_URL
       value: http://ondcagent-svc.aggregator-dev.svc
+    - name: ONEST_AGENT_URL
+      value: http://onestagent-svc.aggregator-dev.svc
     - name: VIDEO_AGENT_URL
       value: http://videoagent-svc.aggregator-dev.svc
     - name: WEATHER_AGENT_URL
@@ -63,6 +65,8 @@ deployment:
       value: x-partner-api-mandi-key
     - name: VIDEO_API_KEY
       value: x-api-video-key
+    - name: PLANNER_LLM_SEARCH
+      value: "true"
     - name: PROJECT_ID
       value: <project-id>
 service:
