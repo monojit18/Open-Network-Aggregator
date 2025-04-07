@@ -22,6 +22,7 @@ const DotEnv = require("dotenv");
 const Express = require("express");
 const Cors = require("cors");
 const Axios = require('axios');
+const { isAbsolute } = require("path");
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -314,7 +315,8 @@ async function checkForAbusiveRequest(plannerInfo)
                                                 requestBody, requestOptions);
         const abusiveResult = processGenericResponse(response);
         const abusiveResponse  = abusiveResult.results[0].formatted_response;
-        return abusiveResponse;
+        const isAbusive = ((abusiveResponse.isAbusive == true) || (abusiveResponse.isIndividual) == true);
+        return isAbusive;
     }
     catch(exception)
     {
@@ -373,7 +375,7 @@ async function callLLMAgent(llmInfo)
     
     try
     {
-        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search`,
+        const agentResponse = await Axios.post(`${_allUrls[KMicroServices.LLMAgent]}/search/${llmInfo.isAbusive}`,
                                                     requestBody, requestOptions);
         const agentResult = processGenericResponse(agentResponse);
         return agentResult;
@@ -384,7 +386,7 @@ async function callLLMAgent(llmInfo)
     }
 }
 
-async function performExtractedSearch(extractedList, plannerInfo, abusiveResponse)
+async function performExtractedSearch(extractedList, plannerInfo)
 {
     try
     {         
@@ -394,30 +396,25 @@ async function performExtractedSearch(extractedList, plannerInfo, abusiveRespons
             {
                 case KDomainNames.ONDC:
                 {
-                    if ((abusiveResponse.isAbusive == false)
-                        && (abusiveResponse.isIndividual) == false)
-                    {
-                        plannerInfo.message.network.relevant_text = item.relevant_text;
-                        await callONDCAgent(plannerInfo);
-                    }                    
+                    const copiedPlannerInfo = JSON.parse(JSON.stringify(plannerInfo));
+                    copiedPlannerInfo.message.network.relevant_text = item.relevant_text;
+                    await callONDCAgent(copiedPlannerInfo);                                        
                 }
                 break;
     
                 case KDomainNames.VIDEO:
                 {
-                    if ((abusiveResponse.isAbusive == false)
-                        && (abusiveResponse.isIndividual) == false)
-                    {
-                        plannerInfo.message.network.filters.query = item.relevant_text;
-                        await callVideoAgent(plannerInfo);
-                    }                    
+                    const copiedPlannerInfo = JSON.parse(JSON.stringify(plannerInfo));
+                    copiedPlannerInfo.message.network.filters.query = item.relevant_text;
+                    await callVideoAgent(copiedPlannerInfo);                                    
                 }
                 break;
     
                 case KDomainNames.LLM:
                 {
-                    plannerInfo.message.network.filters.query = item.relevant_text;
-                    await callLLMAgent(plannerInfo);
+                    const copiedPlannerInfo = JSON.parse(JSON.stringify(plannerInfo));
+                    copiedPlannerInfo.message.network.filters.query = item.relevant_text;
+                    await callLLMAgent(copiedPlannerInfo);
                 }
                 break;
             }
@@ -443,9 +440,8 @@ async function performPlannerSearch(plannerInfo)
         let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
                                                 requestBody, requestOptions);
         const extractedResponse = processGenericResponse(response);
-        const extractedList = extractedResponse.results[0].formatted_response;
-        const abusiveResponse = await checkForAbusiveRequest(plannerInfo);
-        await performExtractedSearch(extractedList, plannerInfo, abusiveResponse);
+        const extractedList = extractedResponse.results[0].formatted_response;        
+        await performExtractedSearch(extractedList, plannerInfo);
     }
     catch(exception)
     {
@@ -468,8 +464,12 @@ _express.post("/multi/ondc/search", async (request, response) =>
     {
         const ackResponse = prepareAckResponse(plannerInfo);
         results.results = ackResponse;
-        response.send(results);        
-        await performPlannerSearch(plannerInfo);
+        response.send(results);
+
+        const isAbusive = await checkForAbusiveRequest(plannerInfo);
+        plannerInfo.isAbusive = isAbusive;
+        (isAbusive == true) ? await callLLMAgent(plannerInfo)
+                            : await performPlannerSearch(plannerInfo);        
     }
     catch(exception)
     {
@@ -494,7 +494,11 @@ _express.post("/multi/onest/search", async (request, response) =>
         const ackResponse = prepareAckResponse(plannerInfo);
         results.results = ackResponse;
         response.send(results);
-        await performPlannerSearch(plannerInfo);
+
+        const isAbusive = await checkForAbusiveRequest(plannerInfo);
+        plannerInfo.isAbusive = isAbusive;       
+        (isAbusive == true) ? await callLLMAgent(plannerInfo)
+                            : await performPlannerSearch(plannerInfo);
     }
     catch(exception)
     {
@@ -554,7 +558,7 @@ _express.post("/agri/search", async (request, response) =>
     }
 });
 /* API DEFINITIONS - END */
-var port = process.env.port || process.env.PORT || 10002;
+var port = process.env.port || process.env.PORT || 11002;
 _server.listen(port);
 
 initializePlanner();
