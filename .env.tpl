@@ -27,7 +27,7 @@ VECTOR_SEARCH_IMAGE_EMBEDDING_MODEL="multimodalembedding@001"
 VECTOR_SEARCH_MULTILINGUAL_EMBEDDING_MODEL="text-multilingual-embedding-002"
 GENAI_API_ENDPOINT="us-central1-aiplatform.googleapis.com"
 GENAI_GEMINI_TEXT_MODEL="gemini-1.5-flash-002"
-GENAI_GEMINI_VISION_MODEL="gemini-1.5-pro"
+GENAI_GEMINI_MULTIMODAL_MODEL="gemini-1.5-flash-002"
 
 STORAGELIB_HOST="http://localhost:6060"
 TRANSLATELIB_HOST="http://localhost:6061"

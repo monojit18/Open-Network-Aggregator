@@ -27,8 +27,8 @@ deployment:
       value: http://streamer-serverapp-svc.utilities-dev.svc
     - name: GENAI_LOCATION
       value: us-central1
-    - name: GENAI_GEMINI_VISION_MODEL
-      value: emini-1.5-flash-002
+    - name: GENAI_GEMINI_MULTIMODAL_MODEL
+      value: gemini-1.5-flash-002
     - name: PROJECT_ID
       value: 
 service:

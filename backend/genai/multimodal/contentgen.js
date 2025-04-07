@@ -70,7 +70,7 @@ DotEnv.config();
 _express.use(Express.json
 ({
     extended: true,
-    limit: '10mb'
+    limit: '100mb'
 }));
     
 _express.use(Express.urlencoded
@@ -139,7 +139,7 @@ function prepareContentGenClient()
     _markDown = new MarkdownIt();
 
     const modelInfo = {};
-    modelInfo.model = process.env.GENAI_GEMINI_VISION_MODEL;
+    modelInfo.model = process.env.GENAI_GEMINI_MULTIMODAL_MODEL;
     _generativeAIModel = _vertexAIClient.getGenerativeModel(modelInfo);
 
     const clientOptions = {};
@@ -163,6 +163,7 @@ function prepareContentParameters(request)
 {
     const contentInfo = {};
     contentInfo.sessionId = request.params.sessionId;
+    contentInfo.systemInstruction = request.body.instruction;
     contentInfo.contents = request.body.contents;
     contentInfo.parameters = prepareGenAIParameters(request);
     contentInfo.type = (request.params.type == KStreamInfo.StreamResponseType)
@@ -188,10 +189,11 @@ function formatResponseText(markedDownContent)
 
         const markDownList = _markDown.parse(markedDownContent);
         let predictionContent = null;
+        
         markDownList.forEach ((markDown) =>
         {
             if (markDown.content != '')
-            {                
+            {
                 exceptionContent = markDown.content;
                 predictionContent = JSON.parse(markDown.content);
                 return;
@@ -250,7 +252,7 @@ async function initSocketServerConnection()
 
     try
     {
-        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/init`,
+        const socketResponse = await Axios.post(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}/stream/init`,
                                                 requestBody, requestOptions);
         console.log(socketResponse);
         return socketResponse;
@@ -267,7 +269,8 @@ async function generateContent(contentInfo)
     const request =
     {        
         contents: contentInfo.contents,
-        generation_config: contentInfo.parameters
+        generation_config: contentInfo.parameters,
+        systemInstruction: contentInfo.systemInstruction
     };
 
     try
