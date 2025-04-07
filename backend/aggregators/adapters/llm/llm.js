@@ -112,6 +112,7 @@ function prepareLLMChatInfo(request)
     llmInfo.message = request.body.message;
     llmInfo.prompt = process.env.LLM_CHAT_PROMPT;
     llmInfo.histories = llmInfo.message.network.chat?.histories;
+    llmInfo.isAbusive = request.body.isAbusive;
 
     const filters = llmInfo.message.network.filters;
     if (Array.isArray(filters) == true)
@@ -269,7 +270,7 @@ async function emitAdapterEvent(eventName, eventData)
         return socketResponse;
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }
 }
@@ -365,8 +366,15 @@ _express.post("/llm/chat", async (request, response) =>
         results.results = ackResponse;
         response.send(results);
 
-        const followupResponse = await generateLLMFollowup(llmInfo);
-        await performLLMChat(llmInfo, followupResponse);
+        if (llmInfo.isAbusive != true)
+        {
+            const followupResponse = await generateLLMFollowup(llmInfo);
+            await performLLMChat(llmInfo, followupResponse);
+        }
+        else
+        {
+            await performLLMChat(llmInfo, []);
+        }        
     }
     catch(exception)
     {
