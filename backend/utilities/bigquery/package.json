@@ -7,14 +7,15 @@
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors @google-cloud/bigquery",
+        "preinstall": "mkdir -p data",
+        "install": "npm install --save-dev express jshint dotenv cors @google-cloud/bigquery",
         "start": "node bigquery.js"
     },
     "engines": {
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "@google-cloud/bigquery": "^7.9.2",
+        "@google-cloud/bigquery": "^7.9.3",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "express": "^4.21.2",

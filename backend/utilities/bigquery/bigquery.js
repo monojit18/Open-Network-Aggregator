@@ -18,11 +18,11 @@ limitations under the License.
 
 const Http = require("http");
 const Path = require("path");
+const FS = require('fs');
 const DotEnv = require("dotenv");
 const Express = require("express");
 const Cors = require("cors");
 const {BigQuery} = require("@google-cloud/bigquery");
-const path = require("path");
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -30,13 +30,13 @@ let bigqueryClient = null;
 
 _express.use(Express.json
 ({
-    extended: true
+    extended: true,
+    limit: '100mb'
 }));
     
 _express.use(Express.urlencoded
 ({
-    extended: true,
-    limit: '100mb'
+    extended: true
 }));
 
 _express.use(Cors
@@ -78,8 +78,9 @@ function prepareVectorSearchInfo(request)
     const bigqueryInfo = {};
     bigqueryInfo.datasetId = request.params.datasetId;
     bigqueryInfo.tableId = request.params.tableId;
-    bigqueryInfo.searchColumn = request.query.scol;
     bigqueryInfo.queryColumn = request.query.qcol;
+    bigqueryInfo.searchColumn = (request.query.scol != null)
+                                ? request.query.scol : request.query.qcol;
     bigqueryInfo.embeddingModel = request.headers.embedding;
     bigqueryInfo.topK = request.headers.max_results;
     bigqueryInfo.distanceType = request.headers.distance;
@@ -162,6 +163,15 @@ function prepareExecuteQueryResponse(queryResponse)
     executeResponse.jobId = queryResponse.job.id;    
     executeResponse.location = queryResponse.job.location;
     return executeResponse;
+}
+
+function prepareInsertRowsResponse(rowsResponse, rows)
+{
+    let insertResponse = {};
+    insertResponse.status = rowsResponse.status;
+    insertResponse.kind = rowsResponse.kind;
+    insertResponse.rows = rows;
+    return insertResponse;
 }
 
 async function executeQuery(query, bigqueryInfo)
@@ -339,10 +349,44 @@ async function insertRowsAsStream(bigqueryInfo)
 {
     try
     {
-        const resp = await bigqueryClient.dataset(bigqueryInfo.datasetId)
+        const responsesList = await bigqueryClient.dataset(bigqueryInfo.datasetId)
                                          .table(bigqueryInfo.tableId)
-                                         .insert(bigqueryInfo.rows);        
-        return {};
+                                         .insert(bigqueryInfo.rows);
+        const insertRowsResponse = responsesList[0];
+        const insertResponse = prepareInsertRowsResponse(insertRowsResponse, bigqueryInfo.rows);
+        return insertResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function insertRowsAsBatch(bigqueryInfo)
+{
+    try
+    {        
+        const batchFilePath = Path.join(__dirname,
+                                        process.env.BIG_QUERY_DATA_DIR_PATH,
+                                        process.env.BIG_QUERY_BATCH_FILE_NAME);
+
+        const option = {};
+        option.flag = "a"; // append mode
+
+        for (const row of bigqueryInfo.rows)
+        {
+            const rowString = JSON.stringify(row) + "\n";
+            FS.writeFileSync(batchFilePath, rowString, option);            
+        }
+
+        const responsesList = await bigqueryClient.dataset(bigqueryInfo.datasetId)
+                                         .table(bigqueryInfo.tableId)
+                                         .load(batchFilePath);
+        FS.unlinkSync(batchFilePath);
+
+        const insertRowsResponse = responsesList[0];
+        const insertResponse = prepareInsertRowsResponse(insertRowsResponse, bigqueryInfo.rows);
+        return insertResponse;
     }
     catch(exception)
     {
@@ -693,6 +737,34 @@ _express.post("/bigquery/datasets/:datasetId/tables/:tableId/rows/insert/stream"
         response.status(errorInfo.code).send(results);
     }
 });
+
+/**
+ * @fires /bigquery/datasets/:datasetId/tables/:tableId/rows/insert/stream
+ * @method POST
+ * @description Insert records as a stream in a Table in Bigquery (No Quota limit)
+ * Request Param: datasetId = value; mandatory
+ * Request Param: tableId = value; mandatory
+ */
+_express.post("/bigquery/datasets/:datasetId/tables/:tableId/rows/insert/batch", async (request, response) =>
+    {
+        const bigqueryInfo = prepareBigQueryInfo(request);
+        bigqueryInfo.rows = request.body.rows;
+    
+        const results = {};
+    
+        try
+        {
+            const insertResponse = await insertRowsAsBatch(bigqueryInfo);
+            results.results = insertResponse;
+            response.status(200).send(results);
+        }
+        catch(exception)
+        {
+            let errorInfo = prepareErrorMessage(exception);        
+            results.results = errorInfo.message;
+            response.status(errorInfo.code).send(results);
+        }
+    });
 
 /**
  * @fires /bigquery/datasets/:datasetId/tables/:tableId/rows/insert
