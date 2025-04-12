@@ -696,7 +696,6 @@ sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 ================================
 #Set Local Variables (inside Jumper VM)
 ================================================
-BASEFOLDERPATH="./open-network-aggregator"
 BASEFOLDERPATH=""
 DISTRIBUTION_PATH=""
 HELPERSPATH=""
@@ -722,6 +721,7 @@ DOMAIN_LIST=$DOMAIN1_NAME,$DOMAIN2_NAME,$DOMAIN3_NAME
 DNS_ZONE=
 AR_REPO=
 JUMP_SERVER_NAME=
+JUMPSERVER_PRIVATE_IP=
 
 gcloud auth login
 gcloud auth list

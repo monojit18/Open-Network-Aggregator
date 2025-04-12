@@ -474,14 +474,14 @@ async function generateCustomContent(endpointInfo)
         const requestBody = {};
         requestBody.contents = endpointInfo.contents;
         requestBody.systemInstruction = endpointInfo.systemInstruction;
-
+        
         const endpointResult = await Axios.post(`${endpointURL}`, requestBody, requestOptions);
         const predictionContent = preaprePredictionResponse(endpointResult.data,
                                                             endpointInfo.expectJSON);
         return predictionContent;
     }
     catch(exception)
-    {
+    {        
         throw exception;
     }
 }
