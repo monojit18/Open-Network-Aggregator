@@ -412,7 +412,8 @@ _express.get("/healthz", async (request, response) =>
 /**
  * @fires /search
  * @method POST
- * @description In turn calls Search API of the corresponding Agent
+ * @description Determines user's intent through a fine tuned Gemini-based model
+ * Calls Search API of the corresponding Agent based on the intent
  */
 _express.post("/search", async (request, response) =>
 {

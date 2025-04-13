@@ -141,6 +141,12 @@ async function initializeAgent()
 }
 
 /* API DEFINITIONS - START */
+/**
+ * @fires /search
+ * @method POST
+ * @description Calls Search API of the either the *Planner agent* or the *onest-adapter (in future)*
+ * based on the intent from **Master Agent**
+ */
 _express.post("/search", async (request, response) =>
 {
     const results = {};
