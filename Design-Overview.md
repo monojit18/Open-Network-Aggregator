@@ -1,4 +1,4 @@
-# Multi Agent Aggregator for Open Network -
+# Zip codeMulti Agent Aggregator for Open Network -
 
 ## Design Overview
 
@@ -166,7 +166,7 @@ Agentic framework is headless service to connect to various types of backends wi
 >   - Route requests to appropriate Affiliates and/or Content Providers(*Outside Network*)
 > - ***Integrator App*** will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
 >   - **Demand side**
->     - The configuration options for Buyers and Seekers would be managed by Interator App in its own database
+>     - The configuration options for Buyers and Seekers would be managed by Integrator App in its own database
 >     - Preferred Networks - Preferred target networks to connect from **Google Agentic framework**
 >     - Intended Verticals - Preferred Verticals to support by **Google Agentic framework**
 >     - Maintain API security by creating and managing API key which needs to be sent through API header
@@ -552,7 +552,7 @@ Agentic framework is headless service to connect to various types of backends wi
 >
 >     
 >
-> - **Publicly availble Providers**
+> - **Publicly available Providers**
 >
 >   - The Content providers has APIs exposed to be consumed publicly
 >   - **Google Agentic framework** call those APIs to get appropriate content
@@ -986,7 +986,7 @@ Network:
 >
 > **catalog.provider.items**
 >
-> Currently this is a list of JSON objects if any type as different Affiliates has different product structure. This means every time a new Affiliates ia dded, the Integrator app has to change their UI with new set of fields.
+> Currently this is a list of JSON objects if any type as different Affiliates has different product structure. This means every time a new Affiliates is added, the Integrator app has to change their UI with new set of fields.
 >
 > In future, pan is to standardise the items array with common set of JSON objects which every Affiliate has to send. That would make the UI integration seamless.
 
@@ -1171,23 +1171,22 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 # Points to Note
 
-> - **Google Agentic framework** would completely **Stateless**
->   - Understand user’s intent from Text or Voice
+> - **Google Agentic framework**
+>   - Understands user’s intent from Text or Voice
 >   - Break that into Actionable insights
 >   - Route requests to appropriate Affiliates and/or Content Providers(*Outside Network*)
-> - Integrator App will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
+> - [Integrator App](#Integrator App) will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
 >   - **Demand side**
->     - The configuration options for Buyers and Seekers would be managed by Interator App in its own database
+>     - The configuration options for Buyers and Seekers would be managed by Integrator App in its own database
 >     - Preferred Networks - Preferred target networks to connect from **Google Agentic framework**
 >     - Intended Verticals - Preferred Verticals to support by **Google Agentic framework**
 >     - Maintain API security by creating and managing API key which needs to be sent through API header
->
-> - **Supply Side**
->   - Maintain a list of default Affiliates and Content Providers(*Outside Network*)
->   - Log all transactions in an Audit DB
->
-> - Implement Basic Analytics
-> - Implement Advanced Analytics (*Future*)
+>  - **Supply Side**
+>     - Maintain a list of default Affiliates and Content Providers(*Outside Network*)
+>     - Log all transactions in an Audit DB
+>   - Implement Basic Analytics
+>  - Implement Advanced Analytics (*Future*)
+>   
 
 
 
