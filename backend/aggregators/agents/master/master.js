@@ -374,7 +374,7 @@ async function processNLPInfo(nlpInfo)
     requestOptions.headers = genAIHeaders;
 
     try
-    {
+    {        
         let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/endpoint/text?type=json`,
                                                 requestBody, requestOptions);
         const nlpResponsesList = processGenericResponse(response);
