@@ -117,7 +117,7 @@ async function initializeAgent()
 /**
  * @fires /search
  * @method POST
- * @description Calls Search API of the corresponding Adapter (*buyer-adapter*)
+ * @description Calls Search API of the Buyer Adapter
  */
 _express.post("/search", async (request, response) =>
 {

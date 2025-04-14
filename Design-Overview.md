@@ -1,4 +1,4 @@
-# Zip codeMulti Agent Aggregator for Open Network -
+# Multi Agent Aggregator for Open Network -
 
 ## Design Overview
 
@@ -20,6 +20,11 @@
 Google Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
 
 This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
+
+# Pre-reads
+
+- [Open Network Aggregator - General Overview](./README.md)
+- [Open Network Aggregator - Deployment](./Deployment.md)
 
 # High-Level View
 
@@ -82,12 +87,12 @@ Agentic framework is headless service to connect to various types of backends wi
 
 ## Demand-side Affiliates
 
-![demand-affilate-int](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/demand-affilate-int.png)
+![demand-affilate-int](./assets/demand-affilate-int.png)
 
 - Affiliate requests API Access to the hosting partner of the *Integrator App*
 - A Google Form link is sent to the Affiliate by GCP partner hosting the *Integrator App*
 - Affiliate fills up the form with details of *User Profile* information to be sent to Agentic framework
-  - Fields to be sent to Agentic - **City, Mobile No., Email, Latitude, Longitude** are mandatory fields
+  - Fields to be sent to Agentic - **City, Mobile No., Email, Latitude, Longitude, Zip code** are mandatory fields
   - Any other fields that Affiliate wants to send to the Agentic framework
 
 - The fields are kept as a configuration parameters by *Integrator App*, mangled by GCP partner hosting the *Integrator App*
@@ -132,7 +137,7 @@ Agentic framework is headless service to connect to various types of backends wi
 
 ## Supply-side Affiliates
 
-![supply-affilate-int](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/supply-affilate-int.png)
+![supply-affilate-int](./assets/supply-affilate-int.png)
 
 - Affiliate requests API Access to the hosting partner of the *Integrator App*
 
@@ -283,8 +288,8 @@ Agentic framework is headless service to connect to various types of backends wi
 
 | Function          | Description                                                  | URL path | Http(s) |
 | ----------------- | ------------------------------------------------------------ | -------- | ------- |
-| Health Check      | Returns 200 OK<br />Used by K8s API gateway to check for healthy backends | /healthz | GET     |
-| Search for Intent | Determines user's intent through a fine tuned Gemini-based model. Calls Search API of the corresponding Agent based on the intent | /search  | POST    |
+| Health Check      | Returns 200 OK<br />Health API for the microservice; can be LBs/Gateways while checking the backend health status | /healthz | GET     |
+| Search for Intent | Determines user's intent through a fine tuned Gemini-based model<br/>Calls Search API of the corresponding Agent based on the intent | /search  | POST    |
 
 
 
@@ -586,7 +591,7 @@ Agentic framework is headless service to connect to various types of backends wi
 
 # [Master Agent](#master-agent)
 
-![demand-affilate-2](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/demand-affilate-2.png)
+![demand-affilate-2](./assets/demand-affilate-2.png)
 
 - Api for [Demand-side affiliates](#Demand-side Affiliates) to integrate with the **Google Agentic framework**
 - This api is hosted by **Google Agentic framework** and exposed to the Demand side of the Network - Buyers and Seekers
@@ -652,11 +657,7 @@ paths:
                   description: Contains a list of target Affilaites and/or Content providers.|
                     Google Agentic framework will route requests appropriately to these networks.
                   properties:                    
-                    $ref: '#/components/schemas/PreferredNetwork'
-                  properties:
-                    type: array
-                    items:
-                      type: string
+                    $ref: '#/components/schemas/PreferredNetwork'                  
               required:
               - transaction_id
               - message_id
@@ -859,52 +860,58 @@ Error:
 
 ```yaml
 Context:
-      description: Describes a message context.
+  description: Describes a message context. This is primarily used internally by the framework.|
+    Affiliates are expected to send this as-is in their response to the search() request.
+  type: object
+  properties:
+    domain:
+      $ref: '#/components/schemas/Domain'
+    location:
       type: object
+      description: Contains location details of the user (*Mobile Device or Web*).
       properties:
-        domain:
-          $ref: '#/components/schemas/Domain'
-        location:
-          type: object
-          description: Contains location details of the user (*Mobile Device or Web*).
-          properties:
-            mob:
-              type: string
-            city:
-              type: string
-            name:
-              type: string
-            email:
-              type: string
-            lat:
-              type: string
-            lng:
-              type: string
-            zip:
-              type: string      
-        version:
+        mob:
           type: string
-          description: Version of Google Agentic framework API specification.
-        transaction_id:
+        city:
           type: string
-          description: This is a unique value which persists across all API calls.
-        message_id:
+        name:
           type: string
-          description: This is a unique value which persists during a request / callback cycle.
-        timestamp:
+        email:
           type: string
-          format: date-time
-          description: Time of request generation in RFC3339 format.
-        callback_url:
-          type: string          
-          description: URL to be called by Affilaites in response to the search() function call.|
-          This is used only if Affiliates want to be send data Synchronously.
-      required:
-      - domain
-      - location
-      - transaction_id
-      - message_id
-      - timestamp
+        lat:
+          type: string
+        lng:
+          type: string
+        zip:
+          type: string      
+    version:
+      type: string
+      description: Version of Google Agentic framework API specification.
+    transaction_id:
+      type: string
+      description: This is a unique value which persists across all API calls.
+    message_id:
+      type: string
+      description: This is a unique value which persists during a request / callback cycle.
+    timestamp:
+      type: string
+      format: date-time
+      description: Time of request generation in RFC3339 format.
+    callback_url:
+      type: string          
+      description: URL to be called by Affilaites in response to the search() function call.|
+        This is used only if Affiliates want to be send data Synchronously.
+  required:
+  - domain
+  - location
+  - transaction_id
+  - message_id
+  - timestamp
+
+  Domain:
+  type: string
+  description: Describes the domain or network name used in the transaction.|
+    e.g. domain:ONDC, domain:ONEST
 ```
 
 #### message
@@ -952,9 +959,9 @@ Catalog:
       required:
       - descriptor
       - embedding_url
-  required:
-  - descriptor
-  - provider
+    required:
+    - descriptor
+    - provider
 ```
 
 ##### network
@@ -992,7 +999,7 @@ Network:
 
 
 
-## VIDEO
+## Video
 
 ### /search
 
@@ -1058,7 +1065,141 @@ paths:
 
 
 
-## Weather
+### /on_search
+
+#### context
+
+```yaml
+Context:
+  description: Describes a message context. This is primarily used internally by the framework.|
+    Affiliates are expected to send this as-is in their response to the search() request.
+  type: object
+  properties:
+    domain:
+      $ref: '#/components/schemas/Domain'
+    location:
+      type: object
+      description: Contains location details of the user (*Mobile Device or Web*).
+      properties:
+        mob:
+          type: string
+        city:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        lat:
+          type: string
+        lng:
+          type: string
+        zip:
+          type: string      
+    version:
+      type: string
+      description: Version of Google Agentic framework API specification.
+    transaction_id:
+      type: string
+      description: This is a unique value which persists across all API calls.
+    message_id:
+      type: string
+      description: This is a unique value which persists during a request / callback cycle.
+    timestamp:
+      type: string
+      format: date-time
+      description: Time of request generation in RFC3339 format.
+    callback_url:
+      type: string          
+      description: URL to be called by Affilaites in response to the search() function call.|
+        This is used only if Affiliates want to be send data Synchronously.
+  required:
+  - domain
+  - location
+  - transaction_id
+  - message_id
+  - timestamp
+
+  Domain:
+  type: string
+  description: Describes the domain or network name used in the transaction.|
+    e.g. domain:VIDEO
+```
+
+#### message
+
+```yaml
+message:
+  type: object
+  properties:
+    catalog:
+      $ref: '#/components/schemas/Catalog'
+    network:
+      $ref: '#/components/schemas/Network'
+    next_page_token:
+      type: string                    
+  required:
+  - catalog
+  - network
+```
+
+##### catalog
+
+```yaml
+Catalog:
+  description: Item containing Search response from the Affiliates or Content providers.
+  type: object
+  properties:
+    descriptor:
+      type: object
+      properties:
+        name:
+          type: string
+    provider:
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string            
+        items:
+          type: array          
+          description: And array of JSON objects containing products from Affiliates.
+      required:
+      - descriptor          
+    required:
+    - descriptor
+    - provider
+```
+
+##### network
+
+```yaml
+Network:      
+  type: object
+  description: Describes details of the target network.
+  properties:
+    name:
+      type: string
+      enum:
+      - VIDEO          
+    action:
+      type: string
+    relevant_text:
+      type: string
+    filters:
+      type: array      
+      description: An array of string or JSON objects to help Affiliates perform Search filtering
+  required:
+  - name
+  - action
+  - relevant_text
+  - filters 
+```
+
+
+
+## Mandi
 
 ### /search
 
@@ -1077,8 +1218,9 @@ paths:
       tags:
       - Domain spaecific search
       - Google Agentic framework
-      - Weather
-      description: Domain spaecific search by Google Agentic framework from various Weather data providers.
+      - Mandi, ENAM, Pricing
+      description: Domain spaecific search by Google Agentic framework from various Content Providers |
+        outside the Open Networks - Mandi, ENAM
       requestBody:
         description: Search service by Google Agentic framework.
         content:
@@ -1120,6 +1262,340 @@ paths:
 ### [ack](#ack)
 
 ### [error](#error)
+
+
+
+### /on_search
+
+#### context
+
+```yaml
+Context:
+  description: Describes a message context. This is primarily used internally by the framework.|
+    Affiliates are expected to send this as-is in their response to the search() request.
+  type: object
+  properties:
+    domain:
+      $ref: '#/components/schemas/Domain'
+    location:
+      type: object
+      description: Contains location details of the user (*Mobile Device or Web*).
+      properties:
+        mob:
+          type: string
+        city:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        lat:
+          type: string
+        lng:
+          type: string
+        zip:
+          type: string      
+    version:
+      type: string
+      description: Version of Google Agentic framework API specification.
+    transaction_id:
+      type: string
+      description: This is a unique value which persists across all API calls.
+    message_id:
+      type: string
+      description: This is a unique value which persists during a request / callback cycle.
+    timestamp:
+      type: string
+      format: date-time
+      description: Time of request generation in RFC3339 format.
+    callback_url:
+      type: string          
+      description: URL to be called by Affilaites in response to the search() function call.|
+        This is used only if Affiliates want to be send data Synchronously.
+  required:
+  - domain
+  - location
+  - transaction_id
+  - message_id
+  - timestamp
+
+  Domain:
+  type: string
+  description: Describes the domain or network name used in the transaction.|
+    e.g. domain:ENAM
+```
+
+#### message
+
+```yaml
+message:
+  type: object
+  properties:
+    catalog:
+      $ref: '#/components/schemas/Catalog'
+    network:
+      $ref: '#/components/schemas/Network'
+    next_page_token:
+      type: string                    
+  required:
+  - catalog
+  - network
+```
+
+##### catalog
+
+```yaml
+Catalog:
+  description: Item containing Search response from the Affiliates or Content providers.
+  type: object
+  properties:
+    descriptor:
+      type: object
+      properties:
+        name:
+          type: string
+    provider:
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string            
+        items:
+          type: array          
+          description: And array of JSON objects containing products from Affiliates.
+      required:
+      - descriptor          
+    required:
+    - descriptor
+    - provider
+```
+
+##### network
+
+```yaml
+Network:      
+  type: object
+  description: Describes details of the target network.
+  properties:
+    name:
+      type: string
+      enum:
+      - ENAM          
+    action:
+      type: string
+    relevant_text:
+      type: string
+    filters:
+      type: array      
+      description: An array of string or JSON objects to help Affiliates perform Search filtering
+  required:
+  - name
+  - action
+  - relevant_text
+  - filters
+```
+
+
+
+## Weather
+
+### /search
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Weather, OpenWeatherMap
+      description: Domain spaecific search by Google Agentic framework |
+      from various Weather data providers.
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - message
+```
+
+### [ack](#ack)
+
+### [error](#error)
+
+
+
+### /on_search
+
+#### context
+
+```yaml
+Context:
+  description: Describes a message context. This is primarily used internally by the framework.|
+    Affiliates are expected to send this as-is in their response to the search() request.
+  type: object
+  properties:
+    domain:
+      $ref: '#/components/schemas/Domain'
+    location:
+      type: object
+      description: Contains location details of the user (*Mobile Device or Web*).
+      properties:
+        mob:
+          type: string
+        city:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        lat:
+          type: string
+        lng:
+          type: string
+        zip:
+          type: string      
+    version:
+      type: string
+      description: Version of Google Agentic framework API specification.
+    transaction_id:
+      type: string
+      description: This is a unique value which persists across all API calls.
+    message_id:
+      type: string
+      description: This is a unique value which persists during a request / callback cycle.
+    timestamp:
+      type: string
+      format: date-time
+      description: Time of request generation in RFC3339 format.
+    callback_url:
+      type: string          
+      description: URL to be called by Affilaites in response to the search() function call.|
+        This is used only if Affiliates want to be send data Synchronously.
+  required:
+  - domain
+  - location
+  - transaction_id
+  - message_id
+  - timestamp
+
+  Domain:
+  type: string
+  description: Describes the domain or network name used in the transaction.|
+    e.g. domain:WEATHER
+```
+
+#### message
+
+```yaml
+message:
+  type: object
+  properties:
+    catalog:
+      $ref: '#/components/schemas/Catalog'
+    network:
+      $ref: '#/components/schemas/Network'
+    next_page_token:
+      type: string                    
+  required:
+  - catalog
+  - network
+```
+
+##### catalog
+
+```yaml
+Catalog:
+  description: Item containing Search response from the Affiliates or Content providers.
+  type: object
+  properties:
+    descriptor:
+      type: object
+      properties:
+        name:
+          type: string
+    provider:
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string            
+        items:
+          type: array          
+          description: And array of JSON objects containing products from Affiliates.
+      required:
+      - descriptor          
+    required:
+    - descriptor
+    - provider
+```
+
+##### network
+
+```yaml
+Network:      
+  type: object
+  description: Describes details of the target network.
+  properties:
+    name:
+      type: string
+      enum:
+      - WEATHER          
+    action:
+      type: string
+    relevant_text:
+      type: string
+    filters:
+      type: array      
+      description: An array of string or JSON objects to help Affiliates perform Search filtering
+  required:
+  - name
+  - action
+  - relevant_text
+  - filters   
+```
 
 
 
@@ -1167,8 +1643,6 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 }
 ```
 
-
-
 # Points to Note
 
 > - **Google Agentic framework**
@@ -1190,9 +1664,59 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 
 
+## How does it all look like?
+
+### Retail
+
+### Dashboard
+
+![retail-ss-2](./assets/retail-ss-2.png)
+
+
+
+- **Intent**: Show me Handbags
+- **Response**: Handbags from ONDC network by various Affiliates
+
+![retail-ss-1](./assets/retail-ss-1.png)
+
+- **Intent**: Show me Sunglasses from Rayban
+- **Response**: Sunglasses from ONDC network by various Affiliates
+
+![retail-ss-3](./assets/retail-ss-3.png)
+
+- **Intent**: Plan my daughter's marriage ceremony
+- **Response**: Planner from multiple Affiliates - ONDC, Youtube Videos and a from Gemini LLM
+
+![retail-ss-planner-1](./assets/retail-ss-planner-1.png)
+
+![retail-ss-planner-2](./assets/retail-ss-planner-2.png)
+
+![retail-ss-planner-3](./assets/retail-ss-planner-3.png)
+
+![retail-ss-planner-4](./assets/retail-ss-planner-4.png)
+
+![retail-ss-planner-5](./assets/retail-ss-planner-5.png)
+
+
+
+### Agri
+
+![agri-ss-1](./assets/agri-ss-1.png)
+
+- **Intent**: Need financial help
+- **Response**: Loan options from Affiliates
+
+![agri-ss-2](./assets/agri-ss-2.png)
+
+- **Intent**: Have a huge stock in godown; how to clear that off?
+- **Response**: market-linkage options from Affiliates to help sell agri products
+
+
+
 ## References
 
-- [Open Network Aggregator - Specs](./Deployment.md)
+- [Open Network Aggregator - General Overview](./README.md)
+- [Open Network Aggregator - Deployment](./Deployment.md)
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)

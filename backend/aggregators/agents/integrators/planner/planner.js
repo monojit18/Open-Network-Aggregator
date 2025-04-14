@@ -453,7 +453,8 @@ async function performPlannerSearch(plannerInfo)
 /**
  * @fires /multi/ondc/search
  * @method POST
- * @description In turn calls the Planner Search to create a planner
+ * @description Calls Search API of either the ONDC Agent, the Video Agent or LLM Agent
+ * based on the intent from the **Master Agent**
  */
 _express.post("/multi/ondc/search", async (request, response) =>
 {
@@ -482,7 +483,8 @@ _express.post("/multi/ondc/search", async (request, response) =>
 /**
  * @fires /multi/onest/search
  * @method POST
- * @description In turn calls the Planner Search to create a planner
+ * @description Calls Search API of either the Video Agent or LLM Agent
+ * based on the intent from the **Master Agent**
  */
 _express.post("/multi/onest/search", async (request, response) =>
 {
@@ -511,7 +513,7 @@ _express.post("/multi/onest/search", async (request, response) =>
 /**
  * @fires /agri/ondc/search
  * @method POST
- * @description In turn calls the ONDC Agent to support any Agri-commerce query
+ * @description Calls Search API of either the ONDC Agent
  */
 _express.post("/agri/ondc/search", async (request, response) =>
 {
@@ -536,7 +538,7 @@ _express.post("/agri/ondc/search", async (request, response) =>
 /**
  * @fires /agri/search
  * @method POST
- * @description In turn calls the LLM Agent to support any Agri-retail query
+ * @description Calls Search API of either the LLM Agent
  */
 _express.post("/agri/search", async (request, response) =>
 {

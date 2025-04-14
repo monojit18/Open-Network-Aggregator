@@ -348,6 +348,55 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
   - Track usage and Calculate cost for each tenant (*Demand-side Affiliate*)
   - Charge back to the Demand-side Affiliate based on a metric; e.g. Usage, No. of Requests or any other custom metric decided between the Demand-side Affiliate and the GCP Partner
 
+
+
+# How does it all look like?
+
+## Retail
+
+### Dashboard
+
+![retail-ss-2](./assets/retail-ss-2.png)
+
+
+
+- **Intent**: Show me Handbags
+- **Response**: Handbags from ONDC network by various Affiliates
+
+![retail-ss-1](./assets/retail-ss-1.png)
+
+- **Intent**: Show me Sunglasses from Rayban
+- **Response**: Sunglasses from ONDC network by various Affiliates
+
+![retail-ss-3](./assets/retail-ss-3.png)
+
+- **Intent**: Plan my daughter's marriage ceremony
+- **Response**: Planner from multiple Affiliates - ONDC, Youtube Videos and a from Gemini LLM
+
+![retail-ss-planner-1](./assets/retail-ss-planner-1.png)
+
+![retail-ss-planner-2](./assets/retail-ss-planner-2.png)
+
+![retail-ss-planner-3](./assets/retail-ss-planner-3.png)
+
+![retail-ss-planner-4](./assets/retail-ss-planner-4.png)
+
+![retail-ss-planner-5](./assets/retail-ss-planner-5.png)
+
+
+
+### Agri
+
+![agri-ss-1](./assets/agri-ss-1.png)
+
+- **Intent**: Need financial help
+- **Response**: Loan options from Affiliates
+
+![agri-ss-2](./assets/agri-ss-2.png)
+
+- **Intent**: Have a huge stock in godown; how to clear that off?
+- **Response**: market-linkage options from Affiliates to help sell agri products
+
 # References
 
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)

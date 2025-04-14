@@ -399,7 +399,7 @@ async function initializeAgent()
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /healthz
  * @method POST
  * @description Health API for the microservice; can be LBs/Gateways while checking the backend health status
  */

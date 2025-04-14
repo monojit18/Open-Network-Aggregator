@@ -207,7 +207,7 @@ async function performBuyerSearch(buyerInfo)
 /**
  * @fires /search
  * @method POST
- * @description In turn calls Search API of each Affiliate
+ * @description Calls Search API of the ONDC Affiliates or Buyer Apps
  */
 _express.post("/search", async (request, response) =>
 {

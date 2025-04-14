@@ -128,7 +128,7 @@ async function callMandiAdapters(mandiMessage, mandiHeaders, urlPart)
 /**
  * @fires /search
  * @method POST
- * @description In turn calls Search API of the corresponding Adapter
+ * @description Calls Search API of the either the Mandi Adapter
  */
 _express.post("/search", async (request, response) =>
 {    
