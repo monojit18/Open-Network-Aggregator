@@ -13,7 +13,7 @@ paths:
       - Domain spaecific search
       - Google Agentic framework
       - Open Networks      
-      description: Domain spaecific search by Google Agentic framework in the Open Networks through BAP interfaces.
+      description: Domain spaecific search by Google Agentic framework in the Open Networks.
       requestBody:
         description: Search service by Google Agentic framework.
         content:
@@ -56,9 +56,9 @@ paths:
       - Domain spaecific search
       - Google Agentic framework
       - Open Networks      
-      description: Receive Search results from BAP Interfaces.
+      description: Receive Search results from Affiliate Interfaces.
       requestBody:
-        description: Payload to be sent by BAP interfaces to the Google Agentic framework.
+        description: Payload to be sent by Affiliate interfaces to the Google Agentic framework.
         content:
           application/json:
             schema:
@@ -74,7 +74,7 @@ paths:
                     network:
                       $ref: '#/components/schemas/Network'
                     next_page_token:
-                      type: string
+                      type: string                    
                   required:
                   - catalog
                   - network
@@ -114,7 +114,7 @@ components:
       properties:
         status:
           type: string
-          description: Describe the status of the ACK response. If schema validation passes, status is ACK else it is NACK.
+          description: Describes the status of the ACK response. If schema validation passes, status is ACK else it is NACK.
           enum:
           - ACK
           - NACK
@@ -122,29 +122,36 @@ components:
       - status
 
     Context:
-      description: Describes a message context
+      description: Describes a message context. This is primarily used internally by the framework.|
+        Affiliates are expected to send this as-is in their response to the search() request.
       type: object
       properties:
         domain:
           $ref: '#/components/schemas/Domain'
         location:
           type: object
-          description: Contains a reverse geocoded address from user's current location (*Mobile Device or Web*).
+          description: Contains location details of the user (*Mobile Device or Web*).
           properties:
-            address:
+            mob:
               type: string
-            country:
-              $ref: '#/components/schemas/Country/properties/code'
             city:
-              $ref: '#/components/schemas/City/properties/code'
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+            lat:
+              type: string
+            lng:
+              type: string
             zip:
-              type: string         
+              type: string      
         version:
           type: string
           description: Version of Google Agentic framework API specification.
         transaction_id:
           type: string
-          description: This is a unique value which persists across all API calls from search through confirm.
+          description: This is a unique value which persists across all API calls.
         message_id:
           type: string
           description: This is a unique value which persists during a request / callback cycle.
@@ -154,43 +161,19 @@ components:
           description: Time of request generation in RFC3339 format.
         callback_url:
           type: string          
-          description: URL to be called by BAPs in response to the search() function call. This is only needed for the Async mode.
+          description: URL to be called by Affilaites in response to the search() function call.|
+            This is used only if Affiliates want to be send data Synchronously.
       required:
       - domain
-      - country
-      - city
-      - version
+      - location
       - transaction_id
       - message_id
       - timestamp
 
-    Country:
-      description: Describes a country.
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the country.
-        code:
-          type: string
-          description: Country code as per ISO 3166-1 and ISO 3166-2 format.
-
-    City:
-      type: object
-      description: Describes a city.
-      properties:
-        name:
-          type: string
-          description: Name of the city.
-        code:
-          type: string
-          description: City code.
-
     Domain:
       type: string
-      description: Describes the domain or network name of the used in the transaction; e.g. ONDC, ONEST, VIDEO etc. |
-        This is primarily used internally by the framework. BAPs are expected to send this as-is in their response |
-        to the search() request.
+      description: Describes the domain or network name used in the transaction.|
+        e.g. domain:ONDC, domain:ONEST
 
     Network:      
       type: object
@@ -199,89 +182,22 @@ components:
         name:
           type: string
           enum:
-          - ONEST
+          - ONDC          
         action:
           type: string
         relevant_text:
           type: string
         filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/SearchItem'
+          type: array      
+          description: An array of string or JSON objects to help Affiliates perform Search filtering
       required:
       - name
       - action
       - relevant_text
-      - filters
-
-    SearchItem:
-      description: Item to Search for in the ONEST network.
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - learning
-          - jobs
-          - scholarships
-        item:
-          type: string
-        provider:
-          type: string
-        location:
-          type: string
-        std:
-          type: string
-        state:
-          type: string
-        country:
-          type: string
-        industry:
-          type: string
-        employment:
-          type: string
-        gender:
-          type: string
-        user:
-          type: object
-          properties:
-            age:
-              type: integer
-            gender:
-              type: string
-            skills:
-              type: array
-              items:
-                type: string
-        backgrouns:
-          type: array
-          items:
-            $ref: '#/components/schemas/Background'
-        academics:
-          type: array
-          items:
-            $ref: '#/components/schemas/Academic'
-      required:
-      - type
+      - filters   
     
-    Academic:
-      type: object
-      properties:
-        value:
-          type: string
-      required:
-      - value
-
-    Background:
-      type: object
-      properties:
-        social:
-          type: string
-      required:
-      - social
-
     Catalog:
-      description: Item containing Search response from the BAPs or Content providers.
+      description: Item containing Search response from the Affiliates or Content providers.
       type: object
       properties:
         descriptor:
@@ -300,19 +216,17 @@ components:
             embedding_url:
               type: string
             items:
-              type: array
-              items:
-                type: object
-                description: This can be a list of any type of objects describing the data from ONEST network.
+              type: array          
+              description: And array of JSON objects containing products from Affiliates.
           required:
           - descriptor
           - embedding_url
-      required:
-      - descriptor
-      - provider
+        required:
+        - descriptor
+        - provider
 
     Error:
-      description: Describes an error object.
+      description: Describes an error object
       type: object
       properties:
         type:
@@ -327,10 +241,11 @@ components:
           description: Error code from a list of error codes from Google Agentic framework.
         path:
           type: string
-          description: Path to json schema generating the error. Used only during json schema validation errors.
+          description: Path to json schema generating the error during json schema validation.
         message:
           type: string
           description: Human readable message describing the error.
       required:
       - type
       - code
+

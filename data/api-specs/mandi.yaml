@@ -1,0 +1,199 @@
+openapi: 3.0.0
+info:
+  title: Google Agentic Core API
+  description: Google Agentic Core API specification
+  version: 0.0.1
+
+security:
+- ApiKeyAuth: []  
+paths:
+  /search:
+    post:
+      tags:
+      - Domain spaecific search
+      - Google Agentic framework
+      - Mandi, ENAM, Pricing
+      description: Domain spaecific search by Google Agentic framework from various Content Providers |
+        outside the Open Networks - Mandi, ENAM
+      requestBody:
+        description: Search service by Google Agentic framework.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  $ref: '#/components/schemas/Context'
+                message:
+                  type: object
+                  properties:
+                    network:
+                      $ref: '#/components/schemas/Network'
+              required:
+              - context
+              - message
+      responses:
+        '200':
+          description: Acknowledgement of message received.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: object
+                    properties:
+                      ack:
+                        $ref: '#/components/schemas/Ack'
+                    required:
+                    - ack
+                  error:
+                    $ref: '#/components/schemas/Error'
+                required:
+                - message
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+        type: apiKey
+        in: header
+        name: X-API-Key
+  schemas:
+    Ack:
+      description: Describes the ACK response.
+      type: object
+      properties:
+        status:
+          type: string
+          description: Describes the status of the ACK response. If schema validation passes, status is ACK else it is NACK.
+          enum:
+          - ACK
+          - NACK
+      required:
+      - status
+
+    Context:
+      description: Describes a message context. This is primarily used internally by the framework.|
+        Affiliates are expected to send this as-is in their response to the search() request.
+      type: object
+      properties:
+        domain:
+          $ref: '#/components/schemas/Domain'
+        location:
+          type: object
+          description: Contains location details of the user (*Mobile Device or Web*).
+          properties:
+            mob:
+              type: string
+            city:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+            lat:
+              type: string
+            lng:
+              type: string
+            zip:
+              type: string      
+        version:
+          type: string
+          description: Version of Google Agentic framework API specification.
+        transaction_id:
+          type: string
+          description: This is a unique value which persists across all API calls.
+        message_id:
+          type: string
+          description: This is a unique value which persists during a request / callback cycle.
+        timestamp:
+          type: string
+          format: date-time
+          description: Time of request generation in RFC3339 format.
+        callback_url:
+          type: string          
+          description: URL to be called by Affilaites in response to the search() function call.|
+            This is used only if Affiliates want to be send data Synchronously.
+      required:
+      - domain
+      - location
+      - transaction_id
+      - message_id
+      - timestamp
+
+    Domain:
+      type: string
+      description: Describes the domain or network name used in the transaction.|
+        e.g. domain:ENAM
+
+    Network:      
+      type: object
+      description: Describes details of the target network.
+      properties:
+        name:
+          type: string
+          enum:
+          - ENAM          
+        action:
+          type: string
+        relevant_text:
+          type: string
+        filters:
+          type: array      
+          description: An array of string or JSON objects to help Affiliates perform Search filtering
+      required:
+      - name
+      - action
+      - relevant_text
+      - filters   
+    
+    Catalog:
+      description: Item containing Search response from the Affiliates or Content providers.
+      type: object
+      properties:
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+        provider:
+          type: object
+          properties:
+            descriptor:
+              type: object
+              properties:
+                name:
+                  type: string            
+            items:
+              type: array          
+              description: And array of JSON objects containing products from Affiliates.
+          required:
+          - descriptor          
+        required:
+        - descriptor
+        - provider
+
+    Error:
+      description: Describes an error object
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - CONTEXT_ERROR
+            - CORE_ERROR
+            - DOMAIN_ERROR            
+            - JSON_SCHEMA_ERROR
+        code:
+          type: string
+          description: Error code from a list of error codes from Google Agentic framework.
+        path:
+          type: string
+          description: Path to json schema generating the error during json schema validation.
+        message:
+          type: string
+          description: Human readable message describing the error.
+      required:
+      - type
+      - code
+            

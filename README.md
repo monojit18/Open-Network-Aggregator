@@ -102,54 +102,6 @@ Following diagrams are self explanatory depicting two different scenarios
 
 ![workflow](./assets/workflow.png)
 
-# Sequential Flow
-
-## Affiliate Networks
-
-![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
-
-- These are Supply side **Partners** or **Affiliates**
-
-- They have their own Buyer Apps to fetch data from various Open Networks like ONDC
-
-  - They need to follow the API specs provided by **Google Agentic framework** to integrate into the system. Agentic framework will call the APIs exposed by Affiliates to fetch their contents
-  - Visibility of their data depends on getting more Buyers registering onto their system
-  - Separate Buyer Apps needed for separate Networks like *Retail, Agri* etc.
-  - Building an aggregator platform themselves need more effort and visibility would still be an issue; to bring more Buyers across segments onto their platform
-  - Examples
-    - Retail Buyer Apps or Seller Apps
-    - Various Service providers
-    - Loan or Credit providers
-
-- **Google Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
-
-  - These Demand side affiliates can simply integrate with Agentic framework (*along with a conversational UI*) and launch from their existing apps or websites
-
-  - This way the users of these Demand side affiliates can reach to multiple Supply side affiliates 
-
-  - At the same time, each Supply side affiliate is exposed to multiple Demand side affiliates and their end users immediately
-
-  - Example
-
-    - Banks, Insurance agencies
-    - Travel & Tourism agencies 
-    - Jobs' and Skilling sites
-    - Media platforms
-  
-    
-
-## Integrator Networks (*Outside Open Network*)
-
-![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
-
-- These are Partners or Integrators who has publicly exposed APIs to share their contents
-- **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
-- Examples
-  - YouTube and other Video content providers
-  - Weather data providers
-  - Mandi price providers
-
-
 # Integrator App
 
 ![integrator-app](./assets/integrator-app.png)
@@ -220,7 +172,9 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
   > - All User Profile information as decided with Demand Affiliate are sent with the API call
 
 - *Integrator App* is launched with its default UI and Agentic framework integrated
+
 - From now on, all user intents (*Text or Voice commands*) are sent to the *Integrator App* which in turn calls the Agentic framework.
+
 - The information reaches the Supply-side affiliates; which then returns appropriate content back to the Affiliate's app
 
 > [!NOTE]
@@ -297,7 +251,58 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 >   - Enable an intense search capability within a specific and selected set of contents - documents, videos, images etc.
 >   - Respond with a more detailed, generated content based on various user parameters like - *profile, context, sentiments* etc.
 
+# Sequential Flow
 
+## Affiliate Networks
+
+![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
+
+- These are Supply side **Partners** or **Affiliates**
+
+- They have their own Buyer Apps to fetch data from various Open Networks like ONDC
+
+  - They need to follow the API specs provided by **Google Agentic framework** to integrate into the system. Agentic framework will call the APIs exposed by Affiliates to fetch their contents
+  - Visibility of their data depends on getting more Buyers registering onto their system
+  - Separate Buyer Apps needed for separate Networks like *Retail, Agri* etc.
+  - Building an aggregator platform themselves need more effort and visibility would still be an issue; to bring more Buyers across segments onto their platform
+  - Examples
+    - Retail Buyer Apps or Seller Apps
+    - Various Service providers
+    - Loan or Credit providers
+
+- **Google Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
+
+  - These Demand side affiliates can simply integrate with Agentic framework (*along with a conversational UI*) and launch from their existing apps or websites
+
+  - This way the users of these Demand side affiliates can reach to multiple Supply side affiliates 
+
+  - At the same time, each Supply side affiliate is exposed to multiple Demand side affiliates and their end users immediately
+
+  - Example
+
+    - Banks, Insurance agencies
+    - Travel & Tourism agencies 
+    - Jobs' and Skilling sites
+    - Media platforms
+  
+    
+
+## Integrator Networks (*Outside Open Network*)
+
+![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
+
+- These are Partners or Integrators who has publicly exposed APIs to share their contents
+
+- **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
+
+- Examples
+  - YouTube and other Video content providers
+  
+  - Weather data providers
+  
+  - Mandi price providers
+  
+    
 
 ## How to Distribute this solution?
 
@@ -342,6 +347,55 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 - Expose API for Demand-side Affiliates; manage each Demand-side Affiliate as one tenant
   - Track usage and Calculate cost for each tenant (*Demand-side Affiliate*)
   - Charge back to the Demand-side Affiliate based on a metric; e.g. Usage, No. of Requests or any other custom metric decided between the Demand-side Affiliate and the GCP Partner
+
+
+
+# How does it all look like?
+
+## Retail
+
+### Dashboard
+
+![retail-ss-2](./assets/retail-ss-2.png)
+
+
+
+- **Intent**: Show me Handbags
+- **Response**: Handbags from ONDC network by various Affiliates
+
+![retail-ss-1](./assets/retail-ss-1.png)
+
+- **Intent**: Show me Sunglasses from Rayban
+- **Response**: Sunglasses from ONDC network by various Affiliates
+
+![retail-ss-3](./assets/retail-ss-3.png)
+
+- **Intent**: Plan my daughter's marriage ceremony
+- **Response**: Planner from multiple Affiliates - ONDC, Youtube Videos and a from Gemini LLM
+
+![retail-ss-planner-1](./assets/retail-ss-planner-1.png)
+
+![retail-ss-planner-2](./assets/retail-ss-planner-2.png)
+
+![retail-ss-planner-3](./assets/retail-ss-planner-3.png)
+
+![retail-ss-planner-4](./assets/retail-ss-planner-4.png)
+
+![retail-ss-planner-5](./assets/retail-ss-planner-5.png)
+
+
+
+### Agri
+
+![agri-ss-1](./assets/agri-ss-1.png)
+
+- **Intent**: Need financial help
+- **Response**: Loan options from Affiliates
+
+![agri-ss-2](./assets/agri-ss-2.png)
+
+- **Intent**: Have a huge stock in godown; how to clear that off?
+- **Response**: market-linkage options from Affiliates to help sell agri products
 
 # References
 

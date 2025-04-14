@@ -142,8 +142,8 @@ async function initializeAgent()
 /**
  * @fires /search/:isAbusive?
  * @method POST
- * @description In turn calls Search API of the corresponding Adapter
- * Request Param: isAbusive = true, false
+ * @description Calls Search API of the  LLM Adapter
+ * Request Param: isAbusive** = true, false
  */
 _express.post("/search/:isAbusive?", async (request, response) =>
 {    
@@ -167,7 +167,7 @@ _express.post("/search/:isAbusive?", async (request, response) =>
 /**
  * @fires /planner/search
  * @method POST
- * @description In turn calls Search API of the corresponding Adapter
+ * @description Calls Search API of the Planner Agent
  */
 _express.post("/planner/search", async (request, response) =>
 {

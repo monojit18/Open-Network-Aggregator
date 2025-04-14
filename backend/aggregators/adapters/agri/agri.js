@@ -268,7 +268,7 @@ async function performAgriSearch(agriInfo)
 /**
  * @fires /loan/search
  * @method POST
- * @description In turn calls Search API of each Loan Provider Affiliate
+ * @description Calls Search API of the Agri Affiliates providing Loan options
  */
 _express.post("/loan/search", async (request, response) =>
 {
@@ -294,7 +294,7 @@ _express.post("/loan/search", async (request, response) =>
 /**
  * @fires /market-linkage/search
  * @method POST
- * @description In turn calls Search API of each Market-linkage Affiliate
+ * @description Calls Search API of the Agri Affiliates providing market linkage options allowing selling of Agri products
  */
 _express.post("/market-linkage/search", async (request, response) =>
 {

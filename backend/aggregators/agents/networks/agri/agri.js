@@ -276,7 +276,8 @@ async function initializeAgent()
 /**
  * @fires /search
  * @method POST
- * @description In turn calls Search API of the corresponding Adapter
+ * @description Calls Search API of the either the Planner Agent or the Agri Adapter
+ * based on the intent from the **Master Agent**
  */
 _express.post("/search", async (request, response) =>
 {

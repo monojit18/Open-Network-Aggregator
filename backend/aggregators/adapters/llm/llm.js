@@ -351,9 +351,9 @@ async function performLLMChat(llmInfo, followupResponse)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /llm/chat
  * @method POST
- * @description In turn calls Search API of each Affiliate
+ * @description Calls Gemini api for LLM chat with streaming
  */
 _express.post("/llm/chat", async (request, response) =>
 {
