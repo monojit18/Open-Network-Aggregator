@@ -411,9 +411,9 @@ async function performMandiPriceSearch(priceInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /mandi/partner
  * @method POST
- * @description In turn calls Search API of the partner Affiliate
+ * @description Calls Search API of the various Mandi price provider Affiliates
  */
 _express.post("/mandi/partner", async (request, response) =>
 {
@@ -438,9 +438,9 @@ _express.post("/mandi/partner", async (request, response) =>
 });
 
 /**
- * @fires /search
+ * @fires /mandi/enam
  * @method POST
- * @description In turn calls Search API of the default Affiliate (e.g. ENAM)
+ * @description Calls Mandi pricing API of ENAM
  */
 _express.post("/mandi/enam", async (request, response) =>
 {

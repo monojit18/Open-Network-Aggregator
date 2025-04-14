@@ -383,9 +383,9 @@ async function performYoutubeSearch(videoInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /videos/partner
  * @method POST
- * @description In turn calls Search API of the partner Affiliate (e.g. Ninjacart)
+ * @description Calls Search API of the various Video provider Affiliates
  */
 _express.post("/videos/partner", async (request, response) =>
 {
@@ -408,9 +408,9 @@ _express.post("/videos/partner", async (request, response) =>
 });
 
 /**
- * @fires /search
+ * @fires /videos/youtube
  * @method POST
- * @description In turn calls Search API of the default Affiliate (e.g. Youtube)
+ * @description Calls Youtube Data API for appropriate contents with semantic search
  */
 _express.post("/videos/youtube", async (request, response) =>
 {

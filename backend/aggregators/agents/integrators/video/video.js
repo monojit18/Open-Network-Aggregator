@@ -179,7 +179,7 @@ async function initializeAgent()
 /**
  * @fires /search
  * @method POST
- * @description In turn calls Search API of the corresponding Adapter
+ * @description Calls Search API of the either the Video Adapter
  */
 _express.post("/search", async (request, response) =>
 {    

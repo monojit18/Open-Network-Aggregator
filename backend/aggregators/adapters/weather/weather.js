@@ -340,9 +340,9 @@ async function performOpenWeatherSearch(weatherInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /search
+ * @fires /weather/partner
  * @method POST
- * @description In turn calls Search API of the partner Affiliate
+ * @description Calls Search API of the various Weather service provider Affiliates
  */
 _express.post("/weather/partner", async (request, response) =>
 {
@@ -370,9 +370,9 @@ _express.post("/weather/partner", async (request, response) =>
 });
 
 /**
- * @fires /search
+ * @fires /weather/openweather
  * @method POST
- * @description In turn calls Search API of the default Affiliate (e.g. OpenWeather)
+ * @description Calls OpenWeatherMap API for current weather reports
  */
 _express.post("/weather/openweather", async (request, response) =>
 {

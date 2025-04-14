@@ -23,6 +23,10 @@ Google Agentic framework will build a bridge between the Demand and Supply sides
 
 This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
 
+# Pre-reads
+
+- [General Overview](./README.md)
+
 # High-Level View
 
 ![high-level-view](./assets/high-level-view.png)
@@ -1143,7 +1147,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
     - Sub Agents are of divided into 2 types
       - Network Agents who works directly with the Open Networks
         - viz. ONDC, ONEST, AGRI
-      - 3rd party Integraor Agents who works with various 3rd party integrators
+      - 3rd party Integrator Agents who works with various 3rd party integrators
         - viz. Video, LLM, Mandi, Weather
 
 #### Master Agent
@@ -1839,7 +1843,7 @@ gcloud config set compute/zone $ZONE
 
 - Following is the way you can test the entire system end to end
 
-#### Receive Data Asyncronously
+#### Receive Data Asynchronously
 
 ```bash
 cd $BASEFOLDERPATH/backend/utilities/event-sockets/test-client
@@ -1921,7 +1925,7 @@ curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
 
 ![test-client-response](./assets/test-client-response.png)
 
-#### Receive Streams Asyncronously
+#### Receive Streams Asynchronously
 
 ```bash
 cd $BASEFOLDERPATH/backend/utilities/websock-streamer/client
@@ -2000,7 +2004,8 @@ curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
 
 ## References
 
-- [Open Network Aggregator](./README.md)
+- [Open Network Aggregator - General Overview](./README.md)
+- [Open Network Aggregator - Design Overview](./Design-Overview.md)
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
