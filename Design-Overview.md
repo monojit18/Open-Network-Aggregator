@@ -1622,7 +1622,7 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 ## Order Response
 
-```json
+```javascript
 {
     context:
     {
