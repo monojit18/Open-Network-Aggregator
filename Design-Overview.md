@@ -643,13 +643,13 @@ paths:
                     city:
                       type: string
                     name:
-                    	type: string
+                      type: string
                     email:
                       type: string
                     lat:
                     	type: string
-										lng:
-											type: string
+                    lng:
+										  type: string
                     zip:
                     	type: string
                 preferred_networks:
