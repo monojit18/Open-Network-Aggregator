@@ -895,7 +895,7 @@ _LOG_BUCKET_=$PROJECT_ID-terra-stg
 - Wrapper around **GCS** services
 
 ```bash
-cd $BASEFOLDERPATH/backend/vertexai/storage
+cd $BASEFOLDERPATH/backend/utilities/storage
 PROJECT_NAME=<PROJECT_NAME>
 REPO_NAME=$AR_REPO
 PACKAGE_NAME=storagelib
