@@ -581,11 +581,11 @@ Agentic framework is headless service to connect to various types of backends wi
 
 | Key                       | Value                       |
 | ------------------------- | --------------------------- |
-| x-api-video-key           | <YouTube Api key>           |
-| x-api-weather-key         | <OpenWeatherMap Api key>    |
-| x-partner-api-weather-key | <Weather Affiliate Api Key> |
-| x-api-mandi-key           | <ENAM Mandi Api Key>        |
-| x-partner-api-mandi-key   | <Mandi Affiliate Api Key>   |
+| x-api-video-key           | [YouTube Api key]           |
+| x-api-weather-key         | [OpenWeatherMap Api key]    |
+| x-partner-api-weather-key | [Weather Affiliate Api Key] |
+| x-api-mandi-key           | [ENAM Mandi Api Key]        |
+| x-partner-api-mandi-key   | [Mandi Affiliate Api Key]   |
 
 
 
