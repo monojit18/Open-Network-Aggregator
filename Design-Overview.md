@@ -581,11 +581,11 @@ Agentic framework is headless service to connect to various types of backends wi
 
 | Key                       | Value                       |
 | ------------------------- | --------------------------- |
-| x-api-video-key           | <YouTube Api key>           |
-| x-api-weather-key         | <OpenWeatherMap Api key>    |
-| x-partner-api-weather-key | <Weather Affiliate Api Key> |
-| x-api-mandi-key           | <ENAM Mandi Api Key>        |
-| x-partner-api-mandi-key   | <Mandi Affiliate Api Key>   |
+| x-api-video-key           | [YouTube Api key]           |
+| x-api-weather-key         | [OpenWeatherMap Api key]    |
+| x-partner-api-weather-key | [Weather Affiliate Api Key] |
+| x-api-mandi-key           | [ENAM Mandi Api Key]        |
+| x-partner-api-mandi-key   | [Mandi Affiliate Api Key]   |
 
 
 
@@ -643,15 +643,15 @@ paths:
                     city:
                       type: string
                     name:
-											type: string
+                      type: string
                     email:
                       type: string
                     lat:
-                    	type: string
-										lng:
-                    	type: string
+                      type: string
+                    lng:
+                      type: string
                     zip:
-                    	type: string
+                      type: string
                 preferred_networks:
                   type: object
                   description: Contains a list of target Affilaites and/or Content providers.|
@@ -1622,13 +1622,13 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 ## Order Response
 
-```JSON
+```javascript
 {
     context:
     {
         transaction_id: <tr_id>,
         message_id: <msg_id>,
-        action_id: <act_id>        
+        action_id: <act_id>
     },
     message:
     {
