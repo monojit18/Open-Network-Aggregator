@@ -647,9 +647,9 @@ paths:
                     email:
                       type: string
                     lat:
+											type: string
+										lng:
                     	type: string
-                    lng:
-										  type: string
                     zip:
                     	type: string
                 preferred_networks:
