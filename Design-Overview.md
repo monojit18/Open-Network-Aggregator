@@ -1622,13 +1622,13 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 
 ## Order Response
 
-```JSON
+```json
 {
     context:
     {
         transaction_id: <tr_id>,
         message_id: <msg_id>,
-        action_id: <act_id>        
+        action_id: <act_id>
     },
     message:
     {
