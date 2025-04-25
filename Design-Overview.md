@@ -647,11 +647,11 @@ paths:
                     email:
                       type: string
                     lat:
-											type: string
+										  type: string
 										lng:
-                    	type: string
+                      type: string
                     zip:
-                    	type: string
+                      type: string
                 preferred_networks:
                   type: object
                   description: Contains a list of target Affilaites and/or Content providers.|
