@@ -1519,12 +1519,6 @@ helm upgrade --install --create-namespace vertexai-charts-genaiimage $BASEFOLDER
 -n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-genaiimage.yaml
 #helm uninstall vertexai-charts-genaiimage -n vertexai
 
-#Deploy GenAI - Vector Search service
-=========================================
-helm upgrade --install --create-namespace vertexai-charts-vectorsearch $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/ \
--n vertexai -f $BASEFOLDERPATH/distribution/gke/charts/vertexai/vertexai-charts/values/values-vectorsearch.yaml
-#helm uninstall vertexai-charts-vectorsearch -n vertexai
-
 #Quick Check of the deployment
 k get po -n vertexai
 k get svc -n vertexai
