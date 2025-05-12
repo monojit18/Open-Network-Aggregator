@@ -7,6 +7,7 @@
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p data",
         "install": "npm install --unsafe-perm --save-dev express jshint dotenv @google-cloud/storage",
         "start": "node storage.js"
     },
@@ -15,8 +16,8 @@
     },
     "devDependencies": {
         "@google-cloud/storage": "^6.12.0",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
+        "dotenv": "^16.5.0",
+        "express": "^4.21.2",
         "jshint": "^2.13.6"
     }
 }
