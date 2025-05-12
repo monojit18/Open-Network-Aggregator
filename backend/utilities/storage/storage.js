@@ -21,17 +21,22 @@ const Path = require("path");
 const DotEnv = require("dotenv");
 const FS = require("fs");
 const Express = require("express");
-const {Storage} = require("@google-cloud/storage");
-const { ok } = require("assert");
+const {Storage, TransferManager} = require("@google-cloud/storage");
+const Stream = require("stream");
+
+const KStorageConstants =
+{
+    ByteMultiplier: 1024
+};
 
 let _express = Express();
 let _server = Http.createServer(_express);
-const storageClient = new Storage();
+const _storageClient = new Storage();
 
 _express.use(Express.json
 ({
     extended: true,
-    limit: '10mb'
+    limit: '10000mb'
 }));
     
 _express.use(Express.urlencoded
@@ -54,18 +59,35 @@ function prepareStorageInfo(request)
 
     if (request.query.dest != null)
         storageInfo.destination = request.query.dest;
+
     if (request.query.folder != null)
         storageInfo.folderName = request.query.folder;
+
     if (request.params.fileName != null)
-        storageInfo.fileName = request.params.fileName;    
+        storageInfo.fileName = request.params.fileName;
+
     if (request.body.contents != null)
-        storageInfo.contents = request.body.contents; 
+        storageInfo.contents = request.body.contents;
+
     if (request.body.metadata != null)
         storageInfo.metaData = request.body.metadata;
+
+    if (request.body.source != null)
+        storageInfo.sourceFileName = request.body.source;
+    
     if (request.headers != null)
         storageInfo.headers = request.headers;
     
     return storageInfo;
+}
+
+function getFilePath(fileName, folderName)
+{
+    let filePath = fileName;
+    if (folderName != null)
+        filePath = `${folderName}/${filePath}`;
+
+    return filePath;
 }
 
 async function performRetrieveSigneUri(request)
@@ -87,7 +109,7 @@ async function retrieveSignedURI(storageInfo)
 {  
     const storageConfig = {};
     storageConfig.action = storageInfo.headers["action"];
-    storageConfig.expires = storageInfo.headers["expires"];
+    storageConfig.expires = Number(storageInfo.headers["expires"]);
 
     const version = storageInfo.headers["version"];
     if (version != null)
@@ -101,22 +123,20 @@ async function retrieveSignedURI(storageInfo)
     if (extensionHeaders != null)
         storageConfig.extensionHeaders = extensionHeaders;
 
-    let filePath = storageInfo.fileName;
-    if (storageInfo.folderName != null)
-        filePath = `${storageInfo.folderName}/${filePath}`;
-
     try
     {
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        
         let responseList = null;
         if (storageInfo.fileName != null)
         {
-            responseList = await storageClient.bucket(storageInfo.bucketName)
+            responseList = await _storageClient.bucket(storageInfo.bucketName)
                                               .file(filePath)
                                               .getSignedUrl(storageConfig);
         }
         else
         {
-            responseList = await storageClient.bucket(storageInfo.bucketName)
+            responseList = await _storageClient.bucket(storageInfo.bucketName)
                                               .getSignedUrl(storageConfig);
         }
         
@@ -133,7 +153,7 @@ async function retrieveMetaData(storageInfo)
 {    
     try
     {
-        const responseList = await storageClient.bucket(storageInfo.bucketName)
+        const responseList = await _storageClient.bucket(storageInfo.bucketName)
                                                 .file(storageInfo.fileName)
                                                 .getMetadata();
 
@@ -152,7 +172,7 @@ async function setMetaData(storageInfo)
     {
         const metaData = {};
         metaData.metadata = storageInfo.metaData;        
-        const responseList = await storageClient.bucket(storageInfo.bucketName)
+        const responseList = await _storageClient.bucket(storageInfo.bucketName)
                                                 .file(storageInfo.fileName)
                                                 .setMetadata(metaData);
         const metaDataResponse = responseList[0];        
@@ -164,23 +184,54 @@ async function setMetaData(storageInfo)
     }
 }
 
+async function listFiles(storageInfo)
+{
+    try
+    {
+
+        const options = {};
+        if (storageInfo.folderName != null)
+            options.prefix = storageInfo.folderName;        
+
+        const responseList = await _storageClient.bucket(storageInfo.bucketName)
+                                                 .getFiles(options);
+        const fileListResponse = responseList[0];
+        const fileListInfo = [];
+
+        fileListResponse.forEach((fileResponse) =>
+        {
+            const fileInfo = {};
+            fileInfo.metaData = fileResponse.metaData;
+            fileInfo.name = fileResponse.name;
+
+            const bucketInfo = {};
+            bucketInfo.name = fileResponse.bucket.name;
+            bucketInfo.metaData = fileResponse.bucket.metaData;
+            fileInfo.bucket = bucketInfo;
+            fileListInfo.push(fileInfo);
+        });
+        return fileListInfo;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function downloadFile(storageInfo)
 {
     const storageConfig = {};
-    storageConfig.destination = storageInfo.destination;
-
-    let filePath = storageInfo.fileName;
-    if (storageInfo.folderName != null)
-        filePath = `${storageInfo.folderName}/${filePath}`;
+    storageConfig.destination = storageInfo.destination;    
 
     try
-    {        
-        await storageClient.bucket(storageInfo.bucketName)
+    {
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        await _storageClient.bucket(storageInfo.bucketName)
                            .file(filePath)
                            .download(storageConfig);
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }
 }
@@ -189,13 +240,51 @@ async function downloadFileIntoMemory(storageInfo)
 {
     try
     {
-        let filePath = storageInfo.fileName;
-        if (storageInfo.folderName != null)
-            filePath = `${storageInfo.folderName}/${filePath}`;
-
-        const contents = await storageClient.bucket(storageInfo.bucketName)
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        const contents = await _storageClient.bucket(storageInfo.bucketName)
                                             .file(filePath)
                                             .download();
+        const buffer = new Buffer.from(contents[0]);
+        return buffer.toString("base64");
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function downloadFileComposite(storageInfo)
+{
+    try
+    {
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        const transferManager = new TransferManager(_storageClient.bucket(storageInfo.bucketName));
+
+        const chunkSize = storageInfo.headers["chunk"];
+        const options = {};
+        options.chunkSizeBytes = Number(chunkSize) * KStorageConstants.ByteMultiplier;
+        options.destination = storageInfo.destination;
+
+        await transferManager.downloadFileInChunks(filePath, options);
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function downloadFileCompositeIntoMemory(storageInfo)
+{
+    try
+    {
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        const transferManager = new TransferManager(_storageClient.bucket(storageInfo.bucketName));
+
+        const chunkSize = storageInfo.headers["chunk"];
+        const options = {};
+        options.chunkSizeBytes = Number(chunkSize) * KStorageConstants.ByteMultiplier;
+
+        const contents = await transferManager.downloadFileInChunks(filePath, options);
         const buffer = new Buffer.from(contents[0]);
         return buffer.toString("base64");
     }
@@ -212,11 +301,8 @@ async function uploadFile(storageInfo)
         let responselist = [];
         const contents = Buffer.from(storageInfo.contents, "base64");
         
-        let filePath = storageInfo.fileName;
-        if (storageInfo.folderName != null)
-            filePath = `${storageInfo.folderName}/${filePath}`;
-
-        responselist = await storageClient.bucket(storageInfo.bucketName)
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        responselist = await _storageClient.bucket(storageInfo.bucketName)
                                           .file(filePath)
                                           .save(contents);
 
@@ -225,6 +311,65 @@ async function uploadFile(storageInfo)
             responselist = await setMetaData(storageInfo);
         }    
         return responselist;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+    
+}
+
+async function uploadFileComposite(storageInfo)
+{
+    try
+    {
+        let responselist = [];
+        const contents = Buffer.from(storageInfo.contents, "base64");
+        const srcFilePath = Path.join(__dirname, process.env.STORAGE_DIR_PATH, storageInfo.fileName);
+        FS.writeFileSync(srcFilePath, contents);
+        
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        const transferManager = new TransferManager(_storageClient.bucket(storageInfo.bucketName));
+
+        const chunkSize = storageInfo.headers["chunk"];
+        const options = {};
+        options.chunkSizeBytes = Number(chunkSize) * KStorageConstants.ByteMultiplier * KStorageConstants.ByteMultiplier;
+        options.uploadName = filePath;
+        responselist = await transferManager.uploadFileInChunks(srcFilePath, options);
+
+        if (storageInfo.metaData != null)
+        {
+            responselist = await setMetaData(storageInfo);
+        }    
+        return responselist;
+    }
+    catch(exception)
+    {        
+        throw exception;
+    }
+    
+}
+
+async function uploadFileStream(storageInfo, response)
+{
+    try
+    {
+        const contents = Buffer.from(storageInfo.contents, "base64");
+        const srcFilePath = Path.join(__dirname, process.env.STORAGE_DIR_PATH, storageInfo.fileName);
+        FS.writeFileSync(srcFilePath, contents);        
+        
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
+        const bucketRef = _storageClient.bucket(storageInfo.bucketName);
+        const file = bucketRef.file(filePath);
+
+        const passthroughSteeam = new Stream.PassThrough();
+        passthroughSteeam.write(contents);
+        passthroughSteeam.end();
+
+        await passthroughSteeam.pipe(file.createWriteStream()).on("finish", () =>
+        {
+            response.status(200).send({});
+        });        
     }
     catch(exception)
     {
@@ -253,7 +398,7 @@ async function createBucket(storageInfo)
     
     try
     {
-        const responseList = await storageClient.createBucket(storageInfo.bucketName, storageConfig);
+        const responseList = await _storageClient.createBucket(storageInfo.bucketName, storageConfig);
         const bucketResponse = responseList[1];
         return bucketResponse;
     }
@@ -267,9 +412,10 @@ async function deleteFile(storageInfo)
 {
     try
     {
+        const filePath = getFilePath(storageInfo.fileName, storageInfo.folderName);
         const storageConfig = {};
         storageConfig.preconditionOpts = {ifGenerationMatch: 0};
-        await storageClient.bucket(storageInfo.bucketName).file(storageInfo.fileName)
+        await _storageClient.bucket(storageInfo.bucketName).file(filePath)
                                                           .delete(storageConfig);
     }
     catch(exception)
@@ -282,7 +428,7 @@ async function deleteBucket(storageInfo)
 {
     try
     {
-        await storageClient.bucket(storageInfo.bucketName).delete();
+        await _storageClient.bucket(storageInfo.bucketName).delete();
     }
     catch(exception)
     {
@@ -292,23 +438,12 @@ async function deleteBucket(storageInfo)
 
 /* API DEFINITIONS - START */
 /**
- * @fires /
- * @method GET
- * @description Service Healthcheck
- */
-_express.get("/", async (request, response) =>
-{
-    const results = {};
-    response.status(200).send(results);
-});
-
-/**
  * @fires /storage/bucket/:bucketName/signeduri/:fileName
  * @method GET
- * @description Retrieve SignedURI of the file within a bucket
+ * @description Retrieve SignedURI of the file within the bucket
  */
- _express.get("/storage/bucket/:bucketName/signeduri/:fileName", async (request, response) =>
- {
+_express.get("/storage/bucket/:bucketName/signeduri/:fileName", async (request, response) =>
+{
     const results = {};
 
     try
@@ -322,17 +457,17 @@ _express.get("/", async (request, response) =>
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }
- });
+});
 
  /**
  * @fires /storage/bucket/:bucketName/signeduri
  * @method GET
  * @description Retrieve SignedURI of the bucket
  */
-  _express.get("/storage/bucket/:bucketName/signeduri", async (request, response) =>
-  {
+_express.get("/storage/bucket/:bucketName/signeduri", async (request, response) =>
+{
     const results = {};
-    
+
     try
     {
         results.results = await performRetrieveSigneUri(request);
@@ -344,12 +479,12 @@ _express.get("/", async (request, response) =>
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }
-  });
+});
 
 /**
  * @fires /storage/bucket/:bucketName/file/:fileName/metadata
  * @method GET
- * @description Get Metadata of the file within a bucket
+ * @description Get Metadata of the file within the bucket
  */
 _express.get("/storage/bucket/:bucketName/file/:fileName/metadata", async (request, response) =>
 {
@@ -372,37 +507,61 @@ _express.get("/storage/bucket/:bucketName/file/:fileName/metadata", async (reque
 /**
  * @fires /storage/bucket/:bucketName/file/:fileName/metadata
  * @method POST
- * @description Set Metadata of the file within a bucket
+ * @description Set Metadata of the file within the bucket
  */
- _express.post("/storage/bucket/:bucketName/file/:fileName/metadata", async (request, response) =>
- {
-     const storageInfo = prepareStorageInfo(request);
-     const results = {};
- 
-     try
-     {
-         results.results = await setMetaData(storageInfo);
-         response.status(200).send(results);
-     }
-     catch(exception)
-     {
-         let errorInfo = prepareErrorMessage(exception);
-         results.results = errorInfo.message;
-         response.status(errorInfo.code).send(results);
-     }
- });
+_express.post("/storage/bucket/:bucketName/file/:fileName/metadata", async (request, response) =>
+{
+    const storageInfo = prepareStorageInfo(request);
+    const results = {};
+
+    try
+    {
+        results.results = await setMetaData(storageInfo);
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
 
 /**
- * @fires /storage/bucket/:bucketName/file
+ * @fires /storage/bucket/:bucketName/files/list
  * @method GET
- * @description Download file from a bucket
+ * @description List of files in the bucket
  */
- _express.get("/storage/bucket/:bucketName/file/:fileName", async (request, response) =>
- {    
+_express.get("/storage/bucket/:bucketName/files/list", async (request, response) =>
+{    
+    const storageInfo = prepareStorageInfo(request);
+    const results = {};    
+
+    try
+    {
+        const contents = await listFiles(storageInfo);
+        results.contents = contents;
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /storage/bucket/:bucketName/file/:fileName
+ * @method GET
+ * @description Download the file from the bucket
+ */
+_express.get("/storage/bucket/:bucketName/file/:fileName", async (request, response) =>
+{    
     const storageInfo = prepareStorageInfo(request);
     if (storageInfo.destination != null)
     {        
-        const filePath = Path.join(process.env.STORAGE_DIR_PATH, storageInfo.destination);
+        const filePath = Path.join(__dirname, process.env.STORAGE_DIR_PATH, storageInfo.destination);
         storageInfo.destination = filePath;        
     }
 
@@ -426,12 +585,48 @@ _express.get("/storage/bucket/:bucketName/file/:fileName/metadata", async (reque
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }
- });
+});
+
+/**
+ * @fires /storage/bucket/:bucketName/file/:fileName/composite
+ * @method GET
+ * @description Download the file from the bucket as parallel composite upload
+ */
+_express.get("/storage/bucket/:bucketName/file/:fileName/composite", async (request, response) =>
+{    
+    const storageInfo = prepareStorageInfo(request);
+    if (storageInfo.destination != null)
+    {        
+        const filePath = Path.join(__dirname, process.env.STORAGE_DIR_PATH, storageInfo.destination);
+        storageInfo.destination = filePath;        
+    }
+
+    const results = {};
+    let contents = null;
+
+    try
+    {
+        if (storageInfo.destination != null)
+            await downloadFileComposite(storageInfo);
+        else
+        {
+            contents = await downloadFileCompositeIntoMemory(storageInfo);
+            results.contents = contents;
+        }
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
 
 /**
  * @fires /storage/bucket/:bucketName/file/:fileName
  * @method POST
- * @description Upload the file to a bucket
+ * @description Upload the file to the bucket
  */
 _express.post("/storage/bucket/:bucketName/file/:fileName", async (request, response) =>
 {
@@ -452,12 +647,56 @@ _express.post("/storage/bucket/:bucketName/file/:fileName", async (request, resp
 });
 
 /**
+ * @fires /storage/bucket/:bucketName/file/:fileName/composite
+ * @method POST
+ * @description Upload the file to a bucket as parallel composite upload
+ */
+_express.post("/storage/bucket/:bucketName/file/:fileName/composite", async (request, response) =>
+{
+    const storageInfo = prepareStorageInfo(request);
+    const results = {};
+
+    try
+    {
+        results.results = await uploadFileComposite(storageInfo);
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /storage/bucket/:bucketName/file/:fileName/steam
+ * @method POST
+ * @description Upload the file to a bucket as steaming upload
+ */
+_express.post("/storage/bucket/:bucketName/file/:fileName/stream", async (request, response) =>
+{
+    const storageInfo = prepareStorageInfo(request);    
+
+    try
+    {
+        await uploadFileStream(storageInfo, response);        
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
  * @fires /storage/bucket/:bucketName
  * @method POST
  * @description Create Storage bucket
  */
- _express.post("/storage/bucket/:bucketName", async (request, response) =>
- {
+_express.post("/storage/bucket/:bucketName", async (request, response) =>
+{
     const storageInfo = prepareStorageInfo(request);
     const results = {};
 
@@ -472,12 +711,12 @@ _express.post("/storage/bucket/:bucketName/file/:fileName", async (request, resp
         results.results = errorInfo.message;
         response.status(errorInfo.code).send(results);
     }
- });
+});
 
 /**
  * @fires /storage/bucket/:bucketName/file/:fileName
  * @method DELETE
- * @description Delete the file from a bucket
+ * @description Delete the file from the bucket
  */
 _express.delete("/storage/bucket/:bucketName/file/:fileName", async (request, response) =>
 {
@@ -500,7 +739,7 @@ _express.delete("/storage/bucket/:bucketName/file/:fileName", async (request, re
 /**
  * @fires /storage/bucket/:bucketName
  * @method DELETE
- * @description Delete the the bucket
+ * @description Delete the bucket
  */
 _express.delete("/storage/bucket/:bucketName", async (request, response) =>
 {
