@@ -89,6 +89,16 @@ function prepareVectorSearchInfo(request)
     return bigqueryInfo;
 }
 
+function prepareSQLQueryInfo(request)
+{
+    const sqlQueryInfo = {};
+    sqlQueryInfo.datasetId = request.params.datasetId;
+    sqlQueryInfo.tableId = request.params.tableId;
+    sqlQueryInfo.fields = request.body.fields;
+    sqlQueryInfo.match = request.body.match;
+    return sqlQueryInfo;
+}
+
 function prepareDatasetResponse(datasetResponse)
 {
     let dataset = {};
@@ -406,6 +416,25 @@ async function insertRows(bigqueryInfo)
     {        
         throw exception;
     }
+}
+
+async function performSearchBySQL(sqlQueryInfo)
+{
+    try
+    {
+        const fieldsSring = sqlQueryInfo.fields.join(",");
+        let searchQuery = `SELECT ${fieldsSring} FROM ${sqlQueryInfo.datasetId}.${sqlQueryInfo.tableId}`;
+        if (sqlQueryInfo.match != null)
+            searchQuery = searchQuery.concat(" ", `WHERE ${sqlQueryInfo.match}`);
+
+        const responsesList = await bigqueryClient.query(searchQuery);
+        const searchResponse = responsesList[0];       
+        return searchResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }    
 }
 
 async function performSearchByQuery(vectorSearchInfo)
@@ -782,6 +811,32 @@ _express.post("/bigquery/datasets/:datasetId/tables/:tableId/rows/insert", async
     {
         const insertResponse = await insertRows(bigqueryInfo);
         results.results = insertResponse;
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);        
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /bigquery/datasets/:datasetId/tables/:tableId/search/sql
+ * @method POST
+ * @description Perform Search by a SQL Query in a Bigquery Table
+ * Request Param: datasetId = value; mandatory
+ * Request Param: tableId = value; mandatory
+ */
+_express.post("/bigquery/datasets/:datasetId/tables/:tableId/search/sql", async (request, response) =>
+{
+    const sqlQueryInfo = prepareSQLQueryInfo(request);
+    const results = {};
+
+    try
+    {
+        const searchResponse = await performSearchBySQL(sqlQueryInfo);
+        results.results = searchResponse;
         response.status(200).send(results);
     }
     catch(exception)
