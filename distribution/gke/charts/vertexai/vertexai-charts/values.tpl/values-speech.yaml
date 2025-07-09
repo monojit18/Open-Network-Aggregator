@@ -12,10 +12,10 @@ deployment:
   maxSurge: 1
   maxUnavailable: 0
   nodeSelector:
-    cloud.google.com/gke-nodepool: gkeappspool
+    cloud.google.com/gke-nodepool: worker-pool
   containers:
   - name: speech-app
-    image: "/speechlib:v1.0"
+    image: "<repo-name>/speechlib:v1.0"
     imagePullPolicy: Always
     memoryRequest: "250Mi"
     cpuRequest: "100m"
@@ -28,7 +28,7 @@ deployment:
     - name: SPEECH_DIR_PATH
       value: /data   
     - name: PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
 service:
   name: speechapp-svc
   selector:
