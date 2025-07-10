@@ -44,7 +44,7 @@ deployment:
     - name: VIDEO_API_KEY
       value: x-api-video-key
     - name: PROJECT_ID
-      value: onix-agentic-151120240130
+      value: <PROJECT_ID>
 service:
   name: planneragent-svc
   selector:
