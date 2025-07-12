@@ -386,15 +386,21 @@ async function generateEmbeddings(contentInfo)
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
- * @fires /genai/content/:sessionId?/:type?
+ * @fires /genai/content{/:sessionId}{/:type}
  * @method POST
  * @description Generate Description from Images and Videos
  * Query Param: type = 'json' to return as a JSON response
  * Request Param: type = 'stream' to get Response a stream
  * Request Param: sessionId = value or empty; mandatory for type = 'stream' to receive stream data to this specific sessionId
  */
-_express.post("/genai/content/:sessionId?/:type?", async (request, response) =>
+_express.post("/genai/content{/:sessionId}{/:type}", async (request, response) =>
 {
     const contentInfo = prepareContentParameters(request);
     const results = {};

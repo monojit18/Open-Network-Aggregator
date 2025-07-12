@@ -78,12 +78,14 @@ function prepareVectorSearchInfo(request)
     const bigqueryInfo = {};
     bigqueryInfo.datasetId = request.params.datasetId;
     bigqueryInfo.tableId = request.params.tableId;
+    bigqueryInfo.vectorIndex = request.params.indexName;
     bigqueryInfo.queryColumn = request.query.qcol;
     bigqueryInfo.searchColumn = (request.query.scol != null)
                                 ? request.query.scol : request.query.qcol;
     bigqueryInfo.embeddingModel = request.headers.embedding;
     bigqueryInfo.topK = request.headers.max_results;
     bigqueryInfo.distanceType = request.headers.distance;
+    bigqueryInfo.indexType = request.headers.index_type;    
     bigqueryInfo.searchQuery = request.body.query;
     bigqueryInfo.searchVector = request.body.vector;
     return bigqueryInfo;
@@ -360,14 +362,14 @@ async function insertRowsAsStream(bigqueryInfo)
     try
     {
         const responsesList = await bigqueryClient.dataset(bigqueryInfo.datasetId)
-                                         .table(bigqueryInfo.tableId)
-                                         .insert(bigqueryInfo.rows);
+                                                  .table(bigqueryInfo.tableId)
+                                                  .insert(bigqueryInfo.rows);
         const insertRowsResponse = responsesList[0];
         const insertResponse = prepareInsertRowsResponse(insertRowsResponse, bigqueryInfo.rows);
         return insertResponse;
     }
     catch(exception)
-    {
+    {        
         throw exception;
     }
 }
@@ -418,6 +420,25 @@ async function insertRows(bigqueryInfo)
     }
 }
 
+async function createVectorIndex(vectorSearchInfo)
+{
+    try
+    {
+        const vectorIndexQuery = `CREATE OR REPLACE VECTOR INDEX ${vectorSearchInfo.vectorIndex} ON
+        ${vectorSearchInfo.datasetId}.${vectorSearchInfo.tableId}(${vectorSearchInfo.queryColumn})
+        OPTIONS(index_type = '${vectorSearchInfo.indexType}', distance_type = '${vectorSearchInfo.distanceType}',
+        ivf_options='{"num_lists": ${vectorSearchInfo.topK}}')`;
+
+        const responsesList = await bigqueryClient.query(vectorIndexQuery);
+        const searchResponse = responsesList[0];
+        return searchResponse;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
 async function performSearchBySQL(sqlQueryInfo)
 {
     try
@@ -454,7 +475,7 @@ async function performSearchByQuery(vectorSearchInfo)
     catch(exception)
     {
         throw exception;
-    }    
+    }
 }
 
 async function performSearchByVector(vectorSearchInfo)
@@ -522,6 +543,12 @@ async function deleteDataset(bigqueryInfo)
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
  * @fires /bigquery/datasets/all
  * @method GET
@@ -811,6 +838,33 @@ _express.post("/bigquery/datasets/:datasetId/tables/:tableId/rows/insert", async
     {
         const insertResponse = await insertRows(bigqueryInfo);
         results.results = insertResponse;
+        response.status(200).send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);        
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /bigquery/datasets/:datasetId/tables/:tableId/vector/indexes/:indexName/create
+ * @method POST
+ * @description Creates Vector Search Index in Bigquery
+ * Request Param: datasetId = value; mandatory
+ * Request Param: tableId = value; mandatory
+ * Request Param: indexName = value; mandatory
+ */
+_express.post("/bigquery/datasets/:datasetId/tables/:tableId/vector/indexes/:indexName/create", async (request, response) =>
+{
+    const vectorSearchInfo = prepareVectorSearchInfo(request);
+    const results = {};
+
+    try
+    {
+        const createResponse = await createVectorIndex(vectorSearchInfo);
+        results.results = createResponse;
         response.status(200).send(results);
     }
     catch(exception)
