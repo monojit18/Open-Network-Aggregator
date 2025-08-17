@@ -99,7 +99,7 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ## Integrator Networks (*Outside Open Network*)
 
-![seqence-non-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-non-open-nw.png)
+![seqence-non-open-nw](./assets/seqence-non-open-nw.png)
 
 - These are Partners or Integrators who has publicly exposed APIs to share their contents
 - **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
@@ -111,7 +111,7 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 # Integrator App
 
-![integrator-app](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/integrator-app.png)
+![integrator-app](./assets/integrator-app.png)
 
 ## What it is?
 
