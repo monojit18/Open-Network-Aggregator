@@ -183,7 +183,6 @@ function prepareVideoAgentRequest(plannerInfo)
 {
     const requestBody = prepareAgentRequest(plannerInfo, KDomainNames.VIDEO);
     requestBody.preferred_network = plannerInfo.preferred_networks[KDomainNames.VIDEO];    
-    requestBody.message.network.filters.query = plannerInfo.message.network.filters.query;
     return requestBody;
 }
 
@@ -406,7 +405,7 @@ async function performExtractedSearch(extractedList, plannerInfo)
                 case KDomainNames.VIDEO:
                 {
                     const copiedPlannerInfo = JSON.parse(JSON.stringify(plannerInfo));
-                    copiedPlannerInfo.message.network.filters.query = item.relevant_text;
+                    copiedPlannerInfo.message.network.filters[0].query = item.relevant_text;
                     await callVideoAgent(copiedPlannerInfo);                                    
                 }
                 break;
@@ -414,7 +413,7 @@ async function performExtractedSearch(extractedList, plannerInfo)
                 case KDomainNames.LLM:
                 {
                     const copiedPlannerInfo = JSON.parse(JSON.stringify(plannerInfo));
-                    copiedPlannerInfo.message.network.filters.query = item.relevant_text;
+                    copiedPlannerInfo.message.network.filters[0].query = item.relevant_text;
                     await callLLMAgent(copiedPlannerInfo);
                 }
                 break;
