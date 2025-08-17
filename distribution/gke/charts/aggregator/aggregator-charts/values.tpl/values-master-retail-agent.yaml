@@ -68,7 +68,7 @@ deployment:
     - name: PLANNER_LLM_SEARCH
       value: "true"
     - name: PROJECT_ID
-      value: <project-id>
+      value: <PROJECT_ID>
 service:
   name: master-retailagent-svc
   selector:

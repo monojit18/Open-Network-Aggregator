@@ -24,7 +24,7 @@ deployment:
     containerPorts: [8084]
     envVars:
     - name: EVENT_SERVER_HTTP_HOST
-      value: http://event-serverapp-svc.utilities.svc
+      value: http://event-serverapp-svc.utilities-dev.svc
     - name: PROJECT_ID
       value: <PROJECT_ID>
 service:

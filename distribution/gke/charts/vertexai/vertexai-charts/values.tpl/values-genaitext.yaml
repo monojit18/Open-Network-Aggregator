@@ -12,10 +12,10 @@ deployment:
   maxSurge: 1
   maxUnavailable: 0
   nodeSelector:
-    cloud.google.com/gke-nodepool: gkeappspool
+    cloud.google.com/gke-nodepool: worker-pool
   containers:
   - name: genaitext-app
-    image: "/genai-textlib:v1.0"
+    image: "<repo-name>/genai-textlib:v1.0"
     imagePullPolicy: Always
     memoryRequest: "500Mi"
     cpuRequest: "500m"
@@ -34,11 +34,11 @@ deployment:
     - name: GENAI_GEMINI_TEXT_MODEL
       value: gemini-1.5-pro
     - name: MODEL_PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
     - name: MODEL_LOCATION
       value: us-central1
     - name: PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
 service:
   name: genaitextapp-svc
   selector:

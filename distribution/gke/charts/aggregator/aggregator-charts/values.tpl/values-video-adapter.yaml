@@ -30,7 +30,7 @@ deployment:
     - name: YOUTUBE_DATA_V3_SEARCH_URL
       value: https://youtube.googleapis.com/youtube/v3   
     - name: PROJECT_ID
-      value: onix-agentic-151120240130
+      value: <PROJECT_ID>
 service:
   name: videoadapter-svc
   selector:

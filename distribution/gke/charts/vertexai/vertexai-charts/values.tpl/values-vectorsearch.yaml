@@ -12,10 +12,10 @@ deployment:
   maxSurge: 1
   maxUnavailable: 0
   nodeSelector:
-    cloud.google.com/gke-nodepool: gkeappspool
+    cloud.google.com/gke-nodepool: worker-pool
   containers:
   - name: vectorsearch-app
-    image: "/vector-searchlib:v1.0"
+    image: "<repo-name>/vector-searchlib:v1.0"
     imagePullPolicy: Always
     memoryRequest: "500Mi"
     cpuRequest: "500m"
@@ -32,7 +32,7 @@ deployment:
     - name: VECTOR_SEARCH_MULTILINGUAL_EMBEDDING_MODEL
       value: text-multilingual-embedding-002
     - name: PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
 service:
   name: vectorsearchapp-svc
   selector:

@@ -28,6 +28,7 @@ const {PredictionServiceClient} = AIPlatform.v1;
 const {helpers} = AIPlatform;
 const Axios = require('axios');
 const { io } = require("socket.io-client");
+const { google } = require("@google-cloud/aiplatform/build/protos/protos");
 
 let _express = Express();
 let _server = Http.createServer(_express);
@@ -48,6 +49,14 @@ const KSocketEvents =
     DisconnectEvent: "disconnect"
 }
 
+const KSocketRoomConfig = 
+{
+    StreamRoom: "stream-room",
+    StreamData: "stream",
+    TextStreamRoom: "text-stream-room",
+    StreamResponseType: "stream"
+}
+
 const KCallTypes =
 {
     CallTypeStream: "stream",
@@ -56,11 +65,17 @@ const KCallTypes =
     CallTypeCode: "code"
 }
 
-// const KGeminiTextModel = "gemini-1.5-pro";
-const KStreamRoom = "stream-room";
-const KStreamData = "stream";
-const KTextStreamRoom = "text-stream-room";
-const KStreamResponseType = "stream";
+const KSearchTypes =
+{
+    GoogleSearch: "GOOGLE_SEARCH"
+}
+
+const KResponseMimeTypes =
+{
+    JSON: "application/json"
+}
+
+
 const KGoogleAuthScope = "https://www.googleapis.com/auth/cloud-platform";
 
 DotEnv.config();
@@ -121,7 +136,7 @@ function prepareSocketClient()
         console.log(message);
     });
 
-    _socketIOClient.on(KStreamData, (stream) =>
+    _socketIOClient.on(KSocketRoomConfig.StreamData, (stream) =>
     {
         console.log(stream);
     });
@@ -169,6 +184,12 @@ function prepareGenAIParameters(request)
     if (request.headers.topk != null)
         parameters.topK = Number(request.headers.topk);
 
+    if (request.body.schema != null)
+    {
+        parameters.responseMimeType = KResponseMimeTypes.JSON;
+        parameters.responseSchema = request.body.schema;
+    }
+
     return parameters;
 }
 
@@ -178,10 +199,11 @@ function prepareTextParameters(request)
     textInfo.sessionId = request.params.sessionId;
     textInfo.contents = request.body.contents;
     textInfo.parameters = prepareGenAIParameters(request);
-    textInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
-                                                                 : KCallTypes.CallTypeText;
-    textInfo.expectJSON = (request.query.type == "json");
+    textInfo.type = (request.params.type == KSocketRoomConfig.StreamResponseType)
+                    ? KCallTypes.CallTypeStream : KCallTypes.CallTypeText;
+    textInfo.expectJSON = (request.query.type == "json") || (request.body.schema != null);
     textInfo.systemInstruction = request.body.instruction;
+    textInfo.grounded = request.headers.grounded;
     return textInfo;
 }
 
@@ -194,8 +216,8 @@ function prepareChatParameters(request)
     chatInfo.contents = request.body.contents;
     chatInfo.datastoreId = request.body.datastore;
     chatInfo.parameters = prepareGenAIParameters(request);
-    chatInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
-                                                                 : KCallTypes.CallTypeChat;
+    chatInfo.type = (request.params.type == KSocketRoomConfig.StreamResponseType)
+                    ? KCallTypes.CallTypeStream : KCallTypes.CallTypeChat;
     chatInfo.systemInstruction = request.body.instruction;
     return chatInfo;
 }
@@ -206,8 +228,8 @@ function prepareCodeParameters(request)
     codeInfo.sessionId = request.params.sessionId;
     codeInfo.contents = request.body.contents;
     codeInfo.parameters = prepareGenAIParameters(request);
-    codeInfo.type = (request.params.type == KStreamResponseType) ? KCallTypes.CallTypeStream
-                                                                 : KCallTypes.CallTypeCode;
+    codeInfo.type = (request.params.type == KSocketRoomConfig.StreamResponseType)
+                    ? KCallTypes.CallTypeStream : KCallTypes.CallTypeCode;
     codeInfo.systemInstruction = request.body.instruction;
     return codeInfo;
 }
@@ -240,7 +262,7 @@ function prepareEndpointParameters(request)
     endpointInfo.contents = request.body.contents;
     endpointInfo.endpointId = request.headers.endpointid;
     endpointInfo.parameters = prepareGenAIParameters(request);
-    endpointInfo.expectJSON = (request.query.type == "json");
+    endpointInfo.expectJSON = (request.query.type == "json") || (request.body.schema != null);
     endpointInfo.systemInstruction = request.body.instruction;
     return endpointInfo;
 }
@@ -273,6 +295,17 @@ function preaprePredictionResponse(prediction, expectJSON)
     {
         throw exception;
     }
+}
+
+function prepareGoogleSearchTools()
+{
+    const textgenTools = [];    
+    const googleSearchRetrievalTool = {};
+    const googleSearchRetrieval = {}
+    googleSearchRetrieval.disableAttribution = false;
+    googleSearchRetrievalTool.googleSearchRetrieval = googleSearchRetrieval;
+    textgenTools.push(googleSearchRetrievalTool);
+    return textgenTools;
 }
 
 function prepareChatTools(chatInfo)
@@ -351,7 +384,7 @@ async function emitTextStream(streamingResult, metadataInfo)
             const streamData = {};
             streamData.buffer = buffer;
             streamData.room = metadataInfo.sessionId;
-            _socketIOClient.emit(KStreamData, streamData);
+            _socketIOClient.emit(KSocketRoomConfig.StreamData, streamData);
         }
     }
 }
@@ -364,7 +397,7 @@ async function initSocketClient()
     });
     
     const socketQuery = {};
-    socketQuery[KStreamRoom] = KTextStreamRoom;
+    socketQuery[KSocketRoomConfig.StreamRoom] = KSocketRoomConfig.TextStreamRoom;
     _socketIOClient = io(`${process.env.WEBSOCK_STREAMER_HTTP_HOST}`,
     {
         query: socketQuery
@@ -404,7 +437,7 @@ async function performDatastoreAsync(chatInfo)
         chatRequest.contents = chatInfo.contents;
         chatRequest.tools = chatTools;
         
-        if (chatInfo.type == KStreamResponseType)
+        if (chatInfo.type == KCallTypes.CallTypeStream)
         {            
             const streamingResult = await _generativeAIPreviewModel.generateContentStream(chatRequest);
             await emitTextStream(streamingResult, chatInfo);
@@ -412,7 +445,7 @@ async function performDatastoreAsync(chatInfo)
             const predictionContent = await streamingResult.response;            
             return predictionContent;
         }
-        else
+        else if (chatInfo.type == KCallTypes.CallTypeChat)
         {
             const chatResponse = await _generativeAIPreviewModel.generateContent(chatRequest);
             const predictionContent = chatResponse.response;
@@ -474,14 +507,14 @@ async function generateCustomContent(endpointInfo)
         const requestBody = {};
         requestBody.contents = endpointInfo.contents;
         requestBody.systemInstruction = endpointInfo.systemInstruction;
-        
+
         const endpointResult = await Axios.post(`${endpointURL}`, requestBody, requestOptions);
         const predictionContent = preaprePredictionResponse(endpointResult.data,
                                                             endpointInfo.expectJSON);
         return predictionContent;
     }
     catch(exception)
-    {        
+    {
         throw exception;
     }
 }
@@ -492,8 +525,13 @@ async function generateContent(textInfo)
     {
         contents: textInfo.contents,
         generationConfig: textInfo.parameters,
-        systemInstruction: textInfo.systemInstruction
+        systemInstruction: textInfo.systemInstruction        
     };
+
+    if (textInfo.grounded == KSearchTypes.GoogleSearch)
+    {
+        request.tools = prepareGoogleSearchTools();
+    }
 
     try
     {
@@ -517,6 +555,11 @@ async function generateStreamContent(textInfo)
         systemInstruction: textInfo.systemInstruction
     };
 
+    if (textInfo.grounded == "GOOGLE_SEARCH")
+    {
+        request.tools = prepareGoogleSearchTools();
+    }
+
     try
     {
         const streamingResult = await _generativeAIModel.generateContentStream(request);
@@ -537,12 +580,12 @@ async function performContentGeneration(textInfo)
     try
     {
         let predictionContent = null;
-        if (textInfo.type == KStreamResponseType)
+        if (textInfo.type == KCallTypes.CallTypeStream)
         {
             await initSocketServerConnection();
             predictionContent = await generateStreamContent(textInfo);
         }
-        else
+        else if (textInfo.type == KCallTypes.CallTypeText)
         {
             predictionContent = await generateContent(textInfo);
         }
@@ -628,12 +671,12 @@ async function performChatContentGeneration(chatInfo)
     try
     {
         let predictionContent = null;
-        if (chatInfo.type == KStreamResponseType)
+        if (chatInfo.type == KCallTypes.CallTypeStream)
         {
             await initSocketServerConnection();
             predictionContent = await generateStreamChatContent(chatInfo);
         }
-        else
+        else if (chatInfo.type == KCallTypes.CallTypeChat)
         {
             predictionContent = await generateChatContent(chatInfo);
         }
@@ -751,12 +794,12 @@ async function performCodeContentGeneration(codeInfo)
     try
     {
         let predictionContent = null;
-        if (codeInfo.type == KStreamResponseType)
+        if (codeInfo.type == KCallTypes.CallTypeStream)
         {
             await initSocketServerConnection();
             predictionContent = await generateStreamCodeContent(codeInfo);
         }
-        else
+        else if (codeInfo.type == KCallTypes.CallTypeCode)
         {
             predictionContent = await generateCodeContent(codeInfo);
         }
@@ -795,15 +838,21 @@ async function performMedLMTextGeneration(medLMInfo)
 }
 
 /* API DEFINITIONS - START */
+_express.get("/healthz", async (request, response) =>
+{
+    const results = {};
+    response.status(200).send(results);
+});
+
 /**
- * @fires /genai/text/:sessionId?/:type?
+ * @fires /genai/text{/:sessionId}{/:type}
  * @method POST
  * @description Generate Text from Prompts
  * Query Param: type = 'json' to return as a JSON response
  * Request Param: type = 'stream' to get Response a stream
  * Request Param: sessionId = value or empty; mandatory for type = 'stream' to receive stream data to this specific sessionId
  */
-_express.post("/genai/text/:sessionId?/:type?", async (request, response) =>
+_express.post("/genai/text{/:sessionId}{/:type}", async (request, response) =>
 {
     const textInfo = prepareTextParameters(request);
     const results = {};
@@ -871,14 +920,14 @@ _express.post("/genai/embeddings/text", async (request, response) =>
 });
 
 /**
- * @fires /genai/chat/:sessionId?/:type?
+ * @fires /genai/chat{/:sessionId}{/:type}
  * @method POST
  * @description Generate Chat from Prompts
  * Query Param: type = 'json' to return as a JSON response
  * Request Param: type = 'stream' to get Response a stream
  * Request Param: sessionId = value or empty; mandatory for type = 'stream' to receive stream data to this specific sessionId
  */
-_express.post("/genai/chat/:sessionId?/:type?", async (request, response) =>
+_express.post("/genai/chat{/:sessionId}{/:type}", async (request, response) =>
 {
     const chatInfo = prepareChatParameters(request);
     const results = {};
@@ -898,14 +947,14 @@ _express.post("/genai/chat/:sessionId?/:type?", async (request, response) =>
 });
 
  /**
- * @fires /genai/code/:sessionId?/:type?
+ * @fires /genai/code{/:sessionId}{/:type}
  * @method POST
  * @description Generate Code from  Prompts
  * Query Param: type = 'json' to return as a JSON response
  * Request Param: type = 'stream' to get Response a stream
  * Request Param: sessionId = value or empty; mandatory for type = 'stream' to receive stream data to this specific sessionId
  */
-_express.post("/genai/code/:sessionId?/:type?", async (request, response) =>
+_express.post("/genai/code{/:sessionId}{/:type}", async (request, response) =>
 {
     const codeInfo = prepareCodeParameters(request);
     const results = {};

@@ -12,10 +12,10 @@ deployment:
   maxSurge: 1
   maxUnavailable: 0
   nodeSelector:
-    cloud.google.com/gke-nodepool: gkeappspool
+    cloud.google.com/gke-nodepool: worker-pool
   containers:
   - name: translate-app
-    image: "/translatelib:v1.0"
+    image: "<repo-name>/translatelib:v1.0"
     imagePullPolicy: Always
     memoryRequest: "500Mi"
     cpuRequest: "200m"
@@ -30,7 +30,7 @@ deployment:
     - name: GLOSSARY_LOCATION
       value: us-central1
     - name: PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
 service:
   name: translateapp-svc
   selector:

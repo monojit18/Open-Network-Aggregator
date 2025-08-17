@@ -13,10 +13,10 @@
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "axios": "^1.7.9",
+        "axios": "^1.11.0",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.7",
-        "express": "^4.21.2",
+        "dotenv": "^17.2.1",
+        "express": "^5.1.0",
         "jshint": "^2.13.6",
         "socket.io-client": "^4.8.1"
     }
