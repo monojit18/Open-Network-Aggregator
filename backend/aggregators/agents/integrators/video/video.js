@@ -104,7 +104,7 @@ function prepareVideoMessage(request)
     videoMessage.context = request.body.context;
     videoMessage.message = request.body.message;
     videoMessage.preferred_network = request.body.preferred_network;
-    videoMessage.preferred_networks = request.body.preferred_networks;
+    videoMessage.preferred_networks = request.body.preferred_networks;    
     return videoMessage;
 }
 
@@ -123,7 +123,8 @@ async function extractAgriAttributes(videoMessage)
     const requestBody = {};
 
     const promptInfo = {};
-    promptInfo.prompt = `${process.env.AGRI_ATTRIBUTES_PROMPT}\n\n${videoMessage.message.network.filters.query}`;
+    promptInfo.prompt = `${process.env.AGRI_ATTRIBUTES_PROMPT}\n\n${videoMessage.message.network.filters[0].query}`;
+    console.log(promptInfo.prompt);
     const contentsList = prepareNLPContentInfo(promptInfo);
     requestBody.contents = contentsList;
 
@@ -210,12 +211,13 @@ _express.post("/search", async (request, response) =>
                 copiedVideoMessage.preferred_network = preferredNetwork;
     
                 const agriAttributesList = await extractAgriAttributes(copiedVideoMessage);
+                console.log(JSON.stringify(agriAttributesList));
                 if (agriAttributesList?.length > 0)
                 {
                     await Promise.all(agriAttributesList.map(async (attributeString) =>
                     {
                         const agriVideoMessage = JSON.parse(JSON.stringify(copiedVideoMessage));
-                        agriVideoMessage.message.network.filters.query = attributeString;
+                        agriVideoMessage.message.network.filters[0].query = attributeString;
                         const adapterResponse = await callVideoNetwork(KVideoNetwork.Partner, videHeaders,
                                                                     agriVideoMessage);
                         adapterResponseList.push(adapterResponse);
