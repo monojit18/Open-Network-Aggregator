@@ -855,7 +855,7 @@ function initializeVectorSearch()
 
 /* API DEFINITIONS - START */
 /**
- * @fires /vector/search/:docType/index/:indexType?/create
+ * @fires /vector/search/:docType/index{/:indexType}/create
  * @method POST
  * @description Create a new Index
  * Request Param: indexType = 'batch' to create a set of Inddexes as batch job
@@ -863,7 +863,7 @@ function initializeVectorSearch()
  * Request Param: docType = 'text' to create an index for Text embedding
  * Request Param: docType = 'image' to create an index for Multimodal embedding
  */
-_express.post("/vector/search/:docType/index/:indexType?/create", async (request, response) =>
+_express.post("/vector/search/:docType/index{/:indexType}/create", async (request, response) =>
 {
     const indexInfo = prepareIndexInfo(request, KOpsTypeEnum.Create);
     const results = {};
@@ -883,14 +883,14 @@ _express.post("/vector/search/:docType/index/:indexType?/create", async (request
 });
 
 /**
- * @fires /vector/search/index/:indexId/:indexType?/update
+ * @fires /vector/search/index/:indexId{/:indexType}/update
  * @method PATCH
  * @description Update an existing Index
  * Request Param: indexType = 'batch' to update a set of Inddexes as batch job
  * Request Param: indexType = 'stream' to create an empty Index
  * Request Param: indexId = value; Update this Index
  */
-_express.patch("/vector/search/index/:indexId/:indexType?/update", async (request, response) =>
+_express.patch("/vector/search/index/:indexId{/:indexType}/update", async (request, response) =>
 {
     const indexInfo = prepareIndexInfo(request, KOpsTypeEnum.Update);
     const results = {};
