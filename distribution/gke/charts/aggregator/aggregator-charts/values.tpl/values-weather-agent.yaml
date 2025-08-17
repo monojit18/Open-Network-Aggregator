@@ -32,7 +32,7 @@ deployment:
     - name: OPEN_WEATHER_NETWORK_KEY
       value: OPEN_WEATHER
     - name: PROJECT_ID
-      value: <project-id>
+      value: <PROJECT_ID>
 service:
   name: weatheragent-svc
   selector:

@@ -21,20 +21,19 @@ const Path = require("path");
 const FS = require("fs");
 const DotEnv = require("dotenv");
 const Express = require("express");
-// const {TextToSpeechClient, TextToSpeechLongAudioSynthesizeClient} = require("@google-cloud/text-to-speech").v1beta1;
-const {TextToSpeechClient} = require("@google-cloud/text-to-speech").v1;
-const SpeechToText = require("@google-cloud/speech");
+const {TextToSpeechClient} = require("@google-cloud/text-to-speech");
+const {SpeechClient} = require("@google-cloud/speech");
+const SpeechClientV2 = require('@google-cloud/speech').v2;
 const Recorder = require('node-record-lpcm16');
 
 let _express = Express();
 let _server = Http.createServer(_express);
+let _textToSpeechClient = null;
+let _speechToTextClient = null;
+let _speechToTextV2Client = null;
 let kRecognizeStream = null;
 let kRecordingClient = null;
 let kStreamingResult = "";
-const textToSpeechClient = new TextToSpeechClient();
-// const texttospeechLongAudioClient = new TextToSpeechLongAudioSynthesizeClient();
-const speechToTextClient = new SpeechToText.v1.SpeechClient();
-// const speechToTextV2Client = new SpeechToText.v1p1beta1.SpeechClient();
 
 DotEnv.config();
 
@@ -52,6 +51,12 @@ function prepareErrorMessage(exception)
 {
     exception.code = ((exception.code == undefined) || (exception.code < 400)) ? 500 : exception.code;
     return exception;
+}
+
+function prepareLocationPath()
+{
+    const locationPath = `${process.env.SPEECH_LOCATION}-googleapis.com`;
+    return locationPath;
 }
 
 function prepareTextToSpeechInput(request)
@@ -98,11 +103,11 @@ function prepareSpeechToTextInput(request)
     }
 
     const channelCount = parseInt(request.headers["channel"], 10);
+    speechInfo.audioChannelCount = channelCount;
     if (channelCount > 1)
-    {
-        speechInfo.audioChannelCount = channelCount;
+    {        
         speechInfo.enableSeparateRecognitionPerChannel = true;
-    }
+    }    
 
     const speakerCount = parseInt(request.headers["speaker"], 10);
     if (speakerCount > 1)
@@ -132,12 +137,58 @@ function prepareStreamSpeechInput(request)
     return speechInfo;
 }
 
+function prepareSpeechToTextV2Input(request)
+{
+    const speechInfo = {};
+
+    if (request.params.fileName != null)
+    {
+        const filePath = Path.join(process.env.SPEECH_DIR_PATH, request.params.fileName);
+        const content = FS.readFileSync(filePath).toString('base64');        
+        speechInfo.content = content;
+    }
+    else
+        speechInfo.inputUri = request.body.uri;
+
+    speechInfo.languageCode = request.headers["language"];
+    speechInfo.frequency = request.headers["frequency"];
+    speechInfo.encoding = parseInt(request.headers["encoding"], 10);
+    speechInfo.model = request.headers["model"];
+    speechInfo.profanityFilter = (request.headers["profanity"] === "true");
+    speechInfo.enableWordTimeOffsets = (request.headers["words"] === "true");
+    speechInfo.enableAutomaticPunctuation = (request.headers["punctuation"] === "true");
+
+    const channelCount = parseInt(request.headers["channel"], 10);
+    speechInfo.audioChannelCount = channelCount;  
+
+    const speakerCount = parseInt(request.headers["speaker"], 10);
+    speechInfo.maxSpeakerCount = speakerCount;
+    return speechInfo;
+}
+
+function prepareFileStreamSpeechInput(request)
+{
+    const speechInfo = prepareStreamSpeechInput(request);
+    speechInfo.fileName = Path.join(__dirname, "data", request.params.fileName);
+    return speechInfo;
+}
+
+function initializeSpeecCLient()
+{
+    _textToSpeechClient = new TextToSpeechClient();
+    _speechToTextClient = new SpeechClient();
+
+    const options = {};
+    options.apiEndpoint = prepareLocationPath();
+    _speechToTextV2Client = new SpeechClientV2.SpeechClient(options);
+}
+
 async function listVoices()
 {
     try
     {
         const request = {};
-        const speechResponseList = await textToSpeechClient.listVoices(request);
+        const speechResponseList = await _textToSpeechClient.listVoices(request);
         const speechResult = speechResponseList[0];
         const responseList = [];
 
@@ -184,7 +235,7 @@ async function synthesizeSpeech(speechInfo)
 
     try
     {
-        const speechResponseList = await textToSpeechClient.synthesizeSpeech(request);               
+        const speechResponseList = await _textToSpeechClient.synthesizeSpeech(request);               
         const speechResponse = speechResponseList[0];
 
         const speechFile = Path.join(process.env.SPEECH_DIR_PATH, speechInfo.fileName);
@@ -237,7 +288,7 @@ async function recognizeSpeech(speechInfo)
 
     try
     {
-        let speechResponseList = await speechToTextClient.longRunningRecognize(request);
+        let speechResponseList = await _speechToTextClient.longRunningRecognize(request);
         let speechResult = speechResponseList[0];
         speechResponseList = await speechResult.promise();
         speechResult = speechResponseList[0];
@@ -263,10 +314,54 @@ async function recognizeSpeech(speechInfo)
                 wordResponse.endtime = `${word.endTime.seconds}` + "." +  `${(word.endTime.nanos / 1e8).toFixed(0)}s`;
                 speechResponse.words.push(wordResponse);
             });
-
             responseList.push(speechResponse);
         });
         return responseList;
+    }
+    catch(exception)
+    {
+        throw exception;
+    }
+}
+
+async function recognizeV2Speech(speechInfo)
+{
+    const inputConfig = {};
+    inputConfig.autoDecodingConfig = {};
+
+    const explicitDecodingConfig = {};
+    explicitDecodingConfig.audioChannelCount = speechInfo.audioChannelCount;
+    explicitDecodingConfig.encoding = speechInfo.encoding;
+    explicitDecodingConfig.sampleRateHertz = speechInfo.frequency;
+    inputConfig.explicitDecodingConfig = explicitDecodingConfig;
+
+    const features = {};
+    features.profanityFilter = speechInfo.profanityFilter;
+    features.enableWordTimeOffsets = speechInfo.enableWordTimeOffsets;
+    features.enableAutomaticPunctuation = speechInfo.enableAutomaticPunctuation;
+    inputConfig.features = features;
+
+    inputConfig.languageCodes = [speechInfo.languageCode];
+    inputConfig.model = speechInfo.model;
+
+    if (speechInfo.maxSpeakerCount > 1)
+    {
+        const diarizationConfig = {};
+        diarizationConfig.maxSpeakerCount = speechInfo.maxSpeakerCount;;        
+        inputConfig.diarizationConfig = diarizationConfig;
+    }
+
+    const recognizer = `projects/${process.env.PROJECT_ID}/locations/${process.env.SPEECH_LOCATION}/recognizers/_`;
+    const requestBody = {
+        recognizer,
+        uri: speechInfo.inputUri,
+        config: inputConfig
+    };
+
+    try
+    {
+        const recognizedResponse = await _speechToTextV2Client.recognize(requestBody);
+        return recognizedResponse;
     }
     catch(exception)
     {
@@ -307,7 +402,7 @@ async function recognizeStream(speechInfo)
         config: inputConfig
     };
 
-    kRecognizeStream = speechToTextClient.streamingRecognize(request);
+    kRecognizeStream = _speechToTextClient.streamingRecognize(request);
     kRecognizeStream.on("data", (data) =>
     {
         if (data.results[0] && data.results[0].alternatives[0])
@@ -328,18 +423,42 @@ async function recognizeStream(speechInfo)
     return responseList;
 }
 
-/* API DEFINITIONS - START */
-/**
- * @fires /
- * @method GET
- * @description Service Healthcheck
- */
-_express.get("/", async (request, response) =>
+async function recognizeFileStream(speechInfo)
 {
-    const results = {};
-    response.status(200).send(results);
-});
+    const inputConfig = {};
+    inputConfig.encoding = speechInfo.encoding;
+    inputConfig.sampleRateHertz = speechInfo.frequency;
+    inputConfig.languageCode = speechInfo.languageCode;
 
+    const request =
+    {
+        interimResults: speechInfo.interimResults,
+        config: inputConfig
+    };
+
+    kRecognizeStream = _speechToTextClient.streamingRecognize(request);
+    kRecognizeStream.on("data", (data) =>
+    {
+        if (data.results[0] && data.results[0].alternatives[0])
+            kStreamingResult = kStreamingResult + data.results[0].alternatives[0].transcript;
+    }).on("end", () =>
+    {
+        console.log(kStreamingResult);
+        kStreamingResult = "";
+        kRecognizeStream = null;
+    }).on("error", (exception) =>
+    {
+        console.log(exception.message);
+        kStreamingResult = "";
+        kRecognizeStream = null;
+    });
+
+    FS.createReadStream(speechInfo.fileName).pipe(kRecognizeStream);
+    const responseList = [];
+    return responseList;
+}
+
+/* API DEFINITIONS - START */
 /**
  * @fires /texttospeech/voices
  * @method GET
@@ -366,8 +485,8 @@ _express.get("/", async (request, response) =>
 /**
  * @fires /texttospeech/synthesize/:fileName
  * @method POST
- * @description Converts text into an Audio file
- * @input Local FileName
+ * @description Create Audio file from Text
+ * Request Param: Local Filename
  */
 _express.post("/texttospeech/synthesize/:fileName", async (request, response) =>
 {
@@ -391,8 +510,8 @@ _express.post("/texttospeech/synthesize/:fileName", async (request, response) =>
 /**
  * @fires /speechtotext/recognize/
  * @method POST
- * @description Recognizes various Textual components in Speech
- * @input Remote storage path: Request Body 
+ * @description Transcript Audio Uri into Text
+ * Request Body: GCS Uri
  */
  _express.post("/speechtotext/recognize/", async (request, response) =>
  {
@@ -402,8 +521,8 @@ _express.post("/texttospeech/synthesize/:fileName", async (request, response) =>
  /**
  * @fires /speechtotext/recognize/:fileName
  * @method POST
- * @description Recognizes various Textual componennts in Speech
- * @input Local FileName
+ * @description Transcript Audio file into Text
+ * Request Param: Local filename
  */
   _express.post("/speechtotext/recognize/:fileName", async (request, response) =>
   {
@@ -434,41 +553,75 @@ _express.post("/texttospeech/synthesize/:fileName", async (request, response) =>
       }
   });
 
- /**
+/**
  * @fires /speechtotext/stream/stop
  * @method POST
  * @description Stops streaming in Audio Recorder
  */
-  _express.post("/speechtotext/stream/stop", async (request, response) =>
-  {
-      kRecordingClient.stop();
-      const results = {};
-      results.results = kStreamingResult;
-      kStreamingResult = "";
-      response.send(results);
-  });
+_express.post("/speechtotext/stream/stop", async (request, response) =>
+{    
+    kRecordingClient.stop();
+    const results = {};
+    results.results = kStreamingResult;
+    kStreamingResult = "";
+    response.send(results);
+});
 
-//   _express.post("/speechtotext/stream/:fileName", async (request, response) =>
-//   {
-//       const speechInfo = prepareFileStreamSpeechInput(request);
-//       const results = {};
-  
-//       try
-//       {
-//           const responseList = await recognizeFileStream(speechInfo);
-//           results.results = responseList;
-//           response.send(results);
-//       }
-//       catch(exception)
-//       {
-//           let errorInfo = prepareErrorMessage(exception);         
-//           results.results = errorInfo.message;
-//           response.status(errorInfo.code).send(results);
-//       }
-//   });
+/**
+ * @fires /speechtotext/stream/:fileName
+ * @method POST
+ * @description Transcript Audio file into Text as Steam with V2 APIs
+ * Request Param: Local filename
+ */
+_express.post("/speechtotext/stream/:fileName", async (request, response) =>
+{
+    const speechInfo = prepareFileStreamSpeechInput(request);
+    const results = {};
+
+    try
+    {
+        const responseList = await recognizeFileStream(speechInfo);
+        results.results = responseList;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);         
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+});
+
+/**
+ * @fires /speechtotext/v2/recognize/
+ * @method POST
+ * @description Transcript Audio Uri into Text with V2 APIs
+ * Request Body: GCS Uri
+ */
+ _express.post("/speechtotext/v2/recognize", async (request, response) =>
+ {
+    const speechInfo = prepareSpeechToTextV2Input(request);
+    const results = {};
+
+    try
+    {
+        const responseList = await recognizeV2Speech(speechInfo);
+        results.results = responseList;
+        response.send(results);
+    }
+    catch(exception)
+    {
+        let errorInfo = prepareErrorMessage(exception);         
+        results.results = errorInfo.message;
+        response.status(errorInfo.code).send(results);
+    }
+    return speechInfo;
+});
 /* API DEFINITIONS - END */
 
 var port = process.env.port || process.env.PORT || 6063;
 _server.listen(port);
+
+initializeSpeecCLient();
 
 console.log("Server running at http://localhost:%d", port);

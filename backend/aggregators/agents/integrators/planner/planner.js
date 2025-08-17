@@ -77,7 +77,8 @@ _express.use(Cors
 
 function prepareErrorMessage(exception)
 {
-    exception.code = exception.response.status;
+    console.log(exception);
+    exception.code = (exception.response.status == undefined) ? 500 : exception.response.status;
     exception.message = exception.response.statusText;
     return exception;
 }
@@ -211,16 +212,16 @@ function preparePlannerRequest(plannerInfo)
     const requestBody = {};
     const promptInfo = {};
     const filters = plannerInfo.message.network.filters;
-    const relevantText = plannerInfo.message.network.relevant_text;
+    // const relevantText = plannerInfo.message.network.relevant_text;
 
     if (Array.isArray(filters) == true)
-        promptInfo.prompt = relevantText;
+        promptInfo.prompt = filters[0].query;
     else
         promptInfo.prompt = filters.query;
 
     const contentsList = preparePlannerContentInfo(promptInfo);
     requestBody.contents = contentsList;
-    requestBody.instruction = prepareInstructionContentInfo(plannerInfo.prompt);
+    requestBody.instruction = prepareInstructionContentInfo(plannerInfo.prompt);    
     return requestBody;
 }
 
@@ -229,16 +230,16 @@ function prepareAbusiveRequest(plannerInfo)
     const requestBody = {};
     const promptInfo = {};
     const filters = plannerInfo.message.network.filters;
-    const relevantText = plannerInfo.message.network.relevant_text;
+    // const relevantText = plannerInfo.message.network.relevant_text;
 
     if (Array.isArray(filters) == true)
-        promptInfo.prompt = relevantText;
+        promptInfo.prompt = filters[0].query;
     else
         promptInfo.prompt = filters.query;
 
     const contentsList = preparePlannerContentInfo(promptInfo);
     requestBody.contents = contentsList;
-    requestBody.instruction = prepareInstructionContentInfo(process.env.PLANNER_ABUSIVE_NLP_PROMPT);
+    requestBody.instruction = prepareInstructionContentInfo(process.env.PLANNER_ABUSIVE_NLP_PROMPT);    
     return requestBody;
 }
 
@@ -440,7 +441,7 @@ async function performPlannerSearch(plannerInfo)
         let response = await Axios.post(`${_allUrls[KMicroServices.GenAITextlib]}/genai/text?type=json`,
                                                 requestBody, requestOptions);
         const extractedResponse = processGenericResponse(response);
-        const extractedList = extractedResponse.results[0].formatted_response;        
+        const extractedList = extractedResponse.results[0].formatted_response;
         await performExtractedSearch(extractedList, plannerInfo);
     }
     catch(exception)
@@ -473,7 +474,7 @@ _express.post("/multi/ondc/search", async (request, response) =>
                             : await performPlannerSearch(plannerInfo);        
     }
     catch(exception)
-    {
+    {        
         let errorInfo = prepareErrorMessage(exception);
         results.results = errorInfo.message;
         await fireErrorEvent(errorInfo, plannerInfo);

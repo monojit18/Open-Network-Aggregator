@@ -15,7 +15,7 @@ deployment:
     cloud.google.com/gke-nodepool: gkeappspool
   containers:
   - name: storage-app
-    image: "/storagelib:v1.0"
+    image: "<repo-name>/storagelib:v1.0"
     imagePullPolicy: Always
     memoryRequest: "250Mi"
     cpuRequest: "100m"
@@ -26,7 +26,7 @@ deployment:
     - name: STORAGE_DIR_PATH
       value: /data
     - name: PROJECT_ID
-      value: 
+      value: <PROJECT_ID>
 service:
   name: storageapp-svc
   selector:

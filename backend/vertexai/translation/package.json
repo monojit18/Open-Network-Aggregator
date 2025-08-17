@@ -7,17 +7,19 @@
     "author": "Monojit Datta",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors @google-cloud/translate",
+        "install": "npm install --unsafe-perm --save-dev express jshint dotenv cors axios google-auth-library @google-cloud/translate",
         "start": "node translation.js"
     },
     "engines": {
         "node": ">=16.0.0"
     },
     "devDependencies": {
-        "@google-cloud/translate": "^8.5.0",
+        "@google-cloud/translate": "^9.2.0",
+        "axios": "^1.11.0",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.7",
-        "express": "^4.21.2",
+        "dotenv": "^17.2.1",
+        "express": "^5.1.0",
+        "google-auth-library": "^10.2.1",
         "jshint": "^2.13.6"
     }
 }
