@@ -103,8 +103,12 @@ function preparePlannerRequest(plannerInfo)
     requestBody.preferred_networks = plannerInfo.preferred_networks;
     requestBody.message.network.relevant_text = plannerInfo.message.network.relevant_text;
 
-    const filters = {};
-    filters.query = plannerInfo.message.network.relevant_text;
+    const filters = [];
+    const relevantText = plannerInfo.message.network.relevant_text;
+
+    const query = {};
+    query.query = relevantText;
+    filters.push(query);    
     requestBody.message.network.filters = filters;    
     return requestBody;
 }
