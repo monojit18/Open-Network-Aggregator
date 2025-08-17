@@ -78,7 +78,7 @@ function prepareParnerInfo(request)
     videoInfo.message = request.body.message;
     videoInfo.apiKey = request.headers[process.env.VIDEO_API_KEY];
     videoInfo.preferred_network = request.body.preferred_network;
-    videoInfo.query = videoInfo.message.network.filters.query;
+    videoInfo.query = videoInfo.message.network.filters[0].query;
     return videoInfo;
 }
 
