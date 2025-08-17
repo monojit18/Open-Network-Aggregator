@@ -509,13 +509,13 @@ _express.post("/genai/image/gen", async (request, response) =>
 });
 
 /**
- * @fires /genai/image/edit/:editMode/:editType?
+ * @fires /genai/image/edit/:editMode{/:editType}
  * @method POST
  * @description Edit an existing Image from Prompts and configurable parameters
  * Request Param: editType = 'foreground', 'backgeround', 'semantic'
  * Request Param: editMode = 'insert', 'remove', 'product'
  */
-_express.post("/genai/image/edit/:editMode/:editType?", async (request, response) =>
+_express.post("/genai/image/edit/:editMode{/:editType}", async (request, response) =>
 {
     const imageInfo = prepareImageInfo(request);
     const results = {};

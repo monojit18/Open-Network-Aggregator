@@ -145,7 +145,7 @@ async function initializeAgent()
  * @description Calls Search API of the  LLM Adapter
  * Request Param: isAbusive** = true, false
  */
-_express.post("/search/:isAbusive?", async (request, response) =>
+_express.post("/search{/:isAbusive}", async (request, response) =>
 {    
     const llmMessage = prepareLLMMessage(request);
     const results = {};
