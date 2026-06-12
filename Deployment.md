@@ -65,7 +65,7 @@ This Document contains the specifications for the APIs exposed by **Google Agent
 
 ## Affiliate Networks
 
-![seqence-all-open-nw](/Users/monojitdatta/Workloads/Development/Projects/GCP-Projects/Workshops/Open-Network-Aggregator/assets/seqence-all-open-nw.png)
+![seqence-all-open-nw](./assets/seqence-all-open-nw.png)
 
 - These are Supply side **Partners** or **Affiliates**
 
@@ -2003,5 +2003,4 @@ curl --location 'https://onix-dev.gcpwkshpdev.com/retail/search' \
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
-  - This is a Private GH repo and hence is allow-listed
 
