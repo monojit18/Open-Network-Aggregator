@@ -1720,4 +1720,3 @@ https://<Base-url-of-the-provider>?trid=<transaction_id>&msgid=<message_id>&acti
 - [Vertex AI](https://cloud.google.com/vertex-ai/docs)
 - [Generative AI on Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview)
 - [Source Code](https://github.com/monojit18/Open-Network-Aggregator)
-  - This is a Private GH repo and hence is allow-listed

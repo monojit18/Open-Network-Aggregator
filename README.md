@@ -11,15 +11,15 @@
 | Seller App                                        | An Application platform or App for the Sellers.<br />In the context of Open Networks or Beckn protocol this is termed as **BPP** |
 | [Demand-side Affiliates](#Demand-side Affiliates) | Businesses, Organisations who are not part of Open Network(s)<br />but want their end users to leverage contents or services from multiple Open networks |
 | [Supply-side Affiliates](#Supply-side Affiliates) | These are primarily Buyer Apps or BAPs who can fetch contents or services<br />from various Seller Apps. But please note, that the Agentic framework is open<br />for other types of content providers as well.<br />e.g. Seller Apps or BPPs in any Open Network can become a Supply-side Affiliate |
-| [Integrator App](#Integrator App)                 | This is the Mobile and Web App that integrates with<br />the **Google Agentic framework**. This App is managed by partners of GCP and<br />provided as a SaaS solution or a Managed Service to end *Demand-side Affiliates* |
+| [Integrator App](#Integrator App)                 | This is the Mobile and Web App that integrates with<br />the **Gemini Powered Agentic framework**. This App is managed by partners of GCP and<br />provided as a SaaS solution or a Managed Service to end *Demand-side Affiliates* |
 
 # Introduction
 
-**Google Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
+**Gemini Powered Agentic framework** aims to provide an easy to integrate interface for Buyers/Seekers wanting to connect to the various Open Networks and/or various Content providers like Video, Webcast, Podcasts, Online Tutorials, Digital Catalogs etc. to name a few.
 
-Google Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
+Gemini Powered Agentic framework will build a bridge between the Demand and Supply sides of the Network and allow a seamless, frictionless communication between the two.
 
-This Document contains the specifications for the APIs exposed by **Google Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
+This Document contains the specifications for the APIs exposed by **Gemini Powered Agentic framework** on the Demand side (*Buyers/Seekers*) and also the specification for the APIs to be hosted on the Supply side (*Buyer Apps, Seeker Apps, Digital Content Providers etc*.)
 
 # Why do we need this?
 
@@ -110,7 +110,7 @@ Following diagrams are self explanatory depicting two different scenarios
 
 Agentic framework is headless service to connect to various types of backends with intelligence to understand the users' requirement and their outing requests accordingly. The framework can be realised by being integrated to a UI framework which shows up contents from various Open Networks and Providers with ease. ***Integrator App*** serves that purpose.
 
-- Integrates with **Google Agentic framework**
+- Integrates with **Gemini Powered Agentic framework**
 
 - Maintains the state of entire application
 
@@ -225,15 +225,15 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 > [!Note]
 >
-> - **Google Agentic framework**
+> - **Gemini Powered Agentic framework**
 >   - Understands user’s intent from Text or Voice
 >   - Break that into Actionable insights
 >   - Route requests to appropriate BAPs and/or Content Providers(*Outside Network*)
 > - ***Integrator App*** will be responsible for managing the configuration points for both Demand and Supply side of this application flow.
 >   - **Demand side**
 >     - The configuration options for Buyers and Seekers would be managed by Interator App in its own database
->     - Preferred Networks - Preferred target networks to connect from **Google Agentic framework**
->     - Intended Verticals - Preferred Verticals to support by **Google Agentic framework**
+>     - Preferred Networks - Preferred target networks to connect from **Gemini Powered Agentic framework**
+>     - Intended Verticals - Preferred Verticals to support by **Gemini Powered Agentic framework**
 >     - Maintain API security by creating and managing API key which needs to be sent through API header
 >   - **Supply Side**
 >     - Maintain a list of default BAPs and Content Providers(*Outside Network*)
@@ -242,7 +242,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 > - Implement Basic Analytics
 > - Implement Advanced Analytics (*Future*)
 >
-> Is **Google Agentic framework** completely **Stateless**?
+> Is **Gemini Powered Agentic framework** completely **Stateless**?
 >
 > - Current implementation is Stateless with a only light-weight *Semantic* memory history for agents
 > - **Future Plans**
@@ -261,7 +261,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 - They have their own Buyer Apps to fetch data from various Open Networks like ONDC
 
-  - They need to follow the API specs provided by **Google Agentic framework** to integrate into the system. Agentic framework will call the APIs exposed by Affiliates to fetch their contents
+  - They need to follow the API specs provided by **Gemini Powered Agentic framework** to integrate into the system. Agentic framework will call the APIs exposed by Affiliates to fetch their contents
   - Visibility of their data depends on getting more Buyers registering onto their system
   - Separate Buyer Apps needed for separate Networks like *Retail, Agri* etc.
   - Building an aggregator platform themselves need more effort and visibility would still be an issue; to bring more Buyers across segments onto their platform
@@ -270,7 +270,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
     - Various Service providers
     - Loan or Credit providers
 
-- **Google Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
+- **Gemini Powered Agentic framework** increases visibility of their data by exposing it to multiple Demand side Affiliates who might not event be on any Open Network
 
   - These Demand side affiliates can simply integrate with Agentic framework (*along with a conversational UI*) and launch from their existing apps or websites
 
@@ -293,7 +293,7 @@ How can Agentic framework complete a transaction for the selected content(s)? A 
 
 - These are Partners or Integrators who has publicly exposed APIs to share their contents
 
-- **Google Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
+- **Gemini Powered Agentic framework** calls these APIs directly and send the contents to the *Integrator App* asynchronously
 
 - Examples
   - YouTube and other Video content providers
